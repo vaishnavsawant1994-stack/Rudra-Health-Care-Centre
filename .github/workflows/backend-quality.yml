@@ -1,0 +1,76 @@
+name: Rudra backend quality
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-quality.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-quality.yml'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: rudra
+          POSTGRES_PASSWORD: rudra-ci-only
+          POSTGRES_DB: rudra_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rudra -d rudra_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: postgres://rudra:rudra-ci-only@localhost:5432/rudra_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan for committed secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Syntax checks
+        run: for f in src/*.mjs; do node --check "$f"; done
+      - name: Apply all PostgreSQL migrations to a clean database
+        run: node src/migrate.mjs
+      - name: Verify migration replay is checksum-safe
+        run: node src/migrate.mjs
+      - name: Verify failed migration rolls back schema and history
+        run: |
+          probe=migrations/999_ci_rollback_probe.sql
+          trap 'rm -f "$probe"' EXIT
+          cat > "$probe" <<'SQL'
+          BEGIN;
+          CREATE TABLE ci_rollback_probe (id integer PRIMARY KEY);
+          INSERT INTO ci_rollback_probe VALUES (1);
+          SELECT 1 / 0;
+          COMMIT;
+          SQL
+          if node src/migrate.mjs; then
+            echo "A deliberately failing migration unexpectedly succeeded" >&2
+            exit 1
+          fi
+          node --input-type=module -e 'import pg from "pg"; const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL }); try { const schema = await pool.query("SELECT to_regclass(\u0027public.ci_rollback_probe\u0027) AS probe"); const history = await pool.query("SELECT 1 FROM schema_migrations WHERE version=\u0027999_ci_rollback_probe.sql\u0027"); if (schema.rows[0].probe !== null || history.rowCount !== 0) throw new Error("Failed migration left schema or history changes behind"); } finally { await pool.end(); }'
+      - name: Run unit and database integration tests
+        run: npm test
+      - name: Dependency vulnerability check
+        run: npm audit --audit-level=high
