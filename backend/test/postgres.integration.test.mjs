@@ -109,6 +109,11 @@ test('PostgreSQL patient, family, lead, centre and append-only audit flow', { sk
     await assert.rejects(createCataloguePackage(pool,owner,{code:`BAD-${randomUUID().slice(0,8)}`,name:'Invalid Centre Package',
       centreId,items:[{testId:otherCentreTest.data.testId}]},request),
       (error)=>error instanceof HttpError&&error.code==='INVALID_PACKAGE_ITEMS');
+    await assert.rejects(pool.query(
+      `INSERT INTO catalogue_package_items (organization_id,centre_id,package_id,test_id)
+       VALUES ($1,$2,$3,$4)`,
+      [organizationId,centreId,packageRecord.data.id,otherCentreTest.data.id]
+    ),(error)=>error.code==='23503');
     const changedPackage=await updateCataloguePackage(pool,owner,packageRecord.data.packageId,
       {status:'INACTIVE',items:[{testId:catalogueTest.data.testId,quantity:2}]},request);
     assert.equal(changedPackage.data.status,'INACTIVE');
@@ -132,6 +137,10 @@ test('PostgreSQL patient, family, lead, centre and append-only audit flow', { sk
     assert.equal(patientLinked.data.referredDoctorId,doctor.data.id);
     assert.equal(patientLinked.data.corporateId,corporate.data.id);
     assert.equal(patientLinked.data.referredPartnerId,partner.data.id);
+    await assert.rejects(pool.query(
+      `UPDATE patients SET referred_doctor_id=$1 WHERE id=$2`,
+      [otherCentreDoctor.data.id,patientLinked.data.id]
+    ),(error)=>error.code==='23503');
     const leadWithPartner=await createLead(pool,owner,{firstName:'Partner Lead',source:'PARTNER',centreId,partnerId:partner.data.partnerId},request);
     assert.equal(leadWithPartner.data.partner_id,partner.data.id);
     const convertedPartnerLead=await convertLead(pool,owner,leadWithPartner.data.id,{},request);
