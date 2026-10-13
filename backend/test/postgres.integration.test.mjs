@@ -169,7 +169,7 @@ test('PostgreSQL patient, family, lead, centre and append-only audit flow', { sk
     const order=await createServiceOrder(pool,owner,orderBody,orderRequest);
     assert.match(order.data.orderId,/^RHC-ORD-[A-F0-9]{12}$/);
     assert.equal(order.data.items.length,2);
-    assert.equal(order.data.items[0].unitPriceMinor,12000);
+    assert.equal(order.data.items[0].unitPriceMinor,'12000');
     const booked=await getServiceOrder(pool,owner,order.data.orderId);
     assert.equal(booked.data.status,'BOOKED');
     assert.equal((await createServiceOrder(pool,owner,orderBody,orderRequest)).data.id,order.data.id);

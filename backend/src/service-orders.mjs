@@ -43,7 +43,7 @@ async function orderItems(client,principal,orderId){
     FROM service_order_items i
     LEFT JOIN catalogue_tests t ON t.organization_id=i.organization_id AND t.id=i.test_id AND t.centre_id=i.centre_id
     LEFT JOIN catalogue_packages p ON p.organization_id=i.organization_id AND p.id=i.package_id AND p.centre_id=i.centre_id
-    WHERE i.organization_id=$1 AND i.order_id=$2 ORDER BY i.created_at,i.id`,[principal.organizationId,orderId]);
+    WHERE i.organization_id=$1 AND i.order_id=$2 ORDER BY i.line_number`,[principal.organizationId,orderId]);
   return result.rows.map(row=>({id:row.id,testId:row.test_public_id,packageId:row.package_public_id,
     code:row.item_code,name:row.item_name,quantity:row.quantity,unitPriceMinor:row.unit_price_minor,currency:row.currency}));
 }
@@ -86,10 +86,10 @@ async function replaceItems(client,principal,centreId,orderId,items){
   const resolved=[];
   for(const item of items)resolved.push(await resolveItem(client,principal,centreId,item));
   await client.query('DELETE FROM service_order_items WHERE organization_id=$1 AND order_id=$2',[principal.organizationId,orderId]);
-  for(const item of resolved)await client.query(`INSERT INTO service_order_items
-    (organization_id,centre_id,order_id,test_id,package_id,item_code,item_name,quantity,unit_price_minor,currency)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-  [principal.organizationId,centreId,orderId,item.testId,item.packageId,item.code,item.name,item.quantity,item.priceMinor,item.currency]);
+  for(const [index,item] of resolved.entries())await client.query(`INSERT INTO service_order_items
+    (organization_id,centre_id,order_id,test_id,package_id,line_number,item_code,item_name,quantity,unit_price_minor,currency)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+  [principal.organizationId,centreId,orderId,item.testId,item.packageId,index+1,item.code,item.name,item.quantity,item.priceMinor,item.currency]);
 }
 
 export async function listServiceOrders(pool,principal,url){
