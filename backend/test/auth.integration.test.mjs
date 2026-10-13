@@ -265,7 +265,37 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
       const centreBDoctor=await call('/api/v1/doctors','POST',{firstName:'Synthetic Centre B Doctor',centreId:centreB});
       assert.equal(centreBDoctor.response.status,201);
       assert.equal((await callAs(receptionist,`/api/v1/doctors/${centreBDoctor.json.data.doctorId}`)).response.status,404);
+      const centreBCorporate=await call('/api/v1/corporates','POST',{name:'Synthetic Centre B Corporate',centreId:centreB});
+      const centreBPartner=await call('/api/v1/partners','POST',{partnerType:'COLLECTION',name:'Synthetic Centre B Partner',centreId:centreB});
+      const centreBTest=await call('/api/v1/catalogue/tests','POST',{code:`SCOPE-${randomUUID().slice(0,8)}`,name:'Synthetic Centre B Test',centreId:centreB});
+      const centreBPackage=await call('/api/v1/catalogue/packages','POST',{code:`SCOPE-${randomUUID().slice(0,8)}`,name:'Synthetic Centre B Package',centreId:centreB,
+        items:[{testId:centreBTest.json.data.testId}]});
+      assert.equal(centreBCorporate.response.status,201);
+      assert.equal(centreBPartner.response.status,201);
+      assert.equal(centreBTest.response.status,201);
+      assert.equal(centreBPackage.response.status,201);
+      for (const path of [
+        `/api/v1/corporates/${centreBCorporate.json.data.corporateId}`,
+        `/api/v1/partners/${centreBPartner.json.data.partnerId}`,
+        `/api/v1/catalogue/tests/${centreBTest.json.data.testId}`,
+        `/api/v1/catalogue/packages/${centreBPackage.json.data.packageId}`
+      ]) assert.equal((await callAs(receptionist,path)).response.status,404,path);
+      for (const path of ['/api/v1/doctors','/api/v1/corporates','/api/v1/partners','/api/v1/catalogue/tests','/api/v1/catalogue/packages']) {
+        assert.equal((await callAs(receptionist,`${path}?centreId=${centreB}`)).response.status,403,path);
+      }
       assert.equal((await callAs(receptionist,`/api/v1/doctors/${doctor.json.data.doctorId}`)).json.data.mobile.endsWith('0201'),true);
+
+      const foreignOrg=(await pool.query(`INSERT INTO organizations (public_id,name,brand_name) VALUES ($1,'Foreign API Test','Foreign') RETURNING id`,
+        [`FOREIGN-ORG-${randomUUID()}`])).rows[0].id;
+      const foreignCentre=(await pool.query(`INSERT INTO centres (organization_id,public_id,name,centre_type,address_line_1,city,state,postal_code)
+        VALUES ($1,$2,'Foreign Centre','MAIN','1 Foreign Road','Mumbai','Maharashtra','400001') RETURNING id`,
+        [foreignOrg,`FOREIGN-CEN-${randomUUID()}`])).rows[0].id;
+      const foreignUser=(await pool.query(`INSERT INTO users (organization_id,public_id,auth_subject,status) VALUES ($1,$2,$3,'active') RETURNING id`,
+        [foreignOrg,`FOREIGN-USR-${randomUUID()}`,`foreign-api:${randomUUID()}`])).rows[0].id;
+      const foreignDoctor=(await pool.query(`INSERT INTO doctors (organization_id,public_id,centre_id,first_name,created_by)
+        VALUES ($1,$2,$3,'Synthetic Foreign Doctor',$4) RETURNING public_id`,
+        [foreignOrg,`FOREIGN-DOC-${randomUUID()}`,foreignCentre,foreignUser])).rows[0].public_id;
+      assert.equal((await call(`/api/v1/doctors/${foreignDoctor}`)).response.status,404);
 
       const removableSessionToken = newOpaqueToken();
       const removableSession = (await pool.query(
