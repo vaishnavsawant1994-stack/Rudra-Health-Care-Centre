@@ -188,8 +188,8 @@ test('PostgreSQL patient, family, lead, centre and append-only audit flow', { sk
     await assert.rejects(transitionAppointment(pool,owner,appointment.data.appointmentId,{status:'CANCELLED',cancellationCode:'OTHER'},request),
       (error)=>error instanceof HttpError&&error.code==='INVALID_APPOINTMENT_TRANSITION');
     const concurrentAppointments=await Promise.allSettled([
-      createAppointment(pool,owner,{patientId:patientLinked.data.patientId,centreId,serviceType:'HOME_COLLECTION',startsAt:'2027-01-12T12:00:00Z',endsAt:'2027-01-12T12:30:00Z'},request),
-      createAppointment(pool,owner,{patientId:patientLinked.data.patientId,centreId,serviceType:'HOME_COLLECTION',startsAt:'2027-01-12T12:00:00Z',endsAt:'2027-01-12T12:30:00Z'},request)
+      createAppointment(pool,owner,{patientId:patientLinked.data.patientId,centreId,serviceType:'CENTRE_VISIT',startsAt:'2027-01-12T12:00:00Z',endsAt:'2027-01-12T12:30:00Z'},request),
+      createAppointment(pool,owner,{patientId:patientLinked.data.patientId,centreId,serviceType:'CENTRE_VISIT',startsAt:'2027-01-12T12:00:00Z',endsAt:'2027-01-12T12:30:00Z'},request)
     ]);
     assert.equal(concurrentAppointments.filter((entry)=>entry.status==='fulfilled').length,1);
     assert.equal(concurrentAppointments.filter((entry)=>entry.status==='rejected'&&entry.reason.code==='APPOINTMENT_CONFLICT').length,1);
