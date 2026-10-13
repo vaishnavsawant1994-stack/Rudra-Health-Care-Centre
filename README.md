@@ -5,8 +5,13 @@ Rudra Health OS R1 engineering foundation. Rudra owns customer relationships and
 ## Current contents
 
 - `dist/index.html`: responsive staff-shell prototype using synthetic records. Demo sign-in is not authentication.
-- `backend/`: Node.js service, OIDC identity-provider boundary, opaque sessions, server-side authorization, patient/family/lead APIs, encrypted contact/address fields, append-only consent/audit history, and PostgreSQL migrations 001–007.
-- `.github/workflows/backend-quality.yml`: PostgreSQL-backed qualification workflow. It applies migrations to a clean PostgreSQL 16 service, checks migration replay, runs unit and database integration tests, scans for secrets, and checks dependency advisories.
+- `backend/`: Node.js service, OIDC identity-provider boundary, opaque sessions, server-side authorization, patient/family/lead APIs, encrypted contact/address fields, append-only consent/audit history, and migrations 001–011.
+- R1.2 branch: doctor, corporate, partner, and diagnostic test/package catalogue APIs and schema, with organization/centre boundary coverage. This tranche is in progress and not yet qualified.
+- `.github/workflows/backend-quality.yml`: PostgreSQL-backed qualification workflow. It applies migrations to clean PostgreSQL 16, checks replay and rollback behavior, runs lint, unit and database integration tests, scans for secrets, and checks dependency advisories.
+
+## Qualification record
+
+R1.1 backend foundation is qualified for engineering/internal development on exact PR head `f7a493d8cea073dca7f0b9050722596797d36be0` (PR #2; merge `3da817dcb807d0e91a4c6169a3482e780de7b547`). R1.2 must pass the same exact-SHA gates before it is considered qualified.
 
 ## Safety and status
 
