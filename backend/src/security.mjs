@@ -12,7 +12,7 @@ export const hmacLookup = (value, key = decodeKey('RUDRA_LOOKUP_HMAC_KEY')) =>
   createHmac('sha256', key).update(value).digest();
 
 export function encryptField(value, key = decodeKey('RUDRA_FIELD_ENCRYPTION_KEY')) {
-  if (value == null || value === '') return null;
+  if (value === null || value === undefined || value === '') return null;
   const iv = randomBytes(12);
   const cipher = createCipheriv('aes-256-gcm', key, iv);
   const ciphertext = Buffer.concat([cipher.update(String(value), 'utf8'), cipher.final()]);
@@ -20,7 +20,7 @@ export function encryptField(value, key = decodeKey('RUDRA_FIELD_ENCRYPTION_KEY'
 }
 
 export function decryptField(payload, key = decodeKey('RUDRA_FIELD_ENCRYPTION_KEY')) {
-  if (payload == null) return null;
+  if (payload === null || payload === undefined) return null;
   const bytes = Buffer.from(payload);
   if (bytes.length < 30 || bytes[0] !== 1) throw new Error('Unsupported encrypted field format');
   const decipher = createDecipheriv('aes-256-gcm', key, bytes.subarray(1, 13));
