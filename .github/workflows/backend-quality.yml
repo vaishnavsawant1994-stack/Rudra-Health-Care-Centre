@@ -54,6 +54,22 @@ jobs:
         run: node src/migrate.mjs
       - name: Verify migration replay is checksum-safe
         run: node src/migrate.mjs
+      - name: Verify failed migration rolls back schema and history
+        run: |
+          probe=migrations/999_ci_rollback_probe.sql
+          trap 'rm -f "$probe"' EXIT
+          cat > "$probe" <<'SQL'
+          BEGIN;
+          CREATE TABLE ci_rollback_probe (id integer PRIMARY KEY);
+          INSERT INTO ci_rollback_probe VALUES (1);
+          SELECT 1 / 0;
+          COMMIT;
+          SQL
+          if node src/migrate.mjs; then
+            echo "A deliberately failing migration unexpectedly succeeded" >&2
+            exit 1
+          fi
+          node --input-type=module -e 'import pg from "pg"; const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL }); try { const schema = await pool.query("SELECT to_regclass(\u0027public.ci_rollback_probe\u0027) AS probe"); const history = await pool.query("SELECT 1 FROM schema_migrations WHERE version=\u0027999_ci_rollback_probe.sql\u0027"); if (schema.rows[0].probe !== null || history.rowCount !== 0) throw new Error("Failed migration left schema or history changes behind"); } finally { await pool.end(); }'
       - name: Run unit and database integration tests
         run: npm test
       - name: Dependency vulnerability check
