@@ -2,13 +2,21 @@
   "name": "rudra-health-os-backend",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "start": "node src/server.mjs",
-    "test": "node --test"
+    "test": "node --test",
+    "lint": "eslint src test --max-warnings=0"
   },
   "dependencies": {
     "jose": "^6.0.11",
     "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.1",
+    "eslint": "9.39.1",
+    "globals": "16.5.0"
   }
 }
