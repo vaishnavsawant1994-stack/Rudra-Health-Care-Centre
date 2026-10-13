@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { HttpError } from '../src/authorization.mjs';
 import {
-  addFamilyMember, addPatientAddress, convertLead, createLead, createPatient,
-  getPatientDetail, listPatientAddresses, listPatients, updatePatient, updateLead
+  addExternalIdentifier, addFamilyMember, addLeadActivity, addPatientAddress, convertLead, createLead, createPatient,
+  endFamilyRelationship, getLeadDetail, getPatientDetail, listExternalIdentifiers, listFamily, listLeads,
+  listPatientAddresses, listPatients, markLeadLost, patientTimeline, updateExternalIdentifier, updatePatient, updateLead
 } from '../src/records.mjs';
 
 const enabled = Boolean(process.env.DATABASE_URL);
@@ -96,6 +97,18 @@ test('PostgreSQL patient, family, lead, centre and append-only audit flow', { sk
       allowDuplicate: true, duplicateOverrideReason: 'Family member shares household contact number' }, request);
     const family = await addFamilyMember(pool, owner, created.data.patientId, { relatedPatientId: second.data.patientId, relationshipType: 'CHILD' }, request);
     assert.equal(family.data.relatedPatientId, second.data.patientId);
+    assert.equal((await listFamily(pool, owner, created.data.patientId)).data.length, 1);
+    await endFamilyRelationship(pool, owner, created.data.patientId, family.data.relationshipId, request);
+    assert.equal((await listFamily(pool, owner, created.data.patientId)).data.length, 0);
+
+    const external = await addExternalIdentifier(pool, owner, created.data.patientId, {
+      provider: 'Metropolis', identifierType: 'Patient ID', externalIdentifier: 'MP-TEST-001', metadata: { source: 'manual' }
+    }, request);
+    assert.equal(external.data.provider, 'METROPOLIS');
+    assert.equal((await listExternalIdentifiers(pool, owner, created.data.patientId)).data.length, 1);
+    const changedExternal = await updateExternalIdentifier(pool, owner, created.data.patientId, external.data.id,
+      { externalIdentifier: 'MP-TEST-002', metadata: { corrected: true } }, request);
+    assert.match(changedExternal.data.display_mask, /^MP••••02$/);
 
     await addPatientAddress(pool, owner, created.data.patientId, {
       addressLine1: '14 Private Lane', city: 'Nashik', state: 'Maharashtra', postalCode: '422001', isPrimary: true
@@ -109,8 +122,12 @@ test('PostgreSQL patient, family, lead, centre and append-only audit flow', { sk
 
     const lead = await createLead(pool, owner, { firstName: 'Mira', mobile: '+919876500103', source: 'WHATSAPP', centreId }, request);
     await updateLead(pool, owner, lead.data.id, { status: 'CONTACTED' }, request);
+    await addLeadActivity(pool, owner, lead.data.id, { activityType: 'CALL', note: 'Spoke to client; follow-up requested.' }, request);
+    assert.equal((await getLeadDetail(pool, owner, lead.data.id)).data.status, 'CONTACTED');
+    assert.equal((await listLeads(pool, owner, new URL('https://rudra.invalid/api/v1/leads?status=CONTACTED'))).data.length, 1);
     const converted = await convertLead(pool, owner, lead.data.id, {}, request);
     assert.equal(converted.data.status, 'CONVERTED');
+    assert.ok((await patientTimeline(pool, owner, converted.data.patientId)).data.length > 0);
     const timeline = await pool.query('SELECT action FROM audit_events WHERE organization_id=$1 AND entity_type=\'LEAD\' AND entity_id=$2', [organizationId, lead.data.id]);
     assert.ok(timeline.rows.some((row) => row.action === 'lead.converted'));
 
@@ -121,6 +138,15 @@ test('PostgreSQL patient, family, lead, centre and append-only audit flow', { sk
     assert.ok(scopedList.data.every((patient) => patient.centreId === centreId));
     await assert.rejects(getPatientDetail(pool, scoped, (await pool.query('SELECT public_id FROM patients WHERE organization_id=$1 AND primary_centre_id=$2 ORDER BY created_at DESC LIMIT 1', [organizationId, otherCentreId])).rows[0].public_id),
       (error) => error instanceof HttpError && error.status === 403);
+
+    const foreignPatient = (await pool.query(
+      `INSERT INTO patients (organization_id,public_id,first_name,primary_centre_id,created_by)
+       VALUES ($1,$2,'Foreign Patient',$3,$4) RETURNING public_id`,
+      [foreignOrganizationId, `FOREIGN-PAT-${randomUUID()}`, foreignCentreId,
+        (await pool.query('INSERT INTO users (organization_id,public_id,auth_subject,status) VALUES ($1,$2,$3,\'active\') RETURNING id',
+          [foreignOrganizationId, `FOREIGN-STF-${randomUUID()}`, `foreign:${randomUUID()}`])).rows[0].id]
+    )).rows[0].public_id;
+    await assert.rejects(getPatientDetail(pool, owner, foreignPatient), (error) => error instanceof HttpError && error.status === 404);
 
     await assert.rejects(pool.query('UPDATE audit_events SET action=\'changed\' WHERE entity_type=\'LEAD\' AND entity_id=$1', [lead.data.id]));
     await assert.rejects(pool.query(
@@ -141,6 +167,10 @@ test('PostgreSQL patient, family, lead, centre and append-only audit flow', { sk
     )).rows[0].id;
     await assert.rejects(pool.query('UPDATE consent_events SET new_value=\'WITHDRAWN\' WHERE id=$1', [consentEvent]));
     await assert.rejects(pool.query('DELETE FROM consent_events WHERE id=$1', [consentEvent]));
+
+    const lost = await createLead(pool, owner, { firstName: 'Lost lead', source: 'WEBSITE', centreId }, request);
+    assert.equal((await markLeadLost(pool, owner, lost.data.id, { reason: 'Client declined the service.' }, request)).data.status, 'LOST');
+    assert.equal((await getLeadDetail(pool, owner, lost.data.id)).data.status, 'LOST');
   } finally {
     await pool.end();
   }
