@@ -5,6 +5,7 @@ Rudra Health OS R1 engineering foundation. Rudra owns customer relationships and
 ## Current contents
 
 - `dist/index.html`: responsive staff-shell prototype using synthetic records. Demo sign-in is not authentication.
+- `prototype/catalogue-foundation.html`: static R1.2 catalogue screen scaffold with disabled actions and no connected records.
 - `backend/`: Node.js service, OIDC identity-provider boundary, opaque sessions, server-side authorization, patient/family/lead APIs, encrypted contact/address fields, append-only consent/audit history, and migrations 001–011.
 - R1.2 branch: doctor, corporate, partner, and diagnostic test/package catalogue APIs and schema, with organization/centre boundary coverage. This tranche is in progress and not yet qualified.
 - `.github/workflows/backend-quality.yml`: PostgreSQL-backed qualification workflow. It applies migrations to clean PostgreSQL 16, checks replay and rollback behavior, runs lint, unit and database integration tests, scans for secrets, and checks dependency advisories.
