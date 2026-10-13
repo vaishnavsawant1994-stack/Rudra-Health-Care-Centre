@@ -15,6 +15,8 @@ import {
   listCataloguePackages, listCatalogueTests, listCorporates, listDoctors, listPartners,
   updateCataloguePackage, updateCatalogueTest, updateCorporate, updateDoctor, updatePartner
 } from './directory.mjs';
+import { createAppointment, getAppointment, listAppointments, transitionAppointment, updateAppointment } from './appointments.mjs';
+import { createServiceOrder, getServiceOrder, listServiceOrders, transitionServiceOrder, updateServiceOrder } from './service-orders.mjs';
 
 const { Pool } = pg;
 const pool = new Pool({ connectionString: required('DATABASE_URL'), max: Number(process.env.DB_POOL_SIZE || 10), idleTimeoutMillis: 30_000 });
@@ -137,6 +139,20 @@ async function handle(request, response) {
       if (method === 'GET') return send(response,200,await handlers.get(pool,principal,decodeURIComponent(directoryMatch[2])),headers);
       if (method === 'PATCH') return send(response,200,await handlers.update(pool,principal,decodeURIComponent(directoryMatch[2]),await readBody(request),request),headers);
     }
+    if (routePath === '/appointments' && method === 'GET') return send(response,200,await listAppointments(pool,principal,url),headers);
+    if (routePath === '/appointments' && method === 'POST') return send(response,201,await createAppointment(pool,principal,await readBody(request),request),headers);
+    let appointmentMatch=routePath.match(/^\/appointments\/([^/]+)$/);
+    if (appointmentMatch && method === 'GET') return send(response,200,await getAppointment(pool,principal,decodeURIComponent(appointmentMatch[1])),headers);
+    if (appointmentMatch && method === 'PATCH') return send(response,200,await updateAppointment(pool,principal,decodeURIComponent(appointmentMatch[1]),await readBody(request),request),headers);
+    appointmentMatch=routePath.match(/^\/appointments\/([^/]+)\/status$/);
+    if (appointmentMatch && method === 'POST') return send(response,200,await transitionAppointment(pool,principal,decodeURIComponent(appointmentMatch[1]),await readBody(request),request),headers);
+    if (routePath === '/service-orders' && method === 'GET') return send(response,200,await listServiceOrders(pool,principal,url),headers);
+    if (routePath === '/service-orders' && method === 'POST') return send(response,201,await createServiceOrder(pool,principal,await readBody(request),request),headers);
+    let orderMatch=routePath.match(/^\/service-orders\/([^/]+)$/);
+    if (orderMatch && method === 'GET') return send(response,200,await getServiceOrder(pool,principal,decodeURIComponent(orderMatch[1])),headers);
+    if (orderMatch && method === 'PATCH') return send(response,200,await updateServiceOrder(pool,principal,decodeURIComponent(orderMatch[1]),await readBody(request),request),headers);
+    orderMatch=routePath.match(/^\/service-orders\/([^/]+)\/status$/);
+    if (orderMatch && method === 'POST') return send(response,200,await transitionServiceOrder(pool,principal,decodeURIComponent(orderMatch[1]),await readBody(request),request),headers);
     if (routePath === '/patients' && method === 'GET') return send(response, 200, await listPatients(pool, principal, url), headers);
     if (routePath === '/patients' && method === 'POST') return send(response, 201, await createPatient(pool, principal, await readBody(request), request), headers);
     let match = routePath.match(/^\/patients\/([^/]+)$/);

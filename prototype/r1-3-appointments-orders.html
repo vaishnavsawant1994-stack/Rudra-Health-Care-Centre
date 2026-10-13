@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Appointments and service orders · Rudra Health OS</title>
+  <style>
+    :root{font:15px/1.5 system-ui,sans-serif;color:#17342e;background:#f4f7f5}*{box-sizing:border-box}body{margin:0}
+    header{padding:22px max(22px,calc((100vw - 1080px)/2));background:#fff;border-bottom:1px solid #dce6e1}
+    header p,.muted{color:#64766f}header p{margin:2px 0 0}main{max-width:1080px;margin:30px auto;padding:0 22px}
+    .notice{padding:13px 16px;border:1px solid #ead9a4;border-radius:10px;background:#fff9e8;color:#624e16}
+    .tabs{display:flex;gap:6px;margin-top:24px;border-bottom:1px solid #dce6e1}.tabs button{padding:11px 15px;border:0;border-bottom:3px solid transparent;background:transparent;color:#64766f;font:inherit;cursor:pointer}
+    .tabs button[aria-selected=true]{border-bottom-color:#18745d;color:#145b49;font-weight:700}.panel{margin-top:18px;border:1px solid #dce6e1;border-radius:12px;background:#fff;overflow:hidden}
+    .head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:17px 20px;border-bottom:1px solid #e8eeeb}.head h2{margin:0;font-size:17px}
+    .filters{display:flex;gap:12px;padding:16px 20px;border-bottom:1px solid #e8eeeb}.filters label{display:grid;gap:4px;color:#53665f;font-size:13px;font-weight:650}
+    select{min-width:190px;padding:9px 12px;border:1px solid #cad8d1;border-radius:8px;background:#f8faf9;color:#77847e;font:inherit}
+    .actions button{padding:8px 12px;border:1px solid #cad8d1;border-radius:8px;background:#f7f9f8;color:#77847e;font:inherit}
+    .empty{padding:50px 18px;text-align:center}.empty strong{display:block;margin-bottom:5px}.empty p{max-width:520px;margin:0 auto;color:#64766f}
+    footer{margin-top:14px;color:#64766f;font-size:13px}@media(max-width:600px){.head,.filters{align-items:stretch;flex-direction:column}.filters label,select{width:100%}.actions{display:flex;flex-wrap:wrap}}
+  </style>
+</head>
+<body>
+  <header><strong>Rudra Health OS · Operations</strong><p>Appointments and service orders · R1.3 engineering preview</p></header>
+  <main>
+    <p class="notice"><strong>Prototype only.</strong> This screen is not connected to the API and contains no records. Do not enter patient, staff, report, or health data.</p>
+    <div class="tabs" role="tablist" aria-label="Operations">
+      <button id="appointments-tab" type="button" role="tab" aria-selected="true" aria-controls="operations-panel">Appointments</button>
+      <button id="orders-tab" type="button" role="tab" aria-selected="false" aria-controls="operations-panel">Service orders</button>
+    </div>
+    <section id="operations-panel" class="panel" role="tabpanel" aria-labelledby="appointments-tab">
+      <div class="head"><h2 id="title">Appointments</h2><div class="actions"><button disabled aria-disabled="true">New appointment</button><button disabled aria-disabled="true">New service order</button></div></div>
+      <div class="filters">
+        <label for="centre">Centre scope<select id="centre" disabled><option>Centre selection is not connected</option></select></label>
+        <label for="status">Status<select id="status" disabled><option>Status filtering is not connected</option></select></label>
+      </div>
+      <div class="empty"><strong id="empty-title">No appointments loaded</strong><p id="empty-copy">The R1.3 workflow is being qualified. Scheduling, check-in, order processing, and Metropolis handoff are not connected in this prototype.</p></div>
+    </section>
+    <footer>Status changes will be audited. Metropolis processing stays a manual boundary; this tranche does not send orders or retrieve reports.</footer>
+  </main>
+  <script>
+    const tabs=[...document.querySelectorAll('[role="tab"]')];const panel=document.getElementById('operations-panel');
+    for(const tab of tabs)tab.addEventListener('click',()=>{const orders=tab.id==='orders-tab';for(const item of tabs)item.setAttribute('aria-selected',String(item===tab));panel.setAttribute('aria-labelledby',tab.id);document.getElementById('title').textContent=orders?'Service orders':'Appointments';document.getElementById('empty-title').textContent=`No ${orders?'service orders':'appointments'} loaded`;});
+  </script>
+</body>
+</html>

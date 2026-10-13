@@ -22,6 +22,8 @@ This is the first executable backend slice for R1.1: an OIDC identity-provider b
 | Leads | `GET/POST /api/v1/leads`, `GET/PATCH /api/v1/leads/:id`, `POST /api/v1/leads/:id/activities`, `POST /api/v1/leads/:id/convert`, `POST /api/v1/leads/:id/lost` |
 | Relationships | `GET/POST /api/v1/doctors`, `GET/PATCH /api/v1/doctors/:id`; corresponding routes for `/corporates` and `/partners` |
 | Catalogue | `GET/POST /api/v1/catalogue/tests`, `GET/PATCH /api/v1/catalogue/tests/:id`; matching routes for `/catalogue/packages` with centre-consistent test items |
+| Appointments | `GET/POST /api/v1/appointments`, `GET/PATCH /api/v1/appointments/:id`, `POST /api/v1/appointments/:id/status` |
+| Service orders | `GET/POST /api/v1/service-orders`, `GET/PATCH /api/v1/service-orders/:id`, `POST /api/v1/service-orders/:id/status` |
 | Operations | `GET /health/live`, `GET /health/ready` |
 
 Responses use `{ "data": ..., "meta": ... }`; errors use `{ "error": { "code", "message", "requestId" } }`. All database queries are parameterized and organization-scoped.
@@ -43,9 +45,11 @@ npm start
 
 CI runs lint without automatic fixes. Type-checking is not applicable to this plain JavaScript `.mjs` project, and a separate build step is not applicable because Node runs the source directly without transpilation or bundling.
 
-R1.1 and R1.2 are qualified for engineering/internal development only. R1.2 passed all required gates on exact PR #3 head `dca48b1cca374b1531d0a8f597e56b20fcd7f1c4` (workflow runs 46 and 47; merge `73807a5da109d5c735779b2aefe72295c6fe3a4e`). This does not qualify production use.
+R1.1 and R1.2 are qualified for engineering/internal development only. R1.3 appointments and service orders are under qualification on the active feature branch; do not treat them as qualified until the exact PR head passes CI.
 
 The static screen scaffold lives at `prototype/catalogue-foundation.html`. It is not connected to this API and does not authenticate users or contain catalogue records.
+
+The R1.3 screen scaffold lives at `prototype/r1-3-appointments-orders.html`. It is not connected to this API. Appointment states are `SCHEDULED → CONFIRMED → CHECKED_IN → IN_SERVICE → COMPLETED`, with cancellation or no-show only before check-in. Orders progress from `BOOKED` to sample collection and processing, then partial or full completion; invalid transitions are rejected. Metropolis order entry and report retrieval remain manual and outside this tranche.
 
 The migration runner applies each migration transactionally, serializes migration processes with a PostgreSQL advisory lock, records checksums, and refuses to silently accept a changed applied migration. Use a clean non-production database to qualify the migrations before any deployment.
 
