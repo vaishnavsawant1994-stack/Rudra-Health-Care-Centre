@@ -12,7 +12,7 @@ if (process.env.CI === 'true' && !enabled) {
 
 test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles and centre grants', { skip: !enabled }, async () => {
   const { default: pg } = await import('pg');
-  const { authenticate, logout, refreshSession } = await import('../src/auth.mjs');
+  const { authenticate, beginLogin } = await import('../src/auth.mjs');
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 4 });
   try {
     const org = (await pool.query(
@@ -87,6 +87,32 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
     }
 
     const owner = principals.get('OWNER');
+    await assert.rejects(authenticate(pool, owner.request('POST', owner.sessionToken, 'wrong-csrf')),
+      (error) => error instanceof HttpError && error.status === 403 && error.code === 'CSRF_INVALID');
+    process.env.OIDC_ISSUER = 'https://identity.example.test/';
+    process.env.OIDC_CLIENT_ID = 'rudra-integration-test';
+    process.env.OIDC_REDIRECT_URI = 'https://rudra.example.test/api/v1/auth/callback';
+    process.env.RUDRA_COOKIE_SIGNING_KEY = Buffer.alloc(32, 41).toString('base64');
+    process.env.OIDC_MFA_ACR_VALUES = 'urn:rudra:mfa';
+    const priorFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response(JSON.stringify({
+      issuer: process.env.OIDC_ISSUER.replace(/\/$/, ''),
+      authorization_endpoint: 'https://identity.example.test/authorize',
+      token_endpoint: 'https://identity.example.test/token',
+      jwks_uri: 'https://identity.example.test/jwks'
+    }), { status: 200, headers: { 'content-type': 'application/json' } });
+    try {
+      const login = await beginLogin();
+      const authorization = new URL(login.location);
+      assert.equal(authorization.searchParams.get('response_type'), 'code');
+      assert.equal(authorization.searchParams.get('code_challenge_method'), 'S256');
+      assert.ok(authorization.searchParams.get('state'));
+      assert.ok(authorization.searchParams.get('nonce'));
+      assert.match(authorization.searchParams.get('code_challenge'), /^[A-Za-z0-9_-]{43}$/);
+      assert.match(login.cookie, /HttpOnly; SameSite=Lax/);
+    } finally {
+      globalThis.fetch = priorFetch;
+    }
     const port = 20_000 + Math.floor(Math.random() * 20_000);
     const signingKey = Buffer.alloc(32, 41).toString('base64');
     const encryptionKey = Buffer.alloc(32, 42).toString('base64');
@@ -175,7 +201,8 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
          VALUES ($1,$2,$3,$4,now()+interval '1 hour',now()+interval '8 hours') RETURNING id`,
         [org, owner.principal.id, sha256(removableSessionToken), sha256(newOpaqueToken())]
       )).rows[0].id;
-      assert.equal((await call(`/api/v1/auth/sessions/${removableSession}`, 'DELETE')).response.status, 200);
+      const revokeResult = await call(`/api/v1/auth/sessions/${removableSession}`, 'DELETE');
+      assert.equal(revokeResult.response.status, 200, `${JSON.stringify(revokeResult.json)} ${appOutput}`);
       const refreshed = await call('/api/v1/auth/refresh', 'POST', {});
       assert.equal(refreshed.response.status, 200);
       const logoutCookies = refreshed.response.headers.get('set-cookie') || '';
@@ -191,19 +218,6 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
       app.kill('SIGTERM');
       await new Promise((resolve) => app.once('exit', resolve));
     }
-
-    await assert.rejects(authenticate(pool, owner.request('POST', owner.sessionToken, 'wrong-csrf')),
-      (error) => error instanceof HttpError && error.status === 403 && error.code === 'CSRF_INVALID');
-    const refreshRequest = owner.request('POST');
-    const rotatedCookies = await refreshSession(pool, refreshRequest, owner.principal);
-    const replacement = rotatedCookies.find((cookie) => cookie.startsWith('rhc_session='))?.match(/^rhc_session=([^;]+)/)?.[1];
-    const replacementCsrf = rotatedCookies.find((cookie) => cookie.startsWith('rhc_csrf='))?.match(/^rhc_csrf=([^;]+)/)?.[1];
-    assert.ok(replacement && replacementCsrf, 'refresh must issue new session and CSRF cookies');
-    await assert.rejects(authenticate(pool, owner.request()), (error) => error.status === 401);
-    const rotatedRequest = owner.request('GET', decodeURIComponent(replacement), decodeURIComponent(replacementCsrf));
-    const rotatedPrincipal = await authenticate(pool, rotatedRequest);
-    await logout(pool, rotatedRequest, rotatedPrincipal);
-    await assert.rejects(authenticate(pool, rotatedRequest), (error) => error.status === 401);
 
     const receptionist = principals.get('RECEPTIONIST');
     await pool.query("UPDATE users SET status='disabled' WHERE id=$1", [receptionist.principal.id]);
