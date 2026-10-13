@@ -131,7 +131,7 @@ async function handle(request, response) {
     const collection = directories[routePath];
     if (collection && method === 'GET') return send(response, 200, await collection.list(pool,principal,url), headers);
     if (collection && method === 'POST') return send(response, 201, await collection.create(pool,principal,await readBody(request),request), headers);
-    let directoryMatch=routePath.match(/^\/(doctors|corporates|partners|catalogue\/tests|catalogue\/packages)\/([^/]+)$/);
+    const directoryMatch=routePath.match(/^\/(doctors|corporates|partners|catalogue\/tests|catalogue\/packages)\/([^/]+)$/);
     if (directoryMatch) {
       const handlers=directories[`/${directoryMatch[1]}`];
       if (method === 'GET') return send(response,200,await handlers.get(pool,principal,decodeURIComponent(directoryMatch[2])),headers);
