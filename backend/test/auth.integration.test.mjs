@@ -37,7 +37,7 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
       ADMIN: ['patients.read','patients.create','patients.update','patients.duplicate.override','leads.read','leads.create','leads.update','leads.convert'],
       CENTRE_MANAGER: ['patients.read','patients.create','patients.update','patients.duplicate.override','leads.read','leads.create','leads.update','leads.convert','audit.read'],
       RECEPTIONIST: ['patients.read','patients.create','patients.update','leads.read','leads.create','leads.update','leads.convert'],
-      PHLEBOTOMIST: [],
+      PHLEBOTOMIST: ['patients.address.read'],
       CUSTOMER_SUPPORT: ['patients.read','leads.read','leads.update'],
       ACCOUNTS: [],
       SALES_RELATIONSHIP: ['patients.create','leads.read','leads.create','leads.update','leads.convert'],
@@ -61,6 +61,15 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
       ACCOUNTS: ['corporates.read','corporates.contact.read','catalogue.tests.read','catalogue.packages.read'],
       SALES_RELATIONSHIP: ['doctors.read','doctors.contact.read','corporates.read','corporates.create','corporates.update','corporates.contact.read','partners.read','partners.create','partners.update','partners.contact.read','catalogue.tests.read','catalogue.packages.read'],
       READ_ONLY_AUDITOR: ['doctors.read','corporates.read','partners.read','catalogue.tests.read','catalogue.packages.read']
+    };
+    const operationsPermissions=['appointments.read','appointments.create','appointments.update','appointments.status',
+      'service_orders.read','service_orders.create','service_orders.update','service_orders.status'];
+    const operationsRoleGrants={
+      OWNER:operationsPermissions,SUPER_ADMIN:operationsPermissions,ADMIN:operationsPermissions,CENTRE_MANAGER:operationsPermissions,
+      RECEPTIONIST:['appointments.read','appointments.create','appointments.update','appointments.status','service_orders.read','service_orders.create','service_orders.update'],
+      PHLEBOTOMIST:['appointments.read','service_orders.read','service_orders.status'],
+      CUSTOMER_SUPPORT:['appointments.read','service_orders.read'],ACCOUNTS:['service_orders.read'],
+      SALES_RELATIONSHIP:[],READ_ONLY_AUDITOR:['appointments.read','service_orders.read']
     };
     const principals = new Map();
     for (const [roleCode, permissions] of Object.entries(expectations)) {
@@ -96,6 +105,9 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
       for (const permission of directoryPermissions) {
         assert.equal(principal.permissions.has(permission),directoryRoleGrants[roleCode].includes(permission),`${roleCode} directory grant mismatch for ${permission}`);
       }
+      for (const permission of operationsPermissions) {
+        assert.equal(principal.permissions.has(permission),operationsRoleGrants[roleCode].includes(permission),`${roleCode} operations grant mismatch for ${permission}`);
+      }
       for (const permission of ['patients.read','patients.create','patients.update','patients.duplicate.override','leads.read','leads.create','leads.update','leads.convert','audit.read']) {
         if (!permissions.includes(permission)) assert.ok(!principal.permissions.has(permission), `${roleCode} unexpectedly has ${permission}`);
       }
@@ -109,6 +121,7 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
     }
 
     const owner = principals.get('OWNER');
+    const receptionist = principals.get('RECEPTIONIST');
     await assert.rejects(authenticate(pool, owner.request('POST', owner.sessionToken, 'wrong-csrf')),
       (error) => error instanceof HttpError && error.status === 403 && error.code === 'CSRF_INVALID');
     process.env.OIDC_ISSUER = 'https://identity.example.test/';
@@ -160,10 +173,11 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
       }
       assert.ok(ready, `API server did not start: ${appOutput}`);
       const cookie = `rhc_session=${owner.sessionToken}; rhc_csrf=${owner.csrfToken}`;
-      const call = async (path, method = 'GET', body = undefined, csrf = true) => {
+      const call = async (path, method = 'GET', body = undefined, csrf = true, idempotencyKey = undefined) => {
         const response = await fetch(`${baseUrl}${path}`, {
           method, headers: { cookie, ...(body === undefined ? {} : { 'content-type': 'application/json' }),
-            ...(csrf && ['POST','PATCH','PUT','DELETE'].includes(method) ? { 'x-csrf-token': owner.csrfToken } : {}) },
+            ...(csrf && ['POST','PATCH','PUT','DELETE'].includes(method) ? { 'x-csrf-token': owner.csrfToken } : {}),
+            ...(idempotencyKey ? { 'idempotency-key': idempotencyKey } : {}) },
           ...(body === undefined ? {} : { body: JSON.stringify(body) })
         });
         const json = await response.json();
@@ -190,9 +204,10 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
       assert.equal((await call(`/api/v1/patients/${patientId}`)).response.status, 200);
       assert.equal((await call(`/api/v1/patients/${patientId}`, 'PATCH', { lastName: 'Updated' })).response.status, 200);
       assert.equal((await call(`/api/v1/patients/${patientId}/timeline`)).response.status, 200);
-      assert.equal((await call(`/api/v1/patients/${patientId}/addresses`, 'POST', {
+      const patientAddress=await call(`/api/v1/patients/${patientId}/addresses`, 'POST', {
         addressLine1: 'HTTP Test Road', city: 'Nashik', state: 'Maharashtra', postalCode: '422001', isPrimary: true
-      })).response.status, 201);
+      });
+      assert.equal(patientAddress.response.status,201);
       assert.equal((await call(`/api/v1/patients/${patientId}/addresses`)).response.status, 200);
 
       const familyPatient = await call('/api/v1/patients', 'POST', { firstName: 'HTTP Family', centreId: centreA });
@@ -260,7 +275,42 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
       assert.equal(partnerLead.response.status,201,JSON.stringify(partnerLead.json));
       const convertedPartnerLead=await call(`/api/v1/leads/${partnerLead.json.data.id}/convert`,'POST',{});
       assert.equal(convertedPartnerLead.response.status,200);
-      const receptionist=principals.get('RECEPTIONIST');
+      const appointment=await call('/api/v1/appointments','POST',{patientId:patientId,centreId:centreA,serviceType:'CENTRE_VISIT',
+        startsAt:'2027-02-03T10:00:00Z',endsAt:'2027-02-03T10:30:00Z'});
+      assert.equal(appointment.response.status,201,JSON.stringify(appointment.json));
+      const appointmentId=appointment.json.data.appointmentId;
+      assert.equal((await call(`/api/v1/appointments/${appointmentId}`)).response.status,200);
+      assert.equal((await call('/api/v1/appointments?status=SCHEDULED')).response.status,200);
+      assert.equal((await call(`/api/v1/appointments/${appointmentId}`,'PATCH',{startsAt:'2027-02-03T10:30:00Z',endsAt:'2027-02-03T11:00:00Z'})).response.status,200);
+      assert.equal((await call(`/api/v1/appointments/${appointmentId}/status`,'POST',{status:'CONFIRMED'})).json.data.status,'CONFIRMED');
+      const phlebotomist=principals.get('PHLEBOTOMIST');
+      const homeAppointment=await call('/api/v1/appointments','POST',{patientId,centreId:centreA,serviceType:'HOME_COLLECTION',addressId:patientAddress.json.data.id,
+        assignedStaffId:phlebotomist.principal.id,startsAt:'2027-02-03T12:00:00Z',endsAt:'2027-02-03T12:30:00Z'});
+      assert.equal(homeAppointment.response.status,201,JSON.stringify(homeAppointment.json));
+      assert.equal(homeAppointment.json.data.collectionAddress.addressLine1,'HTTP Test Road');
+      const homeCipher=(await pool.query('SELECT collection_address_ciphertext FROM appointments WHERE id=$1',[homeAppointment.json.data.id])).rows[0].collection_address_ciphertext;
+      assert.equal(homeCipher.toString('utf8').includes('HTTP Test Road'),false);
+      const orderPackage=await call('/api/v1/catalogue/packages','POST',{code:`ORD-${randomUUID().slice(0,8)}`,name:'Synthetic Order Package',centreId:centreA,
+        items:[{testId:httpTest.json.data.testId}]});
+      assert.equal(orderPackage.response.status,201,JSON.stringify(orderPackage.json));
+      const orderKey=`api-order-${randomUUID()}`;
+      const orderBody={patientId,centreId:centreA,appointmentId,items:[{testId:httpTest.json.data.testId,quantity:1},{packageId:orderPackage.json.data.packageId}]};
+      const order=await call('/api/v1/service-orders','POST',orderBody,true,orderKey);
+      assert.equal(order.response.status,201,JSON.stringify(order.json));
+      const orderId=order.json.data.orderId;
+      const orderRetry=await call('/api/v1/service-orders','POST',orderBody,true,orderKey);
+      assert.equal(orderRetry.response.status,201);
+      assert.equal(orderRetry.json.data.orderId,orderId);
+      const keyReuse=await call('/api/v1/service-orders','POST',{...orderBody,items:[{testId:httpTest.json.data.testId,quantity:3}]},true,orderKey);
+      assert.equal(keyReuse.response.status,409);
+      assert.equal((await call(`/api/v1/service-orders/${orderId}`)).json.data.items.length,2);
+      assert.equal((await call('/api/v1/service-orders?status=BOOKED')).response.status,200);
+      assert.equal((await call(`/api/v1/service-orders/${orderId}`,'PATCH',{items:[{testId:httpTest.json.data.testId,quantity:2}]})).response.status,200);
+      assert.equal((await call(`/api/v1/service-orders/${orderId}/status`,'POST',{status:'SAMPLE_COLLECTED'})).json.data.status,'SAMPLE_COLLECTED');
+      assert.equal((await callAs(phlebotomist,`/api/v1/service-orders/${orderId}/status`,'POST',{status:'IN_PROCESS'})).response.status,200);
+      assert.equal((await callAs(receptionist,`/api/v1/service-orders/${orderId}/status`,'POST',{status:'IN_PROCESS'})).response.status,403);
+      assert.equal((await callAs(receptionist,`/api/v1/appointments/${appointmentId}`)).response.status,200);
+      assert.equal((await callAs(receptionist,`/api/v1/service-orders/${orderId}`)).response.status,200);
       assert.equal((await callAs(receptionist,'/api/v1/doctors','POST',{firstName:'Denied',centreId:centreA})).response.status,403);
       const centreBDoctor=await call('/api/v1/doctors','POST',{firstName:'Synthetic Centre B Doctor',centreId:centreB});
       assert.equal(centreBDoctor.response.status,201);
@@ -283,6 +333,17 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
       for (const path of ['/api/v1/doctors','/api/v1/corporates','/api/v1/partners','/api/v1/catalogue/tests','/api/v1/catalogue/packages']) {
         assert.equal((await callAs(receptionist,`${path}?centreId=${centreB}`)).response.status,403,path);
       }
+      const centreBPatient=await call('/api/v1/patients','POST',{firstName:'Synthetic Centre B Patient',centreId:centreB});
+      const centreBAppointment=await call('/api/v1/appointments','POST',{patientId:centreBPatient.json.data.patientId,centreId:centreB,serviceType:'CENTRE_VISIT',
+        startsAt:'2027-02-03T12:00:00Z',endsAt:'2027-02-03T12:30:00Z'});
+      const centreBOrder=await call('/api/v1/service-orders','POST',{patientId:centreBPatient.json.data.patientId,centreId:centreB,
+        items:[{testId:centreBTest.json.data.testId}]},true,`api-order-${randomUUID()}`);
+      assert.equal(centreBAppointment.response.status,201);
+      assert.equal(centreBOrder.response.status,201);
+      assert.equal((await callAs(receptionist,`/api/v1/appointments/${centreBAppointment.json.data.appointmentId}`)).response.status,404);
+      assert.equal((await callAs(receptionist,`/api/v1/service-orders/${centreBOrder.json.data.orderId}`)).response.status,404);
+      assert.equal((await callAs(receptionist,`/api/v1/appointments?centreId=${centreB}`)).response.status,403);
+      assert.equal((await callAs(receptionist,`/api/v1/service-orders?centreId=${centreB}`)).response.status,403);
       assert.equal((await callAs(receptionist,`/api/v1/doctors/${doctor.json.data.doctorId}`)).json.data.mobile.endsWith('0201'),true);
 
       const foreignOrg=(await pool.query(`INSERT INTO organizations (public_id,name,brand_name) VALUES ($1,'Foreign API Test','Foreign') RETURNING id`,
@@ -296,6 +357,22 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
         VALUES ($1,$2,$3,'Synthetic Foreign Doctor',$4) RETURNING public_id`,
         [foreignOrg,`FOREIGN-DOC-${randomUUID()}`,foreignCentre,foreignUser])).rows[0].public_id;
       assert.equal((await call(`/api/v1/doctors/${foreignDoctor}`)).response.status,404);
+      const foreignPatient=(await pool.query(`INSERT INTO patients (organization_id,public_id,first_name,primary_centre_id,created_by)
+        VALUES ($1,$2,'Synthetic Foreign Patient',$3,$4) RETURNING id,public_id`,
+        [foreignOrg,`FOREIGN-PAT-${randomUUID()}`,foreignCentre,foreignUser])).rows[0];
+      const foreignTest=(await pool.query(`INSERT INTO catalogue_tests (organization_id,public_id,centre_id,code,name,created_by)
+        VALUES ($1,$2,$3,$4,'Synthetic Foreign Test',$5) RETURNING id`,
+        [foreignOrg,`FOREIGN-TST-${randomUUID()}`,foreignCentre,`F-${randomUUID().slice(0,8)}`,foreignUser])).rows[0].id;
+      const foreignAppointment=(await pool.query(`INSERT INTO appointments (organization_id,public_id,centre_id,patient_id,service_type,starts_at,ends_at,created_by,updated_by)
+        VALUES ($1,$2,$3,$4,'CENTRE_VISIT','2027-03-04T09:00:00Z','2027-03-04T09:30:00Z',$5,$5) RETURNING id,public_id`,
+        [foreignOrg,`FOREIGN-APT-${randomUUID()}`,foreignCentre,foreignPatient.id,foreignUser])).rows[0];
+      const foreignOrder=(await pool.query(`INSERT INTO service_orders (organization_id,public_id,idempotency_key,request_hash,centre_id,patient_id,appointment_id,created_by,updated_by)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$8) RETURNING id,public_id`,
+        [foreignOrg,`FOREIGN-ORD-${randomUUID()}`,`foreign-order-${randomUUID()}`,Buffer.alloc(32,7),foreignCentre,foreignPatient.id,foreignAppointment.id,foreignUser])).rows[0];
+      await pool.query(`INSERT INTO service_order_items (organization_id,centre_id,order_id,test_id,item_code,item_name,quantity,currency)
+        VALUES ($1,$2,$3,$4,'FOREIGN','Synthetic Foreign Test',1,'INR')`,[foreignOrg,foreignCentre,foreignOrder.id,foreignTest]);
+      assert.equal((await call(`/api/v1/appointments/${foreignAppointment.public_id}`)).response.status,404);
+      assert.equal((await call(`/api/v1/service-orders/${foreignOrder.public_id}`)).response.status,404);
 
       const removableSessionToken = newOpaqueToken();
       const removableSession = (await pool.query(
@@ -321,7 +398,6 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
       await new Promise((resolve) => app.once('exit', resolve));
     }
 
-    const receptionist = principals.get('RECEPTIONIST');
     await pool.query("UPDATE users SET status='disabled' WHERE id=$1", [receptionist.principal.id]);
     await assert.rejects(authenticate(pool, receptionist.request()), (error) => error.status === 401);
   } finally {

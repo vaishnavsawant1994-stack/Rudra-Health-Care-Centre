@@ -11,6 +11,8 @@ import {
   createCataloguePackage, createCatalogueTest, createCorporate, createDoctor, createPartner,
   getCataloguePackage, getDoctor, listDoctors, updateCataloguePackage
 } from '../src/directory.mjs';
+import { createAppointment, getAppointment, listAppointments, transitionAppointment, updateAppointment } from '../src/appointments.mjs';
+import { createServiceOrder, getServiceOrder, listServiceOrders, transitionServiceOrder, updateServiceOrder } from '../src/service-orders.mjs';
 
 const enabled = Boolean(process.env.DATABASE_URL);
 if (process.env.CI === 'true' && !enabled) {
@@ -37,7 +39,9 @@ test('all checked-in migrations were applied to PostgreSQL 15 or newer', { skip:
       '008_doctors.sql',
       '009_corporates.sql',
       '010_partners.sql',
-      '011_test_package_catalogue.sql'
+      '011_test_package_catalogue.sql',
+      '012_appointments.sql',
+      '013_service_orders.sql'
     ]);
   } finally {
     await pool.end();
@@ -147,6 +151,64 @@ test('PostgreSQL patient, family, lead, centre and append-only audit flow', { sk
     const convertedPatient=await pool.query('SELECT referred_partner_id FROM patients WHERE public_id=$1',[convertedPartnerLead.data.patientId]);
     assert.equal(convertedPatient.rows[0].referred_partner_id,partner.data.id);
     await assert.rejects(pool.query('UPDATE audit_events SET action=\'rewritten\' WHERE organization_id=$1 AND action=\'doctor.created\'',[organizationId]));
+
+    const appointment=await createAppointment(pool,owner,{patientId:patientLinked.data.patientId,centreId,serviceType:'CENTRE_VISIT',
+      startsAt:'2027-01-12T09:00:00.000Z',endsAt:'2027-01-12T09:30:00.000Z'},request);
+    assert.match(appointment.data.appointmentId,/^RHC-APT-[A-F0-9]{12}$/);
+    assert.equal((await getAppointment(pool,owner,appointment.data.appointmentId)).data.status,'SCHEDULED');
+    const confirmed=await transitionAppointment(pool,owner,appointment.data.appointmentId,{status:'CONFIRMED'},request);
+    assert.equal(confirmed.data.status,'CONFIRMED');
+    const rescheduled=await updateAppointment(pool,owner,appointment.data.appointmentId,{startsAt:'2027-01-12T10:00:00Z',endsAt:'2027-01-12T10:30:00Z'},request);
+    assert.equal(rescheduled.data.startsAt.toISOString(),'2027-01-12T10:00:00.000Z');
+    const orderRequest={...request,headers:{...request.headers,'idempotency-key':`r13-order-${randomUUID()}`}};
+    const orderBody={patientId:patientLinked.data.patientId,centreId,appointmentId:appointment.data.appointmentId,
+      items:[{testId:catalogueTest.data.testId,quantity:2},{packageId:packageRecord.data.packageId}]};
+    const order=await createServiceOrder(pool,owner,orderBody,orderRequest);
+    assert.match(order.data.orderId,/^RHC-ORD-[A-F0-9]{12}$/);
+    assert.equal(order.data.items.length,2);
+    assert.equal(order.data.items[0].unitPriceMinor,12000);
+    const booked=await getServiceOrder(pool,owner,order.data.orderId);
+    assert.equal(booked.data.status,'BOOKED');
+    assert.equal((await createServiceOrder(pool,owner,orderBody,orderRequest)).data.id,order.data.id);
+    await assert.rejects(createServiceOrder(pool,owner,{...orderBody,items:[{testId:catalogueTest.data.testId}]},orderRequest),
+      (error)=>error instanceof HttpError&&error.code==='IDEMPOTENCY_KEY_REUSED');
+    const amended=await updateServiceOrder(pool,owner,order.data.orderId,{items:[{packageId:packageRecord.data.packageId,quantity:2}]},request);
+    assert.equal(amended.data.items.length,1);
+    assert.equal((await transitionServiceOrder(pool,owner,order.data.orderId,{status:'SAMPLE_COLLECTED'},request)).data.status,'SAMPLE_COLLECTED');
+    assert.equal((await transitionServiceOrder(pool,owner,order.data.orderId,{status:'IN_PROCESS'},request)).data.status,'IN_PROCESS');
+    assert.equal((await transitionServiceOrder(pool,owner,order.data.orderId,{status:'COMPLETED'},request)).data.status,'COMPLETED');
+    await assert.rejects(updateServiceOrder(pool,owner,order.data.orderId,{items:[{testId:catalogueTest.data.testId}]},request),
+      (error)=>error instanceof HttpError&&error.code==='ORDER_LOCKED');
+    assert.equal((await transitionAppointment(pool,owner,appointment.data.appointmentId,{status:'CHECKED_IN'},request)).data.status,'CHECKED_IN');
+    assert.equal((await transitionAppointment(pool,owner,appointment.data.appointmentId,{status:'IN_SERVICE'},request)).data.status,'IN_SERVICE');
+    assert.equal((await transitionAppointment(pool,owner,appointment.data.appointmentId,{status:'COMPLETED'},request)).data.status,'COMPLETED');
+    await assert.rejects(transitionAppointment(pool,owner,appointment.data.appointmentId,{status:'CANCELLED',cancellationCode:'OTHER'},request),
+      (error)=>error instanceof HttpError&&error.code==='INVALID_APPOINTMENT_TRANSITION');
+    const concurrentAppointments=await Promise.allSettled([
+      createAppointment(pool,owner,{patientId:patientLinked.data.patientId,centreId,serviceType:'HOME_COLLECTION',startsAt:'2027-01-12T12:00:00Z',endsAt:'2027-01-12T12:30:00Z'},request),
+      createAppointment(pool,owner,{patientId:patientLinked.data.patientId,centreId,serviceType:'HOME_COLLECTION',startsAt:'2027-01-12T12:00:00Z',endsAt:'2027-01-12T12:30:00Z'},request)
+    ]);
+    assert.equal(concurrentAppointments.filter((entry)=>entry.status==='fulfilled').length,1);
+    assert.equal(concurrentAppointments.filter((entry)=>entry.status==='rejected'&&entry.reason.code==='APPOINTMENT_CONFLICT').length,1);
+    await assert.rejects(createAppointment(pool,owner,{patientId:patientLinked.data.patientId,centreId,serviceType:'CENTRE_VISIT',
+      startsAt:'2027-01-12T12:15:00Z',endsAt:'2027-01-12T12:45:00Z'},request),
+      (error)=>error instanceof HttpError&&error.code==='APPOINTMENT_CONFLICT');
+    await assert.rejects(transitionServiceOrder(pool,owner,order.data.orderId,{status:'CANCELLED',cancellationCode:'OTHER'},request),
+      (error)=>error instanceof HttpError&&error.code==='INVALID_ORDER_TRANSITION');
+    const cancelOrder=await createServiceOrder(pool,owner,{patientId:patientLinked.data.patientId,centreId,
+      items:[{testId:catalogueTest.data.testId}]},{...request,headers:{...request.headers,'idempotency-key':`r13-order-${randomUUID()}`}});
+    assert.equal((await transitionServiceOrder(pool,owner,cancelOrder.data.orderId,{status:'CANCELLED',cancellationCode:'PATIENT_REQUEST'},request)).data.status,'CANCELLED');
+    await assert.rejects(transitionServiceOrder(pool,owner,cancelOrder.data.orderId,{status:'BOOKED'},request),
+      (error)=>error instanceof HttpError&&error.code==='INVALID_ORDER_TRANSITION');
+    assert.ok((await listAppointments(pool,owner,new URL('https://rudra.invalid/api/v1/appointments?status=COMPLETED'))).data.some((item)=>item.appointmentId===appointment.data.appointmentId));
+    assert.ok((await listServiceOrders(pool,owner,new URL('https://rudra.invalid/api/v1/service-orders?status=COMPLETED'))).data.some((item)=>item.orderId===order.data.orderId));
+    const orderAudit=await pool.query("SELECT action,after_json FROM audit_events WHERE organization_id=$1 AND entity_type IN ('APPOINTMENT','SERVICE_ORDER')",[organizationId]);
+    assert.ok(orderAudit.rows.some((row)=>row.action==='appointment.created'));
+    assert.ok(orderAudit.rows.some((row)=>row.action==='service_order.completed'));
+    const immutableAppointmentEvent=(await pool.query('SELECT id FROM appointment_events WHERE organization_id=$1 AND appointment_id=$2 LIMIT 1',[organizationId,appointment.data.id])).rows[0].id;
+    const immutableOrderEvent=(await pool.query('SELECT id FROM service_order_events WHERE organization_id=$1 AND order_id=$2 LIMIT 1',[organizationId,order.data.id])).rows[0].id;
+    await assert.rejects(pool.query("UPDATE appointment_events SET source='rewritten' WHERE id=$1",[immutableAppointmentEvent]));
+    await assert.rejects(pool.query('DELETE FROM service_order_events WHERE id=$1',[immutableOrderEvent]));
 
     const created = await createPatient(pool, owner, { firstName: 'Asha', lastName: 'Test', mobile: '+919876500101', email: 'asha@example.test', centreId }, request);
     assert.match(created.data.patientId, /^RHC-PAT-\d{6}$/);
