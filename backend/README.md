@@ -43,7 +43,7 @@ npm start
 
 CI runs lint without automatic fixes. Type-checking is not applicable to this plain JavaScript `.mjs` project, and a separate build step is not applicable because Node runs the source directly without transpilation or bundling.
 
-R1.1 is qualified for engineering/internal development. The R1.2 directory and catalogue migrations and APIs are under qualification on the active feature branch; do not treat them as qualified until the exact PR head passes CI.
+R1.1 and R1.2 are qualified for engineering/internal development only. R1.2 passed all required gates on exact PR #3 head `dca48b1cca374b1531d0a8f597e56b20fcd7f1c4` (workflow runs 46 and 47; merge `73807a5da109d5c735779b2aefe72295c6fe3a4e`). This does not qualify production use.
 
 The static screen scaffold lives at `prototype/catalogue-foundation.html`. It is not connected to this API and does not authenticate users or contain catalogue records.
 
