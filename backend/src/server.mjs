@@ -9,6 +9,12 @@ import {
   getPatientDetail, listFamily, listLeads, listPatientAddresses, listPatients,
   markLeadLost, patientTimeline, updateLead, updatePatient
 } from './records.mjs';
+import {
+  createCataloguePackage, createCatalogueTest, createCorporate, createDoctor, createPartner,
+  getCataloguePackage, getCatalogueTest, getCorporate, getDoctor, getPartner,
+  listCataloguePackages, listCatalogueTests, listCorporates, listDoctors, listPartners,
+  updateCataloguePackage, updateCatalogueTest, updateCorporate, updateDoctor, updatePartner
+} from './directory.mjs';
 
 const { Pool } = pg;
 const pool = new Pool({ connectionString: required('DATABASE_URL'), max: Number(process.env.DB_POOL_SIZE || 10), idleTimeoutMillis: 30_000 });
@@ -115,6 +121,22 @@ async function handle(request, response) {
     }
 
     const principal = authenticatedPrincipal = await authenticate(pool, request);
+    const directories = {
+      '/doctors': { list:listDoctors, create:createDoctor, get:getDoctor, update:updateDoctor },
+      '/corporates': { list:listCorporates, create:createCorporate, get:getCorporate, update:updateCorporate },
+      '/partners': { list:listPartners, create:createPartner, get:getPartner, update:updatePartner },
+      '/catalogue/tests': { list:listCatalogueTests, create:createCatalogueTest, get:getCatalogueTest, update:updateCatalogueTest },
+      '/catalogue/packages': { list:listCataloguePackages, create:createCataloguePackage, get:getCataloguePackage, update:updateCataloguePackage }
+    };
+    const collection = directories[routePath];
+    if (collection && method === 'GET') return send(response, 200, await collection.list(pool,principal,url), headers);
+    if (collection && method === 'POST') return send(response, 201, await collection.create(pool,principal,await readBody(request),request), headers);
+    let directoryMatch=routePath.match(/^\/(doctors|corporates|partners|catalogue\/tests|catalogue\/packages)\/([^/]+)$/);
+    if (directoryMatch) {
+      const handlers=directories[`/${directoryMatch[1]}`];
+      if (method === 'GET') return send(response,200,await handlers.get(pool,principal,decodeURIComponent(directoryMatch[2])),headers);
+      if (method === 'PATCH') return send(response,200,await handlers.update(pool,principal,decodeURIComponent(directoryMatch[2]),await readBody(request),request),headers);
+    }
     if (routePath === '/patients' && method === 'GET') return send(response, 200, await listPatients(pool, principal, url), headers);
     if (routePath === '/patients' && method === 'POST') return send(response, 201, await createPatient(pool, principal, await readBody(request), request), headers);
     let match = routePath.match(/^\/patients\/([^/]+)$/);
