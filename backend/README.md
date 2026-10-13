@@ -31,12 +31,15 @@ Requirements: Node.js 22+, PostgreSQL 15+.
 ```sh
 cd backend
 npm install
+npm run lint
 npm test
 cp .env.example .env
 # Fill DATABASE_URL, RUDRA_ORGANIZATION_ID, OIDC settings, and three distinct 32-byte base64 keys.
 node src/migrate.mjs
 npm start
 ```
+
+CI runs lint without automatic fixes. Type-checking is not applicable to this plain JavaScript `.mjs` project, and a separate build step is not applicable because Node runs the source directly without transpilation or bundling.
 
 The migration runner applies each migration transactionally, serializes migration processes with a PostgreSQL advisory lock, records checksums, and refuses to silently accept a changed applied migration. Use a clean non-production database to qualify the migrations before any deployment.
 
