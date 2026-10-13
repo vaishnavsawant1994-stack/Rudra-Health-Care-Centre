@@ -1,0 +1,55 @@
+name: Rudra backend quality
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-quality.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-quality.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: rudra
+          POSTGRES_PASSWORD: rudra-ci-only
+          POSTGRES_DB: rudra_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rudra -d rudra_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: postgres://rudra:rudra-ci-only@localhost:5432/rudra_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for committed secrets
+        uses: gitleaks/gitleaks-action@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Syntax checks
+        run: for f in src/*.mjs; do node --check "$f"; done
+      - name: Apply all PostgreSQL migrations to a clean database
+        run: node src/migrate.mjs
+      - name: Verify migration replay is checksum-safe
+        run: node src/migrate.mjs
+      - name: Run unit and database integration tests
+        run: npm test
+      - name: Dependency vulnerability check
+        run: npm audit --audit-level=high
