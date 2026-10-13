@@ -7,6 +7,10 @@ import {
   endFamilyRelationship, getLeadDetail, getPatientDetail, listExternalIdentifiers, listFamily, listLeads,
   listPatientAddresses, listPatients, markLeadLost, patientTimeline, updateExternalIdentifier, updatePatient, updateLead
 } from '../src/records.mjs';
+import {
+  createCataloguePackage, createCatalogueTest, createCorporate, createDoctor, createPartner,
+  getCataloguePackage, getDoctor, listDoctors, updateCataloguePackage
+} from '../src/directory.mjs';
 
 const enabled = Boolean(process.env.DATABASE_URL);
 if (process.env.CI === 'true' && !enabled) {
@@ -29,7 +33,11 @@ test('all checked-in migrations were applied to PostgreSQL 15 or newer', { skip:
       '004_leads_consents_audit.sql',
       '005_auth_sessions.sql',
       '006_default_authorization.sql',
-      '007_encrypt_patient_addresses.sql'
+      '007_encrypt_patient_addresses.sql',
+      '008_doctors.sql',
+      '009_corporates.sql',
+      '010_partners.sql',
+      '011_test_package_catalogue.sql'
     ]);
   } finally {
     await pool.end();
@@ -78,6 +86,58 @@ test('PostgreSQL patient, family, lead, centre and append-only audit flow', { sk
     const ownerPermissions = new Set((await pool.query('SELECT code FROM permissions')).rows.map((row) => row.code));
     const owner = { id: userId, organizationId, primaryCentreId: centreId, centres: [null], permissions: ownerPermissions,
       permissionCentres: new Map([...ownerPermissions].map((code) => [code, [null]])) };
+
+    const doctor=await createDoctor(pool,owner,{firstName:'Synthetic',lastName:'Doctor',specialty:'Test specialty',qualification:'Test qualification',
+      registrationNumber:'SYN-REG-1001',mobile:'+919876500106',email:'doctor@example.test',centreId},request);
+    assert.match(doctor.data.doctorId,/^RHC-DOC-\d{6}$/);
+    assert.equal(doctor.data.registrationNumber,'SYN-REG-1001');
+    const doctorStored=await pool.query('SELECT registration_ciphertext,registration_lookup_hash,mobile_ciphertext,email_ciphertext FROM doctors WHERE id=$1',[doctor.data.id]);
+    assert.equal(doctorStored.rows[0].registration_ciphertext.toString('utf8').includes('SYN-REG-1001'),false);
+    assert.equal(doctorStored.rows[0].mobile_ciphertext.toString('utf8').includes('9876500106'),false);
+    assert.equal(doctorStored.rows[0].email_ciphertext.toString('utf8').includes('doctor@example.test'),false);
+    const corporate=await createCorporate(pool,owner,{name:'Synthetic Corporate',industry:'Test',contactName:'Test Contact',
+      mobile:'+919876500107',email:'corporate@example.test',centreId},request);
+    const partner=await createPartner(pool,owner,{partnerType:'REFERRAL',name:'Synthetic Partner',contactName:'Test Contact',
+      mobile:'+919876500108',email:'partner@example.test',centreId},request);
+    const catalogueTest=await createCatalogueTest(pool,owner,{code:`SYN-${randomUUID().slice(0,8)}`,name:'Synthetic Blood Test',
+      category:'Synthetic',specimenType:'Synthetic specimen',fastingRequired:true,turnaroundHours:24,priceMinor:12000,centreId},request);
+    const otherCentreTest=await createCatalogueTest(pool,owner,{code:`OTH-${randomUUID().slice(0,8)}`,name:'Other Centre Test',centreId:otherCentreId},request);
+    const packageRecord=await createCataloguePackage(pool,owner,{code:`PKG-${randomUUID().slice(0,8)}`,name:'Synthetic Health Package',
+      priceMinor:25000,centreId,items:[{testId:catalogueTest.data.testId,quantity:1}]},request);
+    assert.match(packageRecord.data.packageId,/^RHC-PKG-\d{6}$/);
+    assert.equal(packageRecord.data.items[0].testId,catalogueTest.data.testId);
+    await assert.rejects(createCataloguePackage(pool,owner,{code:`BAD-${randomUUID().slice(0,8)}`,name:'Invalid Centre Package',
+      centreId,items:[{testId:otherCentreTest.data.testId}]},request),
+      (error)=>error instanceof HttpError&&error.code==='INVALID_PACKAGE_ITEMS');
+    const changedPackage=await updateCataloguePackage(pool,owner,packageRecord.data.packageId,
+      {status:'INACTIVE',items:[{testId:catalogueTest.data.testId,quantity:2}]},request);
+    assert.equal(changedPackage.data.status,'INACTIVE');
+    assert.equal((await getCataloguePackage(pool,owner,packageRecord.data.packageId)).data.items[0].quantity,2);
+    const limitedDirectoryReader={id:userId,organizationId,primaryCentreId:centreId,centres:[centreId],
+      permissions:new Set(['doctors.read']),permissionCentres:new Map([['doctors.read',[centreId]]])};
+    const directoryPage=await listDoctors(pool,limitedDirectoryReader,new URL('https://rudra.invalid/api/v1/doctors'));
+    assert.match(directoryPage.data[0].mobile,/^•+0106$/);
+    assert.equal(directoryPage.data[0].registrationNumber,'••••1001');
+    const otherCentreDoctor=await createDoctor(pool,owner,{firstName:'Other',centreId:otherCentreId},request);
+    await assert.rejects(getDoctor(pool,limitedDirectoryReader,otherCentreDoctor.data.doctorId),
+      (error)=>error instanceof HttpError&&error.status===404);
+    const corporateBytes=await pool.query('SELECT contact_mobile_ciphertext,contact_email_ciphertext FROM corporates WHERE id=$1',[corporate.data.id]);
+    assert.equal(corporateBytes.rows[0].contact_mobile_ciphertext.toString('utf8').includes('9876500107'),false);
+    assert.equal(corporateBytes.rows[0].contact_email_ciphertext.toString('utf8').includes('corporate@example.test'),false);
+    const directoryAudit=await pool.query("SELECT action FROM audit_events WHERE organization_id=$1 AND action IN ('doctor.created','corporate.created','partner.created','test.created','package.created','package.updated')",[organizationId]);
+    assert.ok(directoryAudit.rows.length>=6);
+
+    const patientLinked=await createPatient(pool,owner,{firstName:'Linked Test',centreId,referredDoctorId:doctor.data.doctorId,
+      corporateId:corporate.data.corporateId,referredPartnerId:partner.data.partnerId},request);
+    assert.equal(patientLinked.data.referredDoctorId,doctor.data.id);
+    assert.equal(patientLinked.data.corporateId,corporate.data.id);
+    assert.equal(patientLinked.data.referredPartnerId,partner.data.id);
+    const leadWithPartner=await createLead(pool,owner,{firstName:'Partner Lead',source:'PARTNER',centreId,partnerId:partner.data.partnerId},request);
+    assert.equal(leadWithPartner.data.partner_id,partner.data.id);
+    const convertedPartnerLead=await convertLead(pool,owner,leadWithPartner.data.id,{},request);
+    const convertedPatient=await pool.query('SELECT referred_partner_id FROM patients WHERE public_id=$1',[convertedPartnerLead.data.patientId]);
+    assert.equal(convertedPatient.rows[0].referred_partner_id,partner.data.id);
+    await assert.rejects(pool.query('UPDATE audit_events SET action=\'rewritten\' WHERE organization_id=$1 AND action=\'doctor.created\'',[organizationId]));
 
     const created = await createPatient(pool, owner, { firstName: 'Asha', lastName: 'Test', mobile: '+919876500101', email: 'asha@example.test', centreId }, request);
     assert.match(created.data.patientId, /^RHC-PAT-\d{6}$/);
