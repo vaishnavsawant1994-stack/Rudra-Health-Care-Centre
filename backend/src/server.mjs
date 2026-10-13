@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import pg from 'pg';
-import { HttpError, assertPermission, requireCsrf } from './authorization.mjs';
+import { HttpError, assertPermission } from './authorization.mjs';
 import { authenticate, beginLogin, clearCookies, completeLogin, listSessions, logout, readCookieHeader, recordAuthFailure, refreshSession, revokeSession } from './auth.mjs';
 import {
   addFamilyMember, addLeadActivity, addPatientAddress, addExternalIdentifier, updateExternalIdentifier, listExternalIdentifiers,
@@ -115,7 +115,6 @@ async function handle(request, response) {
     }
 
     const principal = authenticatedPrincipal = await authenticate(pool, request);
-    if (['POST','PATCH','PUT','DELETE'].includes(method)) requireCsrf(request);
     if (routePath === '/patients' && method === 'GET') return send(response, 200, await listPatients(pool, principal, url), headers);
     if (routePath === '/patients' && method === 'POST') return send(response, 201, await createPatient(pool, principal, await readBody(request), request), headers);
     let match = routePath.match(/^\/patients\/([^/]+)$/);
