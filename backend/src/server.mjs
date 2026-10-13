@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import pg from 'pg';
-import { HttpError, assertPermission } from './authorization.mjs';
+import { HttpError } from './authorization.mjs';
 import { authenticate, beginLogin, clearCookies, completeLogin, listSessions, logout, readCookieHeader, recordAuthFailure, refreshSession, revokeSession } from './auth.mjs';
 import {
   addFamilyMember, addLeadActivity, addPatientAddress, addExternalIdentifier, updateExternalIdentifier, listExternalIdentifiers,
