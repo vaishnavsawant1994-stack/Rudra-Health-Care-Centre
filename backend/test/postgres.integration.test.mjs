@@ -152,6 +152,9 @@ test('PostgreSQL patient, family, lead, centre and append-only audit flow', { sk
     assert.equal(convertedPatient.rows[0].referred_partner_id,partner.data.id);
     await assert.rejects(pool.query('UPDATE audit_events SET action=\'rewritten\' WHERE organization_id=$1 AND action=\'doctor.created\'',[organizationId]));
 
+    const activeOrderPackage=await createCataloguePackage(pool,owner,{code:`ORD-${randomUUID().slice(0,8)}`,name:'Synthetic Active Order Package',
+      priceMinor:18000,centreId,items:[{testId:catalogueTest.data.testId,quantity:1}]},request);
+
     const appointment=await createAppointment(pool,owner,{patientId:patientLinked.data.patientId,centreId,serviceType:'CENTRE_VISIT',
       startsAt:'2027-01-12T09:00:00.000Z',endsAt:'2027-01-12T09:30:00.000Z'},request);
     assert.match(appointment.data.appointmentId,/^RHC-APT-[A-F0-9]{12}$/);
@@ -162,7 +165,7 @@ test('PostgreSQL patient, family, lead, centre and append-only audit flow', { sk
     assert.equal(rescheduled.data.startsAt.toISOString(),'2027-01-12T10:00:00.000Z');
     const orderRequest={...request,headers:{...request.headers,'idempotency-key':`r13-order-${randomUUID()}`}};
     const orderBody={patientId:patientLinked.data.patientId,centreId,appointmentId:appointment.data.appointmentId,
-      items:[{testId:catalogueTest.data.testId,quantity:2},{packageId:packageRecord.data.packageId}]};
+      items:[{testId:catalogueTest.data.testId,quantity:2},{packageId:activeOrderPackage.data.packageId}]};
     const order=await createServiceOrder(pool,owner,orderBody,orderRequest);
     assert.match(order.data.orderId,/^RHC-ORD-[A-F0-9]{12}$/);
     assert.equal(order.data.items.length,2);
@@ -172,7 +175,7 @@ test('PostgreSQL patient, family, lead, centre and append-only audit flow', { sk
     assert.equal((await createServiceOrder(pool,owner,orderBody,orderRequest)).data.id,order.data.id);
     await assert.rejects(createServiceOrder(pool,owner,{...orderBody,items:[{testId:catalogueTest.data.testId}]},orderRequest),
       (error)=>error instanceof HttpError&&error.code==='IDEMPOTENCY_KEY_REUSED');
-    const amended=await updateServiceOrder(pool,owner,order.data.orderId,{items:[{packageId:packageRecord.data.packageId,quantity:2}]},request);
+    const amended=await updateServiceOrder(pool,owner,order.data.orderId,{items:[{packageId:activeOrderPackage.data.packageId,quantity:2}]},request);
     assert.equal(amended.data.items.length,1);
     assert.equal((await transitionServiceOrder(pool,owner,order.data.orderId,{status:'SAMPLE_COLLECTED'},request)).data.status,'SAMPLE_COLLECTED');
     assert.equal((await transitionServiceOrder(pool,owner,order.data.orderId,{status:'IN_PROCESS'},request)).data.status,'IN_PROCESS');
