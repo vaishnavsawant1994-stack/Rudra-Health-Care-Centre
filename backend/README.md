@@ -45,6 +45,8 @@ CI runs lint without automatic fixes. Type-checking is not applicable to this pl
 
 R1.1 is qualified for engineering/internal development. The R1.2 directory and catalogue migrations and APIs are under qualification on the active feature branch; do not treat them as qualified until the exact PR head passes CI.
 
+The static screen scaffold lives at `prototype/catalogue-foundation.html`. It is not connected to this API and does not authenticate users or contain catalogue records.
+
 The migration runner applies each migration transactionally, serializes migration processes with a PostgreSQL advisory lock, records checksums, and refuses to silently accept a changed applied migration. Use a clean non-production database to qualify the migrations before any deployment.
 
 ## Provisioning and current limitations
