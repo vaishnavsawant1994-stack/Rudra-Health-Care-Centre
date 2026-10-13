@@ -94,11 +94,11 @@ async function handle(request, response) {
         permissions: [...principal.permissions], csrfToken: cookies.rhc_csrf } }, headers);
     }
     if (routePath === '/auth/refresh' && method === 'POST') {
-      const principal = authenticatedPrincipal = await authenticate(pool, request); requireCsrf(request);
+      const principal = authenticatedPrincipal = await authenticate(pool, request);
       return send(response, 200, { data: { refreshed: true } }, { ...headers, 'set-cookie': await refreshSession(pool, request, principal) });
     }
     if (routePath === '/auth/logout' && method === 'POST') {
-      const principal = authenticatedPrincipal = await authenticate(pool, request); requireCsrf(request);
+      const principal = authenticatedPrincipal = await authenticate(pool, request);
       await logout(pool, request, principal);
       return send(response, 200, { data: { signedOut: true } }, { ...headers, 'set-cookie': clearCookies() });
     }
@@ -108,7 +108,7 @@ async function handle(request, response) {
     }
     const sessionMatch = routePath.match(/^\/auth\/sessions\/([^/]+)$/);
     if (sessionMatch && method === 'DELETE') {
-      const principal = authenticatedPrincipal = await authenticate(pool, request); requireCsrf(request);
+      const principal = authenticatedPrincipal = await authenticate(pool, request);
       await revokeSession(pool, request, principal, decodeURIComponent(sessionMatch[1]));
       const isCurrent = decodeURIComponent(sessionMatch[1]) === principal.sessionId;
       return send(response, 200, { data: { revoked: true } }, { ...headers, ...(isCurrent ? { 'set-cookie': clearCookies() } : {}) });
