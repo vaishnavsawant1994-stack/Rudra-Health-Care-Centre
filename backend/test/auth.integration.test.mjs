@@ -369,8 +369,8 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
       const foreignOrder=(await pool.query(`INSERT INTO service_orders (organization_id,public_id,idempotency_key,request_hash,centre_id,patient_id,appointment_id,created_by,updated_by)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$8) RETURNING id,public_id`,
         [foreignOrg,`FOREIGN-ORD-${randomUUID()}`,`foreign-order-${randomUUID()}`,Buffer.alloc(32,7),foreignCentre,foreignPatient.id,foreignAppointment.id,foreignUser])).rows[0];
-      await pool.query(`INSERT INTO service_order_items (organization_id,centre_id,order_id,test_id,item_code,item_name,quantity,currency)
-        VALUES ($1,$2,$3,$4,'FOREIGN','Synthetic Foreign Test',1,'INR')`,[foreignOrg,foreignCentre,foreignOrder.id,foreignTest]);
+      await pool.query(`INSERT INTO service_order_items (organization_id,centre_id,order_id,test_id,line_number,item_code,item_name,quantity,currency)
+        VALUES ($1,$2,$3,$4,1,'FOREIGN','Synthetic Foreign Test',1,'INR')`,[foreignOrg,foreignCentre,foreignOrder.id,foreignTest]);
       assert.equal((await call(`/api/v1/appointments/${foreignAppointment.public_id}`)).response.status,404);
       assert.equal((await call(`/api/v1/service-orders/${foreignOrder.public_id}`)).response.status,404);
 
