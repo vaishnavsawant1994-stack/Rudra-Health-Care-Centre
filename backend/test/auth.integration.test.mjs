@@ -43,6 +43,25 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
       SALES_RELATIONSHIP: ['patients.create','leads.read','leads.create','leads.update','leads.convert'],
       READ_ONLY_AUDITOR: ['patients.read','leads.read','audit.read']
     };
+    const directoryPermissions = [
+      'doctors.read','doctors.create','doctors.update','doctors.contact.read','doctors.credentials.read',
+      'corporates.read','corporates.create','corporates.update','corporates.contact.read',
+      'partners.read','partners.create','partners.update','partners.contact.read',
+      'catalogue.tests.read','catalogue.tests.create','catalogue.tests.update',
+      'catalogue.packages.read','catalogue.packages.create','catalogue.packages.update'
+    ];
+    const directoryRoleGrants = {
+      OWNER: directoryPermissions,
+      SUPER_ADMIN: directoryPermissions,
+      ADMIN: directoryPermissions,
+      CENTRE_MANAGER: directoryPermissions.filter((code)=>code!=='doctors.credentials.read'),
+      RECEPTIONIST: ['doctors.read','doctors.contact.read','corporates.read','corporates.contact.read','partners.read','partners.contact.read','catalogue.tests.read','catalogue.packages.read'],
+      PHLEBOTOMIST: ['catalogue.tests.read','catalogue.packages.read'],
+      CUSTOMER_SUPPORT: ['doctors.read','doctors.contact.read','partners.read','partners.contact.read','catalogue.tests.read','catalogue.packages.read'],
+      ACCOUNTS: ['corporates.read','corporates.contact.read','catalogue.tests.read','catalogue.packages.read'],
+      SALES_RELATIONSHIP: ['doctors.read','doctors.contact.read','corporates.read','corporates.create','corporates.update','corporates.contact.read','partners.read','partners.create','partners.update','partners.contact.read','catalogue.tests.read','catalogue.packages.read'],
+      READ_ONLY_AUDITOR: ['doctors.read','corporates.read','partners.read','catalogue.tests.read','catalogue.packages.read']
+    };
     const principals = new Map();
     for (const [roleCode, permissions] of Object.entries(expectations)) {
       assert.ok(roleIds.has(roleCode), `missing seeded role ${roleCode}`);
@@ -74,6 +93,9 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
       });
       const principal = await authenticate(pool, request());
       for (const permission of expectations[roleCode]) assert.ok(principal.permissions.has(permission), `${roleCode} missing ${permission}`);
+      for (const permission of directoryPermissions) {
+        assert.equal(principal.permissions.has(permission),directoryRoleGrants[roleCode].includes(permission),`${roleCode} directory grant mismatch for ${permission}`);
+      }
       for (const permission of ['patients.read','patients.create','patients.update','patients.duplicate.override','leads.read','leads.create','leads.update','leads.convert','audit.read']) {
         if (!permissions.includes(permission)) assert.ok(!principal.permissions.has(permission), `${roleCode} unexpectedly has ${permission}`);
       }
@@ -147,6 +169,14 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
         const json = await response.json();
         return { response, json };
       };
+      const callAs = async (actor,path,method='GET',body=undefined) => {
+        const response=await fetch(`${baseUrl}${path}`,{method,headers:{
+          cookie:`rhc_session=${actor.sessionToken}; rhc_csrf=${actor.csrfToken}`,
+          ...(body===undefined?{}:{'content-type':'application/json'}),
+          ...(['POST','PATCH','PUT','DELETE'].includes(method)?{'x-csrf-token':actor.csrfToken}:{})
+        },...(body===undefined?{}:{body:JSON.stringify(body)})});
+        return {response,json:await response.json()};
+      };
       assert.equal((await fetch(`${baseUrl}/health/ready`)).status, 200);
       assert.equal((await call('/api/v1/auth/me')).response.status, 200);
       assert.equal((await call('/api/v1/auth/sessions')).response.status, 200);
@@ -194,6 +224,78 @@ test('PostgreSQL sessions enforce active status, CSRF, rotation, logout, roles a
       const conversion = await call(`/api/v1/leads/${convertible.json.data.id}/convert`, 'POST', {});
       assert.equal(conversion.response.status, 200);
       assert.equal(conversion.json.data.status, 'CONVERTED');
+
+      const doctor=await call('/api/v1/doctors','POST',{firstName:'Synthetic',lastName:'HTTP Doctor',specialty:'Test specialty',
+        registrationNumber:'HTTP-SYN-001',mobile:'+919876500201',email:'http-doctor@example.test',centreId:centreA});
+      assert.equal(doctor.response.status,201,JSON.stringify(doctor.json));
+      const corporate=await call('/api/v1/corporates','POST',{name:'Synthetic HTTP Corporate',contactName:'Synthetic Contact',
+        mobile:'+919876500202',email:'http-corporate@example.test',centreId:centreA});
+      assert.equal(corporate.response.status,201,JSON.stringify(corporate.json));
+      const partner=await call('/api/v1/partners','POST',{partnerType:'REFERRAL',name:'Synthetic HTTP Partner',
+        contactName:'Synthetic Contact',mobile:'+919876500203',email:'http-partner@example.test',centreId:centreA});
+      assert.equal(partner.response.status,201,JSON.stringify(partner.json));
+      const httpTest=await call('/api/v1/catalogue/tests','POST',{code:`HTTP-${randomUUID().slice(0,8)}`,name:'Synthetic HTTP Test',
+        fastingRequired:false,priceMinor:12500,centreId:centreA});
+      assert.equal(httpTest.response.status,201,JSON.stringify(httpTest.json));
+      const httpPackage=await call('/api/v1/catalogue/packages','POST',{code:`HTTP-${randomUUID().slice(0,8)}`,name:'Synthetic HTTP Package',
+        priceMinor:22000,centreId:centreA,items:[{testId:httpTest.json.data.testId,quantity:1}]});
+      assert.equal(httpPackage.response.status,201,JSON.stringify(httpPackage.json));
+      assert.equal((await call(`/api/v1/catalogue/packages/${httpPackage.json.data.packageId}`)).json.data.items.length,1);
+      assert.equal((await call(`/api/v1/doctors/${doctor.json.data.doctorId}`)).response.status,200);
+      assert.equal((await call(`/api/v1/corporates/${corporate.json.data.corporateId}`)).response.status,200);
+      assert.equal((await call(`/api/v1/partners/${partner.json.data.partnerId}`)).response.status,200);
+      assert.equal((await call('/api/v1/doctors','GET')).response.status,200);
+      assert.equal((await call('/api/v1/corporates','GET')).response.status,200);
+      assert.equal((await call('/api/v1/partners','GET')).response.status,200);
+      assert.equal((await call('/api/v1/catalogue/tests','GET')).response.status,200);
+      assert.equal((await call('/api/v1/catalogue/packages','GET')).response.status,200);
+      assert.equal((await call(`/api/v1/doctors/${doctor.json.data.doctorId}`,'PATCH',{specialty:'Updated synthetic specialty'})).response.status,200);
+      assert.equal((await call(`/api/v1/corporates/${corporate.json.data.corporateId}`,'PATCH',{status:'PAUSED'})).response.status,200);
+      assert.equal((await call(`/api/v1/partners/${partner.json.data.partnerId}`,'PATCH',{status:'INACTIVE'})).response.status,200);
+      assert.equal((await call(`/api/v1/catalogue/tests/${httpTest.json.data.testId}`,'PATCH',{priceMinor:13000})).response.status,200);
+      assert.equal((await call(`/api/v1/catalogue/packages/${httpPackage.json.data.packageId}`,'PATCH',{status:'INACTIVE'})).response.status,200);
+      assert.equal((await call('/api/v1/patients','POST',{firstName:'Synthetic Directory Link',centreId:centreA,
+        referredDoctorId:doctor.json.data.doctorId,corporateId:corporate.json.data.corporateId,referredPartnerId:partner.json.data.partnerId})).response.status,201);
+      const partnerLead=await call('/api/v1/leads','POST',{firstName:'Synthetic Partner Lead',source:'PARTNER',centreId:centreA,partnerId:partner.json.data.partnerId});
+      assert.equal(partnerLead.response.status,201,JSON.stringify(partnerLead.json));
+      const convertedPartnerLead=await call(`/api/v1/leads/${partnerLead.json.data.id}/convert`,'POST',{});
+      assert.equal(convertedPartnerLead.response.status,200);
+      const receptionist=principals.get('RECEPTIONIST');
+      assert.equal((await callAs(receptionist,'/api/v1/doctors','POST',{firstName:'Denied',centreId:centreA})).response.status,403);
+      const centreBDoctor=await call('/api/v1/doctors','POST',{firstName:'Synthetic Centre B Doctor',centreId:centreB});
+      assert.equal(centreBDoctor.response.status,201);
+      assert.equal((await callAs(receptionist,`/api/v1/doctors/${centreBDoctor.json.data.doctorId}`)).response.status,404);
+      const centreBCorporate=await call('/api/v1/corporates','POST',{name:'Synthetic Centre B Corporate',centreId:centreB});
+      const centreBPartner=await call('/api/v1/partners','POST',{partnerType:'COLLECTION',name:'Synthetic Centre B Partner',centreId:centreB});
+      const centreBTest=await call('/api/v1/catalogue/tests','POST',{code:`SCOPE-${randomUUID().slice(0,8)}`,name:'Synthetic Centre B Test',centreId:centreB});
+      const centreBPackage=await call('/api/v1/catalogue/packages','POST',{code:`SCOPE-${randomUUID().slice(0,8)}`,name:'Synthetic Centre B Package',centreId:centreB,
+        items:[{testId:centreBTest.json.data.testId}]});
+      assert.equal(centreBCorporate.response.status,201);
+      assert.equal(centreBPartner.response.status,201);
+      assert.equal(centreBTest.response.status,201);
+      assert.equal(centreBPackage.response.status,201);
+      for (const path of [
+        `/api/v1/corporates/${centreBCorporate.json.data.corporateId}`,
+        `/api/v1/partners/${centreBPartner.json.data.partnerId}`,
+        `/api/v1/catalogue/tests/${centreBTest.json.data.testId}`,
+        `/api/v1/catalogue/packages/${centreBPackage.json.data.packageId}`
+      ]) assert.equal((await callAs(receptionist,path)).response.status,404,path);
+      for (const path of ['/api/v1/doctors','/api/v1/corporates','/api/v1/partners','/api/v1/catalogue/tests','/api/v1/catalogue/packages']) {
+        assert.equal((await callAs(receptionist,`${path}?centreId=${centreB}`)).response.status,403,path);
+      }
+      assert.equal((await callAs(receptionist,`/api/v1/doctors/${doctor.json.data.doctorId}`)).json.data.mobile.endsWith('0201'),true);
+
+      const foreignOrg=(await pool.query(`INSERT INTO organizations (public_id,name,brand_name) VALUES ($1,'Foreign API Test','Foreign') RETURNING id`,
+        [`FOREIGN-ORG-${randomUUID()}`])).rows[0].id;
+      const foreignCentre=(await pool.query(`INSERT INTO centres (organization_id,public_id,name,centre_type,address_line_1,city,state,postal_code)
+        VALUES ($1,$2,'Foreign Centre','MAIN','1 Foreign Road','Mumbai','Maharashtra','400001') RETURNING id`,
+        [foreignOrg,`FOREIGN-CEN-${randomUUID()}`])).rows[0].id;
+      const foreignUser=(await pool.query(`INSERT INTO users (organization_id,public_id,auth_subject,status) VALUES ($1,$2,$3,'active') RETURNING id`,
+        [foreignOrg,`FOREIGN-USR-${randomUUID()}`,`foreign-api:${randomUUID()}`])).rows[0].id;
+      const foreignDoctor=(await pool.query(`INSERT INTO doctors (organization_id,public_id,centre_id,first_name,created_by)
+        VALUES ($1,$2,$3,'Synthetic Foreign Doctor',$4) RETURNING public_id`,
+        [foreignOrg,`FOREIGN-DOC-${randomUUID()}`,foreignCentre,foreignUser])).rows[0].public_id;
+      assert.equal((await call(`/api/v1/doctors/${foreignDoctor}`)).response.status,404);
 
       const removableSessionToken = newOpaqueToken();
       const removableSession = (await pool.query(

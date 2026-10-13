@@ -80,7 +80,7 @@ function toPatient(row, principal) {
     alternateMobile: canReadContact ? decryptField(row.alternate_mobile_ciphertext) : null,
     email: canReadContact ? decryptField(row.email_ciphertext) : null, preferredLanguage: row.preferred_language,
     centreId: row.primary_centre_id, referralSource: row.referral_source,
-    referredDoctorId: row.referred_doctor_id, corporateId: row.corporate_id,
+    referredDoctorId: row.referred_doctor_id, corporateId: row.corporate_id, referredPartnerId: row.referred_partner_id,
     status: row.status, primaryAccountHolder: row.is_primary_account_holder,
     lastVisitAt: row.last_visit_at, createdAt: row.created_at, updatedAt: row.updated_at,
     version: row.version
@@ -89,7 +89,7 @@ function toPatient(row, principal) {
 
 const patientSelect = `SELECT id, public_id, first_name, middle_name, last_name, date_of_birth, gender,
   mobile_ciphertext, alternate_mobile_ciphertext, email_ciphertext, preferred_language, primary_centre_id,
-  referral_source, referred_doctor_id, corporate_id, status, is_primary_account_holder, last_visit_at,
+  referral_source, referred_doctor_id, corporate_id, referred_partner_id, status, is_primary_account_holder, last_visit_at,
   created_at, updated_at, version FROM patients`;
 
 async function getPatient(client, principal, id, lock = false) {
@@ -100,6 +100,14 @@ async function getPatient(client, principal, id, lock = false) {
   assertCentre(principal, row.primary_centre_id);
   assertPermission(principal, 'patients.read', row.primary_centre_id);
   return row;
+}
+
+async function resolveCentreReference(client,principal,value,table,permission,centreId,label) {
+  if(value===null||value===undefined||value==='') return null;
+  assertPermission(principal,permission);assertPermission(principal,permission,centreId);
+  const result=await client.query(`SELECT id FROM ${table} WHERE organization_id=$1 AND centre_id=$2 AND (id::text=$3 OR public_id=$3)`,[principal.organizationId,centreId,String(value)]);
+  if(!result.rowCount) throw new HttpError(404,'RELATED_RECORD_NOT_FOUND',`${label} was not found in the selected centre.`);
+  return result.rows[0].id;
 }
 
 export async function listPatients(pool, principal, url) {
@@ -147,6 +155,9 @@ export async function createPatient(pool, principal, body, request) {
   assertCentre(principal, centreId);
   assertPermission(principal, 'patients.create', centreId);
   return transaction(pool, async (client) => {
+    const referredDoctorId=await resolveCentreReference(client,principal,body.referredDoctorId,'doctors','doctors.read',centreId,'Doctor');
+    const corporateId=await resolveCentreReference(client,principal,body.corporateId,'corporates','corporates.read',centreId,'Corporate');
+    const referredPartnerId=await resolveCentreReference(client,principal,body.referredPartnerId,'partners','partners.read',centreId,'Partner');
     let overrideReason = null;
     if (mobile.hash) {
       await lockMobileIdentity(client, principal.organizationId, mobile.hash);
@@ -168,7 +179,8 @@ export async function createPatient(pool, principal, body, request) {
       mobile_ciphertext: mobile.ciphertext, mobile_lookup_hash: mobile.hash, mobile_mask: mobile.mask,
       alternate_mobile_ciphertext: body.alternateMobile ? mobileFields(body.alternateMobile).ciphertext : null,
       email_ciphertext: emailFields(body.email), preferred_language: body.preferredLanguage || null,
-      referral_source: body.referralSource || null, primary_centre_id: centreId,
+      referral_source: body.referralSource || null, referred_doctor_id: referredDoctorId,
+      corporate_id: corporateId, referred_partner_id: referredPartnerId, primary_centre_id: centreId,
       is_primary_account_holder: Boolean(body.primaryAccountHolder)
     };
     if (values.date_of_birth && !/^\d{4}-\d{2}-\d{2}$/.test(values.date_of_birth)) throw new HttpError(400, 'INVALID_DATE', 'Date of birth must use YYYY-MM-DD.');
@@ -176,12 +188,13 @@ export async function createPatient(pool, principal, body, request) {
     const result = await client.query(
       `INSERT INTO patients (organization_id, public_id, first_name, middle_name, last_name, date_of_birth, gender,
         mobile_ciphertext, mobile_lookup_hash, mobile_mask, alternate_mobile_ciphertext, email_ciphertext,
-        preferred_language, referral_source, primary_centre_id, is_primary_account_holder, created_by, updated_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$17) RETURNING id`,
+        preferred_language, referral_source, referred_doctor_id, corporate_id, referred_partner_id,
+        primary_centre_id, is_primary_account_holder, created_by, updated_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$20) RETURNING id`,
       [principal.organizationId, publicId, values.first_name, values.middle_name, values.last_name, values.date_of_birth,
         values.gender, values.mobile_ciphertext, values.mobile_lookup_hash, values.mobile_mask, values.alternate_mobile_ciphertext,
-        values.email_ciphertext, values.preferred_language, values.referral_source, values.primary_centre_id,
-        values.is_primary_account_holder, principal.id]
+        values.email_ciphertext, values.preferred_language, values.referral_source, values.referred_doctor_id,
+        values.corporate_id, values.referred_partner_id, values.primary_centre_id, values.is_primary_account_holder, principal.id]
     );
     const row = (await client.query(`${patientSelect} WHERE id=$1 AND organization_id=$2`, [result.rows[0].id, principal.organizationId])).rows[0];
     await audit(client, principal, 'patient.created', 'PATIENT', row.id, null, { patientId: row.public_id, centreId }, request);
@@ -198,7 +211,7 @@ export async function getPatientDetail(pool, principal, id) {
 
 export async function updatePatient(pool, principal, id, body, request) {
   assertPermission(principal, 'patients.update');
-  const updates = pick(body, ['firstName','middleName','lastName','dateOfBirth','gender','mobile','alternateMobile','email','preferredLanguage','referralSource','centreId','primaryAccountHolder']);
+  const updates = pick(body, ['firstName','middleName','lastName','dateOfBirth','gender','mobile','alternateMobile','email','preferredLanguage','referralSource','centreId','primaryAccountHolder','referredDoctorId','corporateId','referredPartnerId']);
   if (!Object.keys(updates).length) throw new HttpError(400, 'EMPTY_UPDATE', 'Provide at least one supported field to update.');
   return transaction(pool, async (client) => {
     const before = await getPatient(client, principal, id, true);
@@ -206,6 +219,14 @@ export async function updatePatient(pool, principal, id, body, request) {
     const nextCentre = updates.centreId || before.primary_centre_id;
     assertCentre(principal, nextCentre);
     assertPermission(principal, 'patients.update', nextCentre);
+    if(nextCentre!==before.primary_centre_id) {
+      for(const [key,column] of [['referredDoctorId','referred_doctor_id'],['corporateId','corporate_id'],['referredPartnerId','referred_partner_id']]) {
+        if(before[column]&&!Object.hasOwn(updates,key)) throw new HttpError(400,'REFERENCE_REASSIGN_REQUIRED','Reassign or clear linked directory records when moving a patient to another centre.');
+      }
+    }
+    if(Object.hasOwn(updates,'referredDoctorId')) updates.referredDoctorId=await resolveCentreReference(client,principal,updates.referredDoctorId,'doctors','doctors.read',nextCentre,'Doctor');
+    if(Object.hasOwn(updates,'corporateId')) updates.corporateId=await resolveCentreReference(client,principal,updates.corporateId,'corporates','corporates.read',nextCentre,'Corporate');
+    if(Object.hasOwn(updates,'referredPartnerId')) updates.referredPartnerId=await resolveCentreReference(client,principal,updates.referredPartnerId,'partners','partners.read',nextCentre,'Partner');
     let overrideReason = null;
     if (updates.mobile) {
       const mobile = mobileFields(updates.mobile);
@@ -224,6 +245,7 @@ export async function updatePatient(pool, principal, id, body, request) {
       lastName: ['last_name', (v) => v?.trim() || null], dateOfBirth: ['date_of_birth', (v) => v || null],
       gender: ['gender', (v) => v || null], preferredLanguage: ['preferred_language', (v) => v || null],
       referralSource: ['referral_source', (v) => v || null], centreId: ['primary_centre_id', (v) => v],
+      referredDoctorId: ['referred_doctor_id',(v)=>v], corporateId: ['corporate_id',(v)=>v], referredPartnerId: ['referred_partner_id',(v)=>v],
       primaryAccountHolder: ['is_primary_account_holder', Boolean],
       mobileCiphertext: ['mobile_ciphertext', (v) => v], mobileHash: ['mobile_lookup_hash', (v) => v], mobileMask: ['mobile_mask', (v) => v],
       alternateMobileCiphertext: ['alternate_mobile_ciphertext', (v) => v], emailCiphertext: ['email_ciphertext', (v) => v]
@@ -406,14 +428,15 @@ export async function createLead(pool, principal, body, request) {
   assertPermission(principal, 'leads.create', centreId);
   const mobile = mobileFields(body.mobile); const email = emailFields(body.email);
   return transaction(pool, async (client) => {
+    const partnerId=await resolveCentreReference(client,principal,body.partnerId,'partners','partners.read',centreId,'Partner');
     const publicId = await nextPublicId(client, principal.organizationId, 'LEAD', 'LEAD');
     const result = await client.query(
       `INSERT INTO leads (organization_id, public_id, centre_id, first_name, last_name, mobile_ciphertext, mobile_lookup_hash, mobile_mask,
-        email_ciphertext, source, interested_service, assigned_staff_id, status, priority, next_follow_up_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'NEW',$13,$14) RETURNING id, public_id, centre_id, first_name, last_name, mobile_mask, source, status, priority, created_at`,
+        email_ciphertext, source, interested_service, assigned_staff_id, partner_id, status, priority, next_follow_up_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'NEW',$14,$15) RETURNING id, public_id, centre_id, first_name, last_name, mobile_mask, source, status, priority, created_at, partner_id`,
       [principal.organizationId, publicId, centreId, body.firstName?.trim() || null, body.lastName?.trim() || null,
         mobile.ciphertext, mobile.hash, mobile.mask, email, source, body.interestedService || null,
-        body.assignedStaffId || principal.id, body.priority || 'NORMAL', body.nextFollowUpAt || null]
+        body.assignedStaffId || principal.id, partnerId, body.priority || 'NORMAL', body.nextFollowUpAt || null]
     );
     const lead = result.rows[0];
     await client.query('INSERT INTO lead_activities (organization_id, lead_id, activity_type, note, performed_by) VALUES ($1,$2,$3,$4,$5)',
@@ -436,7 +459,7 @@ export async function getLeadDetail(pool, principal, id) {
   return { data: { id: lead.id, leadId: lead.public_id, firstName: lead.first_name, lastName: lead.last_name,
     mobile: decryptField(lead.mobile_ciphertext), email: decryptField(lead.email_ciphertext), source: lead.source,
     interestedService: lead.interested_service, assignedStaffId: lead.assigned_staff_id, status: lead.status,
-    priority: lead.priority, nextFollowUpAt: lead.next_follow_up_at, centreId: lead.centre_id, activities: activities.rows } };
+    partnerId: lead.partner_id, priority: lead.priority, nextFollowUpAt: lead.next_follow_up_at, centreId: lead.centre_id, activities: activities.rows } };
 }
 
 export async function updateLead(pool, principal, id, body, request) {
@@ -444,7 +467,7 @@ export async function updateLead(pool, principal, id, body, request) {
   return transaction(pool, async (client) => {
     const before = await getLead(client, principal, id, true);
     assertPermission(principal, 'leads.update', before.centre_id);
-    const updates = pick(body, ['firstName','lastName','source','interestedService','assignedStaffId','status','priority','nextFollowUpAt','centreId']);
+    const updates = pick(body, ['firstName','lastName','source','interestedService','assignedStaffId','status','priority','nextFollowUpAt','centreId','partnerId']);
     if (!Object.keys(updates).length) throw new HttpError(400, 'EMPTY_UPDATE', 'Provide at least one supported field to update.');
     if (updates.source && !leadSources.has(String(updates.source).toUpperCase())) throw new HttpError(400, 'INVALID_SOURCE', 'Select a supported lead source.');
     if (updates.status) {
@@ -452,7 +475,10 @@ export async function updateLead(pool, principal, id, body, request) {
       if (updates.status === 'CONVERTED' || updates.status === 'LOST') throw new HttpError(400, 'USE_STATUS_ACTION', 'Use the dedicated convert or mark-lost action for this status.');
       validateLeadTransition(before.status, updates.status);
     }
-    const map = { firstName:'first_name', lastName:'last_name', source:'source', interestedService:'interested_service', assignedStaffId:'assigned_staff_id', status:'status', priority:'priority', nextFollowUpAt:'next_follow_up_at', centreId:'centre_id' };
+    const nextCentre=updates.centreId||before.centre_id;
+    if(nextCentre!==before.centre_id&&before.partner_id&&!Object.hasOwn(updates,'partnerId')) throw new HttpError(400,'REFERENCE_REASSIGN_REQUIRED','Reassign or clear the linked partner when moving a lead to another centre.');
+    if(Object.hasOwn(updates,'partnerId')) updates.partnerId=await resolveCentreReference(client,principal,updates.partnerId,'partners','partners.read',nextCentre,'Partner');
+    const map = { firstName:'first_name', lastName:'last_name', source:'source', interestedService:'interested_service', assignedStaffId:'assigned_staff_id', status:'status', priority:'priority', nextFollowUpAt:'next_follow_up_at', centreId:'centre_id', partnerId:'partner_id' };
     const params = [principal.organizationId, before.id]; const sets = [];
     for (const [key, value] of Object.entries(updates)) { params.push(key === 'source' ? String(value).toUpperCase() : value || null); sets.push(`${map[key]}=$${params.length}`); }
     if (updates.centreId) {
@@ -511,10 +537,10 @@ export async function convertLead(pool, principal, id, body, request) {
       const publicId = await nextPublicId(client, principal.organizationId, 'PATIENT', 'PAT');
       const created = await client.query(
         `INSERT INTO patients (organization_id, public_id, first_name, last_name, mobile_ciphertext, mobile_lookup_hash, mobile_mask,
-          email_ciphertext, primary_centre_id, referral_source, created_by, updated_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11) RETURNING id`,
+          email_ciphertext, primary_centre_id, referral_source, referred_partner_id, created_by, updated_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12) RETURNING id`,
         [principal.organizationId, publicId, lead.first_name || 'New', lead.last_name, lead.mobile_ciphertext, lead.mobile_lookup_hash,
-          lead.mobile_mask, lead.email_ciphertext, lead.centre_id, lead.source, principal.id]
+          lead.mobile_mask, lead.email_ciphertext, lead.centre_id, lead.source, lead.partner_id, principal.id]
       );
       patientId = created.rows[0].id;
       patientPublicId = publicId;

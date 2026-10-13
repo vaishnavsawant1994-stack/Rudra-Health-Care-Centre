@@ -20,6 +20,8 @@ This is the first executable backend slice for R1.1: an OIDC identity-provider b
 | Identity | `GET /api/v1/auth/login`, `GET /api/v1/auth/callback`, `GET /api/v1/auth/me`, `GET /api/v1/auth/sessions`, `DELETE /api/v1/auth/sessions/:sessionId`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout` |
 | Patients | `GET/POST /api/v1/patients`, `GET/PATCH /api/v1/patients/:id`, `GET /api/v1/patients/:id/timeline`, `GET/POST /api/v1/patients/:id/addresses`, `GET/POST /api/v1/patients/:id/family`, `DELETE /api/v1/patients/:id/family/:relationshipId`, `GET/POST /api/v1/patients/:id/external-identifiers`, `PATCH /api/v1/patients/:id/external-identifiers/:externalId` |
 | Leads | `GET/POST /api/v1/leads`, `GET/PATCH /api/v1/leads/:id`, `POST /api/v1/leads/:id/activities`, `POST /api/v1/leads/:id/convert`, `POST /api/v1/leads/:id/lost` |
+| Relationships | `GET/POST /api/v1/doctors`, `GET/PATCH /api/v1/doctors/:id`; corresponding routes for `/corporates` and `/partners` |
+| Catalogue | `GET/POST /api/v1/catalogue/tests`, `GET/PATCH /api/v1/catalogue/tests/:id`; matching routes for `/catalogue/packages` with centre-consistent test items |
 | Operations | `GET /health/live`, `GET /health/ready` |
 
 Responses use `{ "data": ..., "meta": ... }`; errors use `{ "error": { "code", "message", "requestId" } }`. All database queries are parameterized and organization-scoped.
@@ -40,6 +42,10 @@ npm start
 ```
 
 CI runs lint without automatic fixes. Type-checking is not applicable to this plain JavaScript `.mjs` project, and a separate build step is not applicable because Node runs the source directly without transpilation or bundling.
+
+R1.1 is qualified for engineering/internal development. The R1.2 directory and catalogue migrations and APIs are under qualification on the active feature branch; do not treat them as qualified until the exact PR head passes CI.
+
+The static screen scaffold lives at `prototype/catalogue-foundation.html`. It is not connected to this API and does not authenticate users or contain catalogue records.
 
 The migration runner applies each migration transactionally, serializes migration processes with a PostgreSQL advisory lock, records checksums, and refuses to silently accept a changed applied migration. Use a clean non-production database to qualify the migrations before any deployment.
 

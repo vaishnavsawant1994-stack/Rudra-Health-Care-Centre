@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Test and package catalogue · Rudra Health OS</title>
+  <style>
+    :root { color-scheme: light; font: 15px/1.5 system-ui, sans-serif; color: #17342e; background: #f4f7f5; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header { padding: 22px max(22px, calc((100vw - 1080px) / 2)); background: #fff; border-bottom: 1px solid #dce6e1; }
+    header p { margin: 2px 0 0; color: #64766f; }
+    main { max-width: 1080px; margin: 30px auto; padding: 0 22px; }
+    .notice { padding: 13px 16px; border: 1px solid #ead9a4; border-radius: 10px; background: #fff9e8; color: #624e16; }
+    .toolbar, .tabs, .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .toolbar { margin: 24px 0 16px; }
+    label { display: grid; gap: 4px; font-size: 13px; font-weight: 650; }
+    select, button { font: inherit; }
+    select { min-width: 220px; padding: 9px 12px; border: 1px solid #cad8d1; border-radius: 8px; background: #fff; color: #63736d; }
+    .tabs { justify-content: flex-start; border-bottom: 1px solid #dce6e1; }
+    .tabs button { padding: 11px 15px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: #64766f; cursor: pointer; }
+    .tabs button[aria-selected="true"] { border-bottom-color: #18745d; color: #145b49; font-weight: 700; }
+    .panel { margin-top: 18px; border: 1px solid #dce6e1; border-radius: 12px; background: #fff; overflow: hidden; }
+    .panel-head { padding: 17px 20px; border-bottom: 1px solid #e8eeeb; }
+    h1, h2, p { margin-top: 0; }
+    h1 { margin-bottom: 0; font-size: 21px; }
+    h2 { margin: 0; font-size: 17px; }
+    .actions { display: flex; gap: 8px; }
+    .actions button { padding: 8px 12px; border: 1px solid #cad8d1; border-radius: 8px; background: #f7f9f8; color: #77847e; }
+    .empty { padding: 54px 18px; text-align: center; }
+    .empty strong { display: block; margin-bottom: 5px; }
+    .empty p { max-width: 520px; margin: 0 auto; color: #64766f; }
+    .footnote { margin-top: 14px; color: #64766f; font-size: 13px; }
+    @media (max-width: 600px) { .toolbar, .panel-head { align-items: stretch; flex-direction: column; } select { width: 100%; } .actions { flex-wrap: wrap; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Test and package catalogue</h1>
+    <p>Catalogue foundation · R1.2 engineering preview</p>
+  </header>
+  <main>
+    <p class="notice"><strong>Prototype only.</strong> This screen is not connected to the API and contains no catalogue records. Do not enter patient, staff, report, or health data.</p>
+    <div class="toolbar">
+      <label for="centre">Centre scope
+        <select id="centre" disabled aria-describedby="scope-note"><option>Centre selection is not connected</option></select>
+      </label>
+      <div class="actions" aria-label="Catalogue actions">
+        <button type="button" disabled aria-disabled="true">New test</button>
+        <button type="button" disabled aria-disabled="true">New package</button>
+      </div>
+    </div>
+    <p id="scope-note" class="footnote">The eventual screen will follow the signed-in user's centre permissions.</p>
+    <div class="tabs" role="tablist" aria-label="Catalogue type">
+      <button id="tests-tab" type="button" role="tab" aria-selected="true" aria-controls="catalogue-panel">Tests</button>
+      <button id="packages-tab" type="button" role="tab" aria-selected="false" aria-controls="catalogue-panel">Packages</button>
+    </div>
+    <section id="catalogue-panel" class="panel" role="tabpanel" aria-labelledby="tests-tab">
+      <div class="panel-head"><h2 id="panel-title">Tests</h2><span>API foundation</span></div>
+      <div class="empty"><strong id="empty-title">No tests loaded</strong><p id="empty-copy">The catalogue API is being qualified. This preview does not read or store records.</p></div>
+    </section>
+    <p class="footnote">Prices in the backend use integer minor currency units and an explicit currency code. Test and package records are scoped to their organization and centre.</p>
+  </main>
+  <script>
+    const tabs = [...document.querySelectorAll('[role="tab"]')];
+    const panel = document.getElementById('catalogue-panel');
+    function selectTab(tab) {
+      const packages = tab.id === 'packages-tab';
+      for (const item of tabs) item.setAttribute('aria-selected', String(item === tab));
+      panel.setAttribute('aria-labelledby', tab.id);
+      document.getElementById('panel-title').textContent = packages ? 'Packages' : 'Tests';
+      document.getElementById('empty-title').textContent = `No ${packages ? 'packages' : 'tests'} loaded`;
+    }
+    for (const tab of tabs) tab.addEventListener('click', () => selectTab(tab));
+  </script>
+</body>
+</html>
