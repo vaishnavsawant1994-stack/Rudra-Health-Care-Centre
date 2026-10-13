@@ -45,7 +45,7 @@ npm start
 
 CI runs lint without automatic fixes. Type-checking is not applicable to this plain JavaScript `.mjs` project, and a separate build step is not applicable because Node runs the source directly without transpilation or bundling.
 
-R1.1 and R1.2 are qualified for engineering/internal development only. R1.3 appointments and service orders are under qualification on the active feature branch; do not treat them as qualified until the exact PR head passes CI.
+R1.1–R1.3 are qualified for engineering/internal development only. R1.3 passed on PR #5 head `930b6c5bda925c3edef560124adf07a247f29061` (merge `f69755d0a60fdc34fbaa171fcef6388a9580f1f2`). PostgreSQL 16 migrations and integration tests, lint, secret scanning, and dependency audit passed on the PR head and post-merge `main` commit.
 
 The static screen scaffold lives at `prototype/catalogue-foundation.html`. It is not connected to this API and does not authenticate users or contain catalogue records.
 
