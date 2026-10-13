@@ -38,6 +38,8 @@ jobs:
       DATABASE_URL: postgres://rudra:rudra-ci-only@localhost:5432/rudra_test
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Scan for committed secrets
         uses: gitleaks/gitleaks-action@v2
         env:
