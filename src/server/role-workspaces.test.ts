@@ -127,6 +127,12 @@ describe("role workspace permission filtering", () => {
     expect(getRoleWorkspacePanels("reception", [{ key: "patients.read", centreId: "c1" }])).toContain("patient_directory");
     expect(getRoleWorkspacePanels("manager", [{ key: "patients.read", centreId: "c1" }])).not.toContain("patient_directory");
   });
+  it("embeds public enquiry review in Reception only when CRM read is granted", () => {
+    expect(getRoleWorkspacePanels("reception", [])).not.toContain("public_enquiries");
+    expect(getRoleWorkspacePanels("reception", [{ key: "leads.read", centreId: "c1" }])).toContain("public_enquiries");
+    expect(getRoleWorkspacePanels("manager", [{ key: "leads.read", centreId: "c1" }])).not.toContain("public_enquiries");
+    expect(getRoleWorkspacePanels("reception", [{ key: "leads.create", centreId: "c1" }])).not.toContain("public_enquiries");
+  });
   it("embeds only role work panels authorized by the staff grants", () => {
     expect(getRoleWorkspacePanels("reception", [{ key: "appointments.read", centreId: "c1" }, { key: "tasks.assigned.read", centreId: "c1" }])).toEqual(["confirmation_queue", "arrival_queue", "appointment_schedule", "walk_in_queue", "support_requests", "staff_tasks"]);
     expect(getRoleWorkspacePanels("reception", [{ key: "appointments.read", centreId: "c1" }, { key: "appointments.update", centreId: "c1" }])).toContain("walk_in_tokens");

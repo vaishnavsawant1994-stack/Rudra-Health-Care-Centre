@@ -125,11 +125,12 @@ export function getRoleWorkspaceLinks(key: RoleWorkspaceKey, grants: readonly Pe
   });
 }
 
-export type RoleWorkspacePanel = "patient_directory" | "arrival_queue" | "confirmation_queue" | "assigned_appointments" | "appointment_schedule" | "walk_in_queue" | "walk_in_tokens" | "order_coordination" | "sample_receiving" | "sample_handover" | "sample_dispatch" | "sample_exceptions" | "approval_queue" | "collection_work" | "roster_workload" | "finance_operations" | "sales_pipeline" | "sales_followups" | "report_followups" | "support_requests" | "staff_tasks" | "escalation_work";
+export type RoleWorkspacePanel = "patient_directory" | "public_enquiries" | "arrival_queue" | "confirmation_queue" | "assigned_appointments" | "appointment_schedule" | "walk_in_queue" | "walk_in_tokens" | "order_coordination" | "sample_receiving" | "sample_handover" | "sample_dispatch" | "sample_exceptions" | "approval_queue" | "collection_work" | "roster_workload" | "finance_operations" | "sales_pipeline" | "sales_followups" | "report_followups" | "support_requests" | "staff_tasks" | "escalation_work";
 export function getRoleWorkspacePanels(key: RoleWorkspaceKey, grants: readonly PermissionGrant[]): RoleWorkspacePanel[] {
   const has = (permission: string) => grants.some((grant) => grant.key === permission);
   const panels: RoleWorkspacePanel[] = [];
   if (key === "reception" && has("patients.read")) panels.push("patient_directory");
+  if (key === "reception" && has("leads.read")) panels.push("public_enquiries");
   if (!has("appointments.read") && has("appointments.assigned.read")) panels.push("assigned_appointments");
   if ((key === "reception" || key === "manager") && has("appointments.read")) panels.push("confirmation_queue", "arrival_queue", "appointment_schedule");
   if ((key === "reception" || key === "manager") && has("appointments.read")) panels.push("walk_in_queue");

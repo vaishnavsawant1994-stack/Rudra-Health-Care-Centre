@@ -1989,3 +1989,9 @@ Public contact/enquiry intake now accepts a separate `SUPPORT` category. Staff r
 
 Verification on this tree: focused public enquiry tests **23/23**; default suite **670/670 across 163 files**; TypeScript, full lint, and production build (**232 page entries**) passed. No schema/dependency/persistent account/key changes. W021 is still partial: no patient portal support account, live messaging/call channel, full support case resolution, or browser/mobile acceptance. Patient portal accounts remain disabled pending approved identity proofing; synthetic records only. Other P2-09 and production gates remain open.
 
+### 2026-11-03 checkpoint - Reception website-enquiry workbench integration
+
+The Reception role workspace embeds the existing public-enquiry review workbench when `leads.read` is granted. Create/assign/dismiss, internal support-task creation, and corporate/partner relationship conversion continue to depend on their separate grants and API checks. Requests remain staff-reviewed; website booking requests are not appointments, and service feedback is not a clinical channel. This adds no new endpoint or data model.
+
+Verification: focused role-workspace and public-enquiry tests **47/47**; default suite **671/671 across 163 files**; TypeScript, full lint and production build (**232 page entries**) passed. Centre & Staff Operations remains pending live role/cross-centre and browser/mobile acceptance. Patient accounts remain disabled pending identity-proofing approval. Other security and production gates remain open; synthetic data only.
+
