@@ -1,0 +1,4 @@
+import { AdminShell } from "@/components/admin/admin-shell";
+import { AdminDataPanel } from "@/components/admin/admin-data-panel";
+import { AdminOperationForm } from "@/components/admin/admin-operation-form";
+export default async function SessionsPage() { return <AdminShell permission="sessions.read" title="Active sessions">{(staff) => <><AdminDataPanel endpoint="/api/admin/sessions" label="Unexpired staff sessions" />{staff.grants.some((grant) => grant.key === "sessions.revoke") ? <section className="admin-card"><h2>Revoke a session</h2><AdminOperationForm endpoint="/api/admin/sessions" method="DELETE" fields={[{ name: "sessionId", label: "Session ID" }]} submitLabel="Revoke session" /></section> : null}<p className="setup-notice">Sessions expire after eight hours. Revocation is audit logged.</p></>}</AdminShell>; }

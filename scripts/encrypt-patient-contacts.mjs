@@ -1,0 +1,44 @@
+import { createCipheriv,createDecipheriv,createHmac,randomBytes } from "node:crypto";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+import pg from "pg";
+import { loadProjectEnvironment } from "./load-project-env.mjs";
+loadProjectEnvironment();
+const {Pool}=pg;
+
+function configuration(databaseUrl=process.env.DATABASE_MIGRATION_URL,schema="public"){
+  const url=new URL(databaseUrl??"");const validDev=url.pathname==="/rudra_health_dev"&&databaseUrl===process.env.DATABASE_MIGRATION_URL;const validQualification=url.pathname==="/rudra_health_test"&&databaseUrl===process.env.DATABASE_TEST_URL&&/^p2_09a_[a-z0-9_]{1,48}$/.test(schema);if(!["127.0.0.1","localhost","[::1]"].includes(url.hostname)||(!validDev&&!validQualification))throw new Error("Backfill target must be local rudra_health_dev or a disposable P2-09A schema in rudra_health_test.");
+  const raw=process.env.RUDRA_FIELD_ENCRYPTION_KEYS;let parsed;try{parsed=JSON.parse(raw??"");}catch{throw new Error("Patient encryption key ring is unavailable.");}
+  const keys=new Map();for(const [id,value] of Object.entries(parsed??{})){if(!/^[A-Za-z0-9_-]{1,48}$/.test(id)||typeof value!=="string"||!/^[A-Za-z0-9+/]{43}=$/.test(value)||Buffer.from(value,"base64").length!==32)throw new Error("Patient encryption key ring is invalid.");keys.set(id,Buffer.from(value,"base64"));}
+  const activeId=process.env.RUDRA_FIELD_ACTIVE_KEY_ID;if(!activeId||!keys.has(activeId))throw new Error("Active patient encryption key is unavailable.");
+  const blindRaw=process.env.RUDRA_BLIND_INDEX_KEY;if(typeof blindRaw!=="string"||!/^[A-Za-z0-9+/]{43}=$/.test(blindRaw)||Buffer.from(blindRaw,"base64").length!==32)throw new Error("Patient blind-index key is unavailable.");
+  return {url:url.toString(),keys,activeId,activeKey:keys.get(activeId),blindKey:Buffer.from(blindRaw,"base64"),schema};
+}
+function aad(row,field,keyId){return Buffer.from(`rudra:patient-contact:v1:${row.organization_id}:${row.centre_id}:${row.id}:${field}:${keyId}`);}
+function normalize(field,value){return field==="email"?value.trim().toLowerCase():value.trim().replace(/[ ()-]/g,"");}
+function seal(value,field,row,cfg){const iv=randomBytes(12);const cipher=createCipheriv("aes-256-gcm",cfg.activeKey,iv);cipher.setAAD(aad(row,field,cfg.activeId));const enc=Buffer.concat([cipher.update(value,"utf8"),cipher.final()]);return `v1.${cfg.activeId}.${iv.toString("base64url")}.${cipher.getAuthTag().toString("base64url")}.${enc.toString("base64url")}`;}
+function open(value,field,row,cfg){const [version,id,ivText,tagText,data,...extra]=value.split(".");if(version!=="v1"||!id||!ivText||!tagText||data===undefined||extra.length)throw new Error("Encrypted contact validation failed.");const key=cfg.keys.get(id);if(!key)throw new Error("A required historical field key is unavailable.");try{const iv=Buffer.from(ivText,"base64url"),tag=Buffer.from(tagText,"base64url");const decipher=createDecipheriv("aes-256-gcm",key,iv);decipher.setAAD(aad(row,field,id));decipher.setAuthTag(tag);return Buffer.concat([decipher.update(Buffer.from(data,"base64url")),decipher.final()]).toString("utf8");}catch{throw new Error("Encrypted contact integrity validation failed.");}}
+function index(field,value,cfg){return createHmac("sha256",cfg.blindKey).update(`rudra:patient-contact-index:v1:${field}:`).update(normalize(field,value)).digest("hex");}
+function makeSecrets(row,cfg){return {encryptionKeyId:cfg.activeId,phoneCiphertext:seal(row.phone,"phone",row,cfg),emailCiphertext:row.email?seal(row.email,"email",row,cfg):null,phoneBlindIndex:index("phone",row.phone,cfg),emailBlindIndex:row.email?index("email",row.email,cfg):null};}
+
+export async function backfillPatientContacts({databaseUrl=process.env.DATABASE_MIGRATION_URL,schema="public",logger=console}={}){
+  const cfg=configuration(databaseUrl,schema);
+  const pool=new Pool({connectionString:cfg.url,max:1,connectionTimeoutMillis:5000,application_name:"rudra-patient-contact-encryption",options:`-c search_path=${schema},public`});const client=await pool.connect();let processed=0;
+  try{
+    await client.query("SELECT pg_advisory_lock(hashtextextended('rudra:patient-contact-backfill:v1',0))");
+    const legacy=await client.query("SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema=$1 AND table_name='patients' AND column_name='phone') AS present",[schema]);
+    if(!legacy.rows[0].present){const rows=await client.query("SELECT p.id,p.organization_id,p.centre_id,s.phone_ciphertext,s.email_ciphertext,s.phone_blind_index,s.email_blind_index FROM patients p JOIN patient_contact_secrets s ON s.patient_id=p.id AND s.organization_id=p.organization_id AND s.centre_id=p.centre_id");for(const row of rows.rows){const phone=open(row.phone_ciphertext,"phone",row,cfg);if(index("phone",phone,cfg)!==row.phone_blind_index)throw new Error("Patient phone encrypted index verification failed.");if(row.email_ciphertext){const email=open(row.email_ciphertext,"email",row,cfg);if(index("email",email,cfg)!==row.email_blind_index)throw new Error("Patient email encrypted index verification failed.");}}const count=await client.query("SELECT count(*)::int AS count FROM patients p LEFT JOIN patient_contact_secrets s ON s.patient_id=p.id AND s.organization_id=p.organization_id AND s.centre_id=p.centre_id WHERE s.patient_id IS NULL");if(count.rows[0].count)throw new Error("Patient contact encryption coverage verification failed.");logger.log(`Patient contacts already cut over; ${rows.rowCount} encrypted record(s) re-verified.`);return {processed:0,total:rows.rowCount};}
+    for(;;){await client.query("BEGIN");try{
+      const batch=await client.query("SELECT p.id,p.organization_id,p.centre_id,p.phone,p.email FROM patients p LEFT JOIN patient_contact_secrets s ON s.patient_id=p.id AND s.organization_id=p.organization_id AND s.centre_id=p.centre_id WHERE s.patient_id IS NULL ORDER BY p.id LIMIT 100 FOR UPDATE OF p SKIP LOCKED");
+      if(!batch.rowCount){await client.query("COMMIT");break;}
+      for(const row of batch.rows){if(typeof row.phone!=="string"||!row.phone.trim())throw new Error("A patient contact row lacks a required phone; backfill stopped without clearing plaintext.");const s=makeSecrets(row,cfg);await client.query("INSERT INTO patient_contact_secrets(patient_id,organization_id,centre_id,encryption_key_id,phone_ciphertext,email_ciphertext,phone_blind_index,email_blind_index) VALUES($1,$2,$3,$4,$5,$6,$7,$8)",[row.id,row.organization_id,row.centre_id,s.encryptionKeyId,s.phoneCiphertext,s.emailCiphertext,s.phoneBlindIndex,s.emailBlindIndex]);const check=await client.query("SELECT phone_ciphertext,email_ciphertext FROM patient_contact_secrets WHERE patient_id=$1",[row.id]);if(open(check.rows[0].phone_ciphertext,"phone",row,cfg)!==row.phone||(row.email&&open(check.rows[0].email_ciphertext,"email",row,cfg)!==row.email))throw new Error("Patient contact encryption round-trip check failed; plaintext was not removed.");processed++;}
+      await client.query("COMMIT");
+    }catch(error){await client.query("ROLLBACK").catch(()=>undefined);throw error;}}
+    const verification=await client.query("SELECT p.id,p.organization_id,p.centre_id,p.phone,p.email,s.phone_ciphertext,s.email_ciphertext,s.phone_blind_index,s.email_blind_index FROM patients p JOIN patient_contact_secrets s ON s.patient_id=p.id AND s.organization_id=p.organization_id AND s.centre_id=p.centre_id");
+    for(const row of verification.rows){if(open(row.phone_ciphertext,"phone",row,cfg)!==row.phone||index("phone",row.phone,cfg)!==row.phone_blind_index)throw new Error("Patient phone encryption/index verification failed.");if(row.email&&(open(row.email_ciphertext,"email",row,cfg)!==row.email||index("email",row.email,cfg)!==row.email_blind_index))throw new Error("Patient email encryption/index verification failed.");}
+    const missing=await client.query("SELECT count(*)::int AS count FROM patients p LEFT JOIN patient_contact_secrets s ON s.patient_id=p.id AND s.organization_id=p.organization_id AND s.centre_id=p.centre_id WHERE s.patient_id IS NULL");if(missing.rows[0].count!==0)throw new Error("Patient contact backfill coverage verification failed.");
+    logger.log(`Patient contact backfill verified; ${verification.rowCount} synthetic/local record(s) covered. Legacy fields remain intact until migration 0026 succeeds.`);return {processed,total:verification.rowCount};
+  }finally{await client.query("SELECT pg_advisory_unlock(hashtextextended('rudra:patient-contact-backfill:v1',0))").catch(()=>undefined);client.release();await pool.end();}
+}
+
+if(process.argv[1]&&pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url){try{await backfillPatientContacts();}catch(error){console.error(error instanceof Error?error.message:"Patient contact encryption backfill stopped safely.");process.exitCode=1;}}

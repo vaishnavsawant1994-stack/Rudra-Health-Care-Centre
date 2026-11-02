@@ -1,0 +1,18 @@
+"use client";
+import { useEffect, useState, type FormEvent } from "react";
+
+type Profile = { id: string; staffCode: string; displayName: string; status: string; isOwner: boolean; email: string; twoFactorEnabled: boolean };
+export function StaffProfilePanel({ staffId, canManage }: { staffId: string; canManage: boolean }) {
+  const [profile, setProfile] = useState<Profile | null>(null); const [assignments, setAssignments] = useState<Array<{ id: string; role: string; centre: string | null; revokedAt: string | null }>>([]); const [state, setState] = useState("Loading staff profile…"); const [pending, setPending] = useState(false);
+  useEffect(() => {
+    let live = true;
+    fetch(`/api/admin/staff/${staffId}`, { cache: "no-store" }).then(async (response) => ({ response, body: await response.json() })).then(({ response, body }) => {
+      if (!live) return;
+      if (!response.ok) { setState(body.error === "not_found" ? "Staff record not found or unavailable in your centre scope." : `Profile unavailable (${body.error ?? response.status}).`); return; }
+      setProfile(body.staff); setAssignments(body.assignments ?? []); setState("");
+    }).catch(() => { if (live) setState("Staff profile service unavailable."); });
+    return () => { live = false; };
+  }, [staffId]);
+  async function update(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!profile) return; const form = new FormData(event.currentTarget); const selectedStatus = String(form.get("status") ?? profile.status); const body = { displayName: String(form.get("displayName") ?? "").trim(), ...(selectedStatus !== "INVITED" ? { status: selectedStatus } : {}) }; setPending(true); try { const response = await fetch(`/api/admin/staff/${staffId}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); const result = await response.json(); if (!response.ok) { setState(`Update failed (${result.error ?? response.status}).`); return; } setProfile((current) => current ? { ...current, ...result.staff } : current); setState("Staff profile saved."); window.dispatchEvent(new Event("rudra-admin-data-refresh")); } catch { setState("Update failed. Staff service unavailable."); } finally { setPending(false); } }
+  return <section className="admin-card"><h2>Staff account</h2>{state && !profile ? <p role="status">{state}</p> : profile ? <><dl className="profile-grid"><dt>Staff code</dt><dd>{profile.staffCode}</dd><dt>Linked email</dt><dd>{profile.email}</dd><dt>Authenticator</dt><dd>{profile.twoFactorEnabled ? "Enrolled" : "Enrollment required"}</dd><dt>Owner account</dt><dd>{profile.isOwner ? "Yes" : "No"}</dd></dl><h3>Role assignments</h3>{assignments.length ? <ul>{assignments.map((item) => <li key={item.id}>{item.role} · {item.centre ?? "Organization"} · {item.revokedAt ? "Revoked" : "Active"}</li>)}</ul> : <p>No assignments in your authorized scope.</p>}{canManage && !profile.isOwner ? <form className="admin-form" onSubmit={update}><label>Display name<input name="displayName" minLength={2} maxLength={180} required defaultValue={profile.displayName} /></label><label>Account status<select name="status" defaultValue={profile.status}><option value="INVITED" disabled>Invited</option><option value="ACTIVE">Active</option><option value="SUSPENDED">Suspended</option><option value="REVOKED">Deactivated</option></select></label><button className="button button-primary" disabled={pending}>{pending ? "Saving…" : "Save profile"}</button><p role="status" aria-live="polite">{state}</p></form> : <p className="setup-notice">This account is read-only in your current role.</p>}</> : null}</section>;
+}

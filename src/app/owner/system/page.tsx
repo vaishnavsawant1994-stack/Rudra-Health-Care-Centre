@@ -1,0 +1,3 @@
+import { AdminShell } from "@/components/admin/admin-shell";
+import { AdminDataPanel } from "@/components/admin/admin-data-panel";
+export default async function SystemPage() { return <AdminShell permission="configuration.read" title="System health"><AdminDataPanel endpoint="/api/admin/system" label="Configuration readiness" /><p className="setup-notice">Configuration secrets are never shown here. Report scanner health checks only whether a loopback scanner answers the protocol ping. “Available” does not mean a report was scanned or cleared; documents stay quarantined until the scanner processes each file and returns a trusted clean result. Use the environment file and setup guide to configure identity, database and scanner connections.</p></AdminShell>; }

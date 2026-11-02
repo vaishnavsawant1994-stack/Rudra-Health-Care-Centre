@@ -1,0 +1,4 @@
+import { AdminShell } from "@/components/admin/admin-shell";
+import { AdminDataPanel } from "@/components/admin/admin-data-panel";
+import { AdminOperationForm } from "@/components/admin/admin-operation-form";
+export default async function SettingsPage() { return <AdminShell permission="organization.read" title="Organization settings">{(staff) => <><AdminDataPanel endpoint="/api/admin/organization" label="Organization details" />{staff.grants.some((grant) => grant.key === "organization.manage" && grant.centreId === null) ? <section className="admin-card"><h2>Update organization details</h2><AdminOperationForm endpoint="/api/admin/organization" method="PATCH" fields={[{ name: "name", label: "Organization display name" }, { name: "legalName", label: "Legal name (optional)", required: false }]} submitLabel="Save organization" /></section> : null}</>}</AdminShell>; }

@@ -1,0 +1,3 @@
+export function SetupRequired({ title = "Secure access setup required", missing, invalid }: { title?: string; missing: string[]; invalid: string[] }) {
+  return <section className="notice setup-notice"><span className="notice-icon" aria-hidden="true">⛨</span><div><h2>{title}</h2><p>Staff and owner tools stay unavailable until the approved PostgreSQL and identity settings are complete. No sign-in or protected operation was attempted.</p>{missing.length ? <p><strong>Not configured:</strong> {missing.join(", ")}</p> : null}{invalid.length ? <p><strong>Needs correction:</strong> {invalid.join(", ")}</p> : null}<p>See <code>docs/PHASE_01_SETUP.md</code> for the local setup sequence.</p></div></section>;
+}

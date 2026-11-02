@@ -1,0 +1,5 @@
+import { AdminShell } from "@/components/admin/admin-shell";
+import { AdminDataPanel } from "@/components/admin/admin-data-panel";
+import { AdminOperationForm } from "@/components/admin/admin-operation-form";
+import { CentrePublicProfileWorkbench } from "@/components/admin/centre-public-profile-workbench";
+export default async function CentresPage() { return <AdminShell permission="centres.read" title="Centres management">{(staff) => <><AdminDataPanel endpoint="/api/admin/centres" label="Authorized centres" />{staff.grants.some((grant) => grant.key === "centres.manage") ? <CentrePublicProfileWorkbench /> : null}{staff.grants.some((grant) => grant.key === "centres.manage" && grant.centreId === null) ? <section className="admin-card"><h2>Add a centre</h2><AdminOperationForm endpoint="/api/admin/centres" fields={[{ name: "code", label: "Centre code (uppercase letters, digits, hyphens)" }, { name: "name", label: "Centre name" }, { name: "timeZone", label: "Time zone", placeholder: "Asia/Kolkata", required: false }]} submitLabel="Create centre" /></section> : null}</>}</AdminShell>; }

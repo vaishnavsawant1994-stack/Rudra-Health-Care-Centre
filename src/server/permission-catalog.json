@@ -1,0 +1,1033 @@
+{
+  "permissions": [
+    [
+      "doctors.read",
+      "View doctor relationship records within authorized centres",
+      "CENTRE"
+    ],
+    [
+      "doctors.manage",
+      "Create and update doctor relationship records within authorized centres",
+      "CENTRE"
+    ],
+    [
+      "corporate.read",
+      "View corporate relationships and authorized contacts within centres",
+      "CENTRE"
+    ],
+    [
+      "corporate.manage",
+      "Create and update corporate relationship records within centres",
+      "CENTRE"
+    ],
+    [
+      "partners.read",
+      "View partner relationships and authorized contacts within centres",
+      "CENTRE"
+    ],
+    [
+      "partners.manage",
+      "Create and update partner relationship records within centres",
+      "CENTRE"
+    ],
+    [
+      "website.content.manage",
+      "Create and edit structured public website content drafts",
+      "ORGANIZATION"
+    ],
+    [
+      "website.content.publish",
+      "Publish or unpublish approved public website content",
+      "ORGANIZATION"
+    ],
+    [
+      "website.content.review",
+      "Independently review public website content drafts",
+      "ORGANIZATION"
+    ],
+    [
+      "appointments.assign",
+      "Assign or reassign appointment staff",
+      "CENTRE"
+    ],
+    [
+      "appointments.assigned.read",
+      "View only appointments assigned to the signed-in staff member",
+      "CENTRE"
+    ],
+    [
+      "appointments.cancel",
+      "Cancel appointments with a recorded reason",
+      "CENTRE"
+    ],
+    [
+      "appointments.create",
+      "Create patient appointments within authorized centres",
+      "CENTRE"
+    ],
+    [
+      "appointments.home_charge.manage",
+      "Approve custom or waived home-collection charges",
+      "CENTRE"
+    ],
+    [
+      "appointments.read",
+      "View appointments within authorized centres",
+      "CENTRE"
+    ],
+    [
+      "appointments.update",
+      "Edit appointment booking details and status",
+      "CENTRE"
+    ],
+    [
+      "assignments.manage",
+      "Assign roles within delegated scope",
+      "ORGANIZATION"
+    ],
+    [
+      "assignments.read",
+      "View staff role assignments",
+      "CENTRE"
+    ],
+    [
+      "audit.read",
+      "View append-only audit activity",
+      "ORGANIZATION"
+    ],
+    [
+      "catalogue.import",
+      "Preview and import catalogue CSV files",
+      "CENTRE"
+    ],
+    [
+      "catalogue.manage",
+      "Create and version diagnostic catalogue records",
+      "CENTRE"
+    ],
+    [
+      "catalogue.price.verify",
+      "Review and approve source-backed catalogue prices",
+      "CENTRE"
+    ],
+    [
+      "catalogue.read",
+      "View diagnostic tests and packages",
+      "CENTRE"
+    ],
+    [
+      "centres.manage",
+      "Manage Rudra centres",
+      "ORGANIZATION"
+    ],
+    [
+      "centres.read",
+      "View Rudra centres",
+      "CENTRE"
+    ],
+    [
+      "collections.assign",
+      "Create and assign collection jobs",
+      "CENTRE"
+    ],
+    [
+      "collections.read",
+      "View collection operations in authorized centres",
+      "CENTRE"
+    ],
+    [
+      "collections.visit.record",
+      "Record assigned collection visits",
+      "CENTRE"
+    ],
+    [
+      "configuration.manage",
+      "Change approved non-secret application settings",
+      "ORGANIZATION"
+    ],
+    [
+      "configuration.read",
+      "View application configuration status",
+      "ORGANIZATION"
+    ],
+    [
+      "escalations.assigned.read",
+      "View operational escalations assigned to the signed-in staff member",
+      "CENTRE"
+    ],
+    [
+      "escalations.create",
+      "Create an operational escalation in an authorized centre",
+      "CENTRE"
+    ],
+    [
+      "escalations.manage",
+      "Assign and manage centre operational escalations",
+      "CENTRE"
+    ],
+    [
+      "escalations.read",
+      "View operational escalations in authorized centres",
+      "CENTRE"
+    ],
+    [
+      "families.create",
+      "Create family records within authorized centre scope",
+      "CENTRE"
+    ],
+    [
+      "families.members.manage",
+      "Add, edit, and end family member associations",
+      "CENTRE"
+    ],
+    [
+      "families.members.verify",
+      "Record offline verification of a family association",
+      "CENTRE"
+    ],
+    [
+      "families.read",
+      "View family records within authorized centre scope",
+      "CENTRE"
+    ],
+    [
+      "families.sharing.manage",
+      "Request and revoke named family sharing grants",
+      "CENTRE"
+    ],
+    [
+      "families.sharing.verify",
+      "Record verification of explicit family sharing authorization",
+      "CENTRE"
+    ],
+    [
+      "families.update",
+      "Update family records within authorized centre scope",
+      "CENTRE"
+    ],
+    [
+      "finance.adjustment.manage",
+      "Record authorized financial adjustments",
+      "CENTRE"
+    ],
+    [
+      "finance.charge.create",
+      "Create internal charge snapshots",
+      "CENTRE"
+    ],
+    [
+      "finance.payment.record",
+      "Record manual payment evidence",
+      "CENTRE"
+    ],
+    [
+      "finance.payment.verify",
+      "Confirm or dispute recorded payments",
+      "CENTRE"
+    ],
+    [
+      "finance.policy.manage",
+      "Configure billing responsibility policy",
+      "ORGANIZATION"
+    ],
+    [
+      "finance.read",
+      "View financial records in authorized centres",
+      "CENTRE"
+    ],
+    [
+      "finance.reconcile",
+      "Close and reconcile a centre cash session",
+      "CENTRE"
+    ],
+    [
+      "finance.refund.approve",
+      "Approve refund requests",
+      "CENTRE"
+    ],
+    [
+      "finance.refund.execute",
+      "Record refund execution evidence",
+      "CENTRE"
+    ],
+    [
+      "finance.refund.request",
+      "Request refunds or reversals",
+      "CENTRE"
+    ],
+    [
+      "leads.activities.write",
+      "Record lead activity and contact attempts",
+      "CENTRE"
+    ],
+    [
+      "leads.assign",
+      "Assign leads and follow-ups to authorized staff",
+      "CENTRE"
+    ],
+    [
+      "leads.convert",
+      "Convert an eligible lead to a patient",
+      "CENTRE"
+    ],
+    [
+      "leads.create",
+      "Create enquiry records in authorized centres",
+      "CENTRE"
+    ],
+    [
+      "leads.followups.manage",
+      "Schedule, assign, reschedule and complete follow-ups",
+      "CENTRE"
+    ],
+    [
+      "leads.marketing_consent",
+      "Record and manage separate marketing permission",
+      "CENTRE"
+    ],
+    [
+      "leads.read",
+      "View lead contact records in authorized centres",
+      "CENTRE"
+    ],
+    [
+      "leads.reopen",
+      "Reopen closed or do-not-contact lead records with authorization",
+      "CENTRE"
+    ],
+    [
+      "leads.update",
+      "Update lead status and operational details",
+      "CENTRE"
+    ],
+    [
+      "orders.cancel",
+      "Cancel diagnostic orders with a reason",
+      "CENTRE"
+    ],
+    [
+      "orders.confirm",
+      "Confirm source-verified diagnostic orders",
+      "CENTRE"
+    ],
+    [
+      "orders.create",
+      "Create and maintain diagnostic order drafts",
+      "CENTRE"
+    ],
+    [
+      "orders.read",
+      "View diagnostic orders in an authorized centre",
+      "CENTRE"
+    ],
+    [
+      "organization.manage",
+      "Change organization settings",
+      "ORGANIZATION"
+    ],
+    [
+      "organization.read",
+      "View organization details",
+      "ORGANIZATION"
+    ],
+    [
+      "patients.create",
+      "Register patients within authorized centre scope",
+      "CENTRE"
+    ],
+    [
+      "patients.read",
+      "View patient records within authorized centre scope",
+      "CENTRE"
+    ],
+    [
+      "patients.update",
+      "Update patient records within authorized centre scope",
+      "CENTRE"
+    ],
+    [
+      "reports.deliver",
+      "Record authorized report handoff and evidence",
+      "CENTRE"
+    ],
+    [
+      "reports.document.upload",
+      "Upload private diagnostic report documents",
+      "CENTRE"
+    ],
+    [
+      "reports.exceptions.manage",
+      "Place reports on hold and record discrepancies",
+      "CENTRE"
+    ],
+    [
+      "reports.followups.manage",
+      "Manage internal report follow-up tasks",
+      "CENTRE"
+    ],
+    [
+      "reports.read",
+      "View diagnostic report operations in authorized centres",
+      "CENTRE"
+    ],
+    [
+      "reports.register",
+      "Register incoming report references",
+      "CENTRE"
+    ],
+    [
+      "reports.release",
+      "Approve reports for controlled release",
+      "CENTRE"
+    ],
+    [
+      "reports.verify",
+      "Verify report provenance and patient/order identity",
+      "CENTRE"
+    ],
+    [
+      "roles.manage",
+      "Manage role permission grants",
+      "ORGANIZATION"
+    ],
+    [
+      "roles.read",
+      "View roles and permissions",
+      "ORGANIZATION"
+    ],
+    [
+      "roster.manage",
+      "Create, edit and cancel staff shifts and unavailability",
+      "CENTRE"
+    ],
+    [
+      "roster.read",
+      "View staff shifts and availability in authorized centres",
+      "CENTRE"
+    ],
+    [
+      "samples.collect",
+      "Record verified specimen collection",
+      "CENTRE"
+    ],
+    [
+      "samples.dispatch",
+      "Pack and dispatch specimens",
+      "CENTRE"
+    ],
+    [
+      "samples.exceptions.manage",
+      "Record and reconcile sample exceptions",
+      "CENTRE"
+    ],
+    [
+      "samples.external.verify",
+      "Record reviewed external receipt evidence",
+      "CENTRE"
+    ],
+    [
+      "samples.procedures.manage",
+      "Record approved handling procedure references",
+      "CENTRE"
+    ],
+    [
+      "samples.read",
+      "View specimen records and custody history",
+      "CENTRE"
+    ],
+    [
+      "samples.receive",
+      "Receive specimens at Rudra",
+      "CENTRE"
+    ],
+    [
+      "samples.recollection.authorize",
+      "Authorize a recollection under an approved procedure",
+      "CENTRE"
+    ],
+    [
+      "sessions.read",
+      "View active staff sessions",
+      "ORGANIZATION"
+    ],
+    [
+      "sessions.revoke",
+      "Revoke staff sessions",
+      "ORGANIZATION"
+    ],
+    [
+      "staff.manage",
+      "Provision and manage staff accounts",
+      "ORGANIZATION"
+    ],
+    [
+      "staff.read",
+      "View staff profiles",
+      "CENTRE"
+    ],
+    [
+      "tasks.approve",
+      "Review operational task completion requests",
+      "CENTRE"
+    ],
+    [
+      "tasks.assign",
+      "Assign and reassign centre tasks",
+      "CENTRE"
+    ],
+    [
+      "tasks.assigned.read",
+      "View only tasks assigned to the signed-in staff member",
+      "CENTRE"
+    ],
+    [
+      "tasks.create",
+      "Create centre operational tasks",
+      "CENTRE"
+    ],
+    [
+      "tasks.policy.manage",
+      "Configure operational task-completion approval policy",
+      "ORGANIZATION"
+    ],
+    [
+      "tasks.read",
+      "View centre tasks within assigned scope",
+      "CENTRE"
+    ],
+    [
+      "tasks.support.create",
+      "Create support request tasks",
+      "CENTRE"
+    ],
+    [
+      "tasks.support.manage",
+      "Manage and reassign centre support request tasks",
+      "CENTRE"
+    ],
+    [
+      "tasks.support.read",
+      "View centre-scoped support request tasks",
+      "CENTRE"
+    ],
+    [
+      "tasks.update",
+      "Update assigned tasks or manage centre task status",
+      "CENTRE"
+    ],
+    [
+      "workspace.read",
+      "Open the staff workspace",
+      "CENTRE"
+    ],
+    [
+      "marketing.read",
+      "View internal campaign records in authorized centres",
+      "CENTRE"
+    ],
+    [
+      "marketing.manage",
+      "Create and manage internal campaign records in authorized centres",
+      "CENTRE"
+    ]
+  ],
+  "roles": [
+    [
+      "accounts",
+      "Accounts",
+      "CENTRE"
+    ],
+    [
+      "administrator",
+      "Administrator",
+      "ORGANIZATION"
+    ],
+    [
+      "centre_manager",
+      "Centre Manager",
+      "CENTRE"
+    ],
+    [
+      "customer_support",
+      "Customer Support",
+      "CENTRE"
+    ],
+    [
+      "laboratory_branch_operations",
+      "Laboratory / Branch Operations",
+      "CENTRE"
+    ],
+    [
+      "owner_super_admin",
+      "Owner / Super Admin",
+      "ORGANIZATION"
+    ],
+    [
+      "phlebotomist",
+      "Phlebotomist",
+      "CENTRE"
+    ],
+    [
+      "read_only_auditor",
+      "Read-Only Auditor",
+      "ORGANIZATION"
+    ],
+    [
+      "receptionist",
+      "Receptionist",
+      "CENTRE"
+    ],
+    [
+      "sales_marketing",
+      "Sales / Marketing",
+      "CENTRE"
+    ]
+  ],
+  "roleGrants": {
+    "accounts": [
+      "escalations.assigned.read",
+      "escalations.create",
+      "finance.adjustment.manage",
+      "finance.charge.create",
+      "finance.payment.record",
+      "finance.payment.verify",
+      "finance.read",
+      "finance.reconcile",
+      "finance.refund.approve",
+      "finance.refund.execute",
+      "finance.refund.request",
+      "tasks.assigned.read",
+      "tasks.update",
+      "workspace.read"
+    ],
+    "administrator": [
+      "website.content.manage",
+      "website.content.review",
+      "doctors.read",
+      "doctors.manage",
+      "corporate.read",
+      "corporate.manage",
+      "partners.read",
+      "partners.manage",
+      "appointments.assign",
+      "appointments.cancel",
+      "appointments.create",
+      "appointments.home_charge.manage",
+      "appointments.read",
+      "appointments.update",
+      "assignments.manage",
+      "assignments.read",
+      "audit.read",
+      "catalogue.import",
+      "catalogue.manage",
+      "catalogue.price.verify",
+      "catalogue.read",
+      "centres.manage",
+      "centres.read",
+      "collections.assign",
+      "collections.read",
+      "collections.visit.record",
+      "configuration.read",
+      "escalations.assigned.read",
+      "escalations.create",
+      "escalations.manage",
+      "escalations.read",
+      "families.create",
+      "families.members.manage",
+      "families.members.verify",
+      "families.read",
+      "families.sharing.manage",
+      "families.sharing.verify",
+      "families.update",
+      "finance.adjustment.manage",
+      "finance.charge.create",
+      "finance.payment.record",
+      "finance.payment.verify",
+      "finance.policy.manage",
+      "finance.read",
+      "finance.reconcile",
+      "finance.refund.approve",
+      "finance.refund.execute",
+      "finance.refund.request",
+      "leads.activities.write",
+      "leads.assign",
+      "leads.convert",
+      "leads.create",
+      "leads.followups.manage",
+      "leads.marketing_consent",
+      "leads.read",
+      "leads.reopen",
+      "leads.update",
+      "orders.cancel",
+      "orders.confirm",
+      "orders.create",
+      "orders.read",
+      "organization.read",
+      "patients.create",
+      "patients.read",
+      "patients.update",
+      "reports.deliver",
+      "reports.document.upload",
+      "reports.exceptions.manage",
+      "reports.followups.manage",
+      "reports.read",
+      "reports.register",
+      "reports.release",
+      "reports.verify",
+      "roles.read",
+      "roster.manage",
+      "roster.read",
+      "samples.collect",
+      "samples.dispatch",
+      "samples.exceptions.manage",
+      "samples.external.verify",
+      "samples.procedures.manage",
+      "samples.read",
+      "samples.receive",
+      "samples.recollection.authorize",
+      "sessions.read",
+      "sessions.revoke",
+      "staff.manage",
+      "staff.read",
+      "tasks.approve",
+      "tasks.assign",
+      "tasks.assigned.read",
+      "tasks.create",
+      "tasks.policy.manage",
+      "tasks.read",
+      "tasks.update",
+      "workspace.read",
+      "tasks.support.read",
+      "tasks.support.create",
+      "tasks.support.manage",
+      "marketing.read",
+      "marketing.manage"
+    ],
+    "centre_manager": [
+      "doctors.read",
+      "doctors.manage",
+      "corporate.read",
+      "corporate.manage",
+      "partners.read",
+      "partners.manage",
+      "appointments.assign",
+      "appointments.cancel",
+      "appointments.create",
+      "appointments.home_charge.manage",
+      "appointments.read",
+      "appointments.update",
+      "assignments.read",
+      "catalogue.import",
+      "catalogue.manage",
+      "catalogue.price.verify",
+      "catalogue.read",
+      "centres.read",
+      "collections.assign",
+      "collections.read",
+      "collections.visit.record",
+      "escalations.assigned.read",
+      "escalations.create",
+      "escalations.manage",
+      "escalations.read",
+      "families.create",
+      "families.members.manage",
+      "families.members.verify",
+      "families.read",
+      "families.sharing.manage",
+      "families.sharing.verify",
+      "families.update",
+      "finance.adjustment.manage",
+      "finance.payment.record",
+      "finance.payment.verify",
+      "finance.read",
+      "finance.reconcile",
+      "finance.refund.approve",
+      "finance.refund.execute",
+      "finance.refund.request",
+      "leads.activities.write",
+      "leads.assign",
+      "leads.convert",
+      "leads.create",
+      "leads.followups.manage",
+      "leads.marketing_consent",
+      "leads.read",
+      "leads.reopen",
+      "leads.update",
+      "orders.cancel",
+      "orders.confirm",
+      "orders.create",
+      "orders.read",
+      "patients.create",
+      "patients.read",
+      "patients.update",
+      "reports.deliver",
+      "reports.document.upload",
+      "reports.exceptions.manage",
+      "reports.followups.manage",
+      "reports.read",
+      "reports.register",
+      "reports.release",
+      "reports.verify",
+      "roster.manage",
+      "roster.read",
+      "samples.collect",
+      "samples.dispatch",
+      "samples.exceptions.manage",
+      "samples.external.verify",
+      "samples.procedures.manage",
+      "samples.read",
+      "samples.receive",
+      "samples.recollection.authorize",
+      "staff.read",
+      "tasks.approve",
+      "tasks.assign",
+      "tasks.assigned.read",
+      "tasks.create",
+      "tasks.read",
+      "tasks.update",
+      "workspace.read",
+      "tasks.support.read",
+      "tasks.support.create",
+      "tasks.support.manage",
+      "marketing.read"
+    ],
+    "customer_support": [
+      "escalations.assigned.read",
+      "escalations.create",
+      "leads.activities.write",
+      "leads.followups.manage",
+      "leads.read",
+      "leads.update",
+      "reports.followups.manage",
+      "reports.read",
+      "tasks.assigned.read",
+      "tasks.create",
+      "tasks.update",
+      "workspace.read",
+      "tasks.support.read",
+      "tasks.support.create",
+      "tasks.support.manage"
+    ],
+    "laboratory_branch_operations": [
+      "collections.read",
+      "escalations.assigned.read",
+      "escalations.create",
+      "reports.document.upload",
+      "reports.exceptions.manage",
+      "reports.read",
+      "reports.register",
+      "reports.verify",
+      "roster.read",
+      "samples.dispatch",
+      "samples.exceptions.manage",
+      "samples.external.verify",
+      "samples.read",
+      "samples.receive",
+      "tasks.assigned.read",
+      "tasks.update",
+      "workspace.read"
+    ],
+    "owner_super_admin": [
+      "website.content.manage",
+      "website.content.publish",
+      "website.content.review",
+      "doctors.read",
+      "doctors.manage",
+      "corporate.read",
+      "corporate.manage",
+      "partners.read",
+      "partners.manage",
+      "appointments.assign",
+      "appointments.cancel",
+      "appointments.create",
+      "appointments.home_charge.manage",
+      "appointments.read",
+      "appointments.update",
+      "assignments.manage",
+      "assignments.read",
+      "audit.read",
+      "catalogue.import",
+      "catalogue.manage",
+      "catalogue.price.verify",
+      "catalogue.read",
+      "centres.manage",
+      "centres.read",
+      "collections.assign",
+      "collections.read",
+      "collections.visit.record",
+      "configuration.manage",
+      "configuration.read",
+      "escalations.assigned.read",
+      "escalations.create",
+      "escalations.manage",
+      "escalations.read",
+      "families.create",
+      "families.members.manage",
+      "families.members.verify",
+      "families.read",
+      "families.sharing.manage",
+      "families.sharing.verify",
+      "families.update",
+      "finance.adjustment.manage",
+      "finance.charge.create",
+      "finance.payment.record",
+      "finance.payment.verify",
+      "finance.policy.manage",
+      "finance.read",
+      "finance.reconcile",
+      "finance.refund.approve",
+      "finance.refund.execute",
+      "finance.refund.request",
+      "leads.activities.write",
+      "leads.assign",
+      "leads.convert",
+      "leads.create",
+      "leads.followups.manage",
+      "leads.marketing_consent",
+      "leads.read",
+      "leads.reopen",
+      "leads.update",
+      "orders.cancel",
+      "orders.confirm",
+      "orders.create",
+      "orders.read",
+      "organization.manage",
+      "organization.read",
+      "patients.create",
+      "patients.read",
+      "patients.update",
+      "reports.deliver",
+      "reports.document.upload",
+      "reports.exceptions.manage",
+      "reports.followups.manage",
+      "reports.read",
+      "reports.register",
+      "reports.release",
+      "reports.verify",
+      "roles.manage",
+      "roles.read",
+      "roster.manage",
+      "roster.read",
+      "samples.collect",
+      "samples.dispatch",
+      "samples.exceptions.manage",
+      "samples.external.verify",
+      "samples.procedures.manage",
+      "samples.read",
+      "samples.receive",
+      "samples.recollection.authorize",
+      "sessions.read",
+      "sessions.revoke",
+      "staff.manage",
+      "staff.read",
+      "tasks.approve",
+      "tasks.assign",
+      "tasks.assigned.read",
+      "tasks.create",
+      "tasks.policy.manage",
+      "tasks.read",
+      "tasks.update",
+      "workspace.read",
+      "tasks.support.read",
+      "tasks.support.create",
+      "tasks.support.manage",
+      "marketing.read",
+      "marketing.manage"
+    ],
+    "phlebotomist": [
+      "appointments.assigned.read",
+      "collections.read",
+      "collections.visit.record",
+      "escalations.assigned.read",
+      "escalations.create",
+      "orders.read",
+      "roster.read",
+      "samples.collect",
+      "samples.exceptions.manage",
+      "samples.read",
+      "tasks.assigned.read",
+      "tasks.update",
+      "workspace.read"
+    ],
+    "read_only_auditor": [
+      "assignments.read",
+      "audit.read",
+      "catalogue.read",
+      "centres.read",
+      "collections.read",
+      "configuration.read",
+      "escalations.read",
+      "finance.read",
+      "orders.read",
+      "organization.read",
+      "reports.read",
+      "roles.read",
+      "roster.read",
+      "samples.read",
+      "sessions.read",
+      "staff.read",
+      "tasks.read",
+      "workspace.read"
+    ],
+    "receptionist": [
+      "appointments.cancel",
+      "appointments.create",
+      "appointments.read",
+      "appointments.update",
+      "catalogue.read",
+      "collections.assign",
+      "collections.read",
+      "escalations.assigned.read",
+      "escalations.create",
+      "families.create",
+      "families.members.manage",
+      "families.read",
+      "families.sharing.manage",
+      "families.update",
+      "finance.charge.create",
+      "finance.payment.record",
+      "finance.read",
+      "leads.activities.write",
+      "leads.convert",
+      "leads.create",
+      "leads.followups.manage",
+      "leads.read",
+      "leads.update",
+      "orders.create",
+      "orders.read",
+      "patients.create",
+      "patients.read",
+      "patients.update",
+      "reports.followups.manage",
+      "reports.read",
+      "samples.read",
+      "tasks.assigned.read",
+      "tasks.create",
+      "tasks.update",
+      "workspace.read",
+      "tasks.support.create"
+    ],
+    "sales_marketing": [
+      "escalations.assigned.read",
+      "escalations.create",
+      "doctors.read",
+      "doctors.manage",
+      "corporate.read",
+      "corporate.manage",
+      "partners.read",
+      "partners.manage",
+      "leads.activities.write",
+      "leads.create",
+      "leads.followups.manage",
+      "leads.marketing_consent",
+      "leads.read",
+      "leads.update",
+      "tasks.assigned.read",
+      "tasks.create",
+      "tasks.update",
+      "workspace.read",
+      "marketing.read",
+      "marketing.manage"
+    ]
+  }
+}

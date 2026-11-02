@@ -1,0 +1,1 @@
+ALTER TYPE patient_consent_status ADD VALUE 'NOT_RECORDED' BEFORE 'GRANTED';
