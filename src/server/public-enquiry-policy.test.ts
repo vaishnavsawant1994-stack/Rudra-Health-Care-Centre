@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  formatPublicCampaignAttribution,
   legacyPublicEnquiryFingerprint,
+  publicEnquiryCreateSchema,
   publicEnquiryFingerprint,
   publicEnquiryRequestContext,
   verifyPublicEnquiryFingerprint,
@@ -29,6 +31,13 @@ afterEach(() => {
 describe("public enquiry idempotency fingerprints", () => {
   const value = { firstName: "Synthetic", message: "Synthetic enquiry" };
   const context = publicEnquiryRequestContext({ organizationId: "org-a", centreId: "centre-a", idempotencyKey: "key-a" });
+
+  it("accepts bounded UTM labels and rejects values that could carry personal or arbitrary text", () => {
+    const base = { centreId: "00000000-0000-4000-8000-000000000001", firstName: "Synthetic", lastName: "Visitor", phone: "+919876543210", category: "GENERAL", message: "Synthetic question", responsePermission: false };
+    expect(publicEnquiryCreateSchema.safeParse({ ...base, campaignAttribution: { source: "google-ads", medium: "cpc", campaign: "winter_2026" } }).success).toBe(true);
+    expect(publicEnquiryCreateSchema.safeParse({ ...base, campaignAttribution: { source: "person@example.test" } }).success).toBe(false);
+    expect(formatPublicCampaignAttribution({ source: "google-ads", medium: "cpc", campaign: "winter_2026" })).toBe("utm_source=google-ads;utm_medium=cpc;utm_campaign=winter_2026");
+  });
 
   it("verifies the same request after operational key rotation when the old key is retained", () => {
     const oldKey = Buffer.alloc(32, 1).toString("base64");

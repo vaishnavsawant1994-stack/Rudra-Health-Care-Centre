@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { IdempotencyAttempt } from "@/lib/idempotency-attempt";
 import { canCreateSupportFollowupAtCentre } from "@/lib/staff-task-access";
-import { getExactPublicBookingService, getPublicBookingPrefill, getPublicBookingServiceText } from "@/lib/public-booking-prefill";
+import { getExactPublicBookingService, getPublicBookingPrefill, getPublicBookingServiceText, getPublicCampaignAttribution } from "@/lib/public-booking-prefill";
 import type { PermissionGrant } from "@/server/permissions";
 
 type Centre = { id: string; name: string; code: string };
@@ -84,7 +84,7 @@ export function PublicEnquiryForm({ mode = "inquiry", topic = "GENERAL" }: { mod
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const form = event.currentTarget; const values = Object.fromEntries(new FormData(form).entries());
     const selectedService = catalogueServices.find((item) => item.id === selectedCatalogueServiceId);
-    const body = { ...values, ...(selectedService ? { requestedCatalogueItemId: selectedService.id, requestedCatalogueVersion: selectedService.version } : {}), requestTopic: topic, requestKind: mode === "booking" ? "BOOKING_REQUEST" : "INQUIRY", responsePermission: values.responsePermission === "on" };
+    const body = { ...values, ...(selectedService ? { requestedCatalogueItemId: selectedService.id, requestedCatalogueVersion: selectedService.version } : {}), campaignAttribution: getPublicCampaignAttribution(window.location.search), requestTopic: topic, requestKind: mode === "booking" ? "BOOKING_REQUEST" : "INQUIRY", responsePermission: values.responsePermission === "on" };
     setBusy(true); setState("Sending your enquiry securely…");
     try {
       const serializedBody = JSON.stringify(body);

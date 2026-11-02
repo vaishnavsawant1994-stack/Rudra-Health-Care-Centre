@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { getExactPublicBookingService, getPublicBookingCatalogueHref, getPublicBookingPrefill, getPublicBookingServiceText } from "./public-booking-prefill";
+import { getExactPublicBookingService, getPublicBookingCatalogueHref, getPublicBookingPrefill, getPublicBookingServiceText, getPublicCampaignAttribution } from "./public-booking-prefill";
 
 describe("public booking prefill", () => {
+  it("keeps only short, non-personal UTM labels for campaign attribution", () => {
+    expect(getPublicCampaignAttribution("?utm_source=Google+Ads&utm_medium=CPC&utm_campaign=Diwali_2026&email=person%40example.test"))
+      .toEqual({ source: "google-ads", medium: "cpc", campaign: "diwali_2026" });
+    expect(getPublicCampaignAttribution("?utm_source=person%40example.test&utm_medium=direct-contact&utm_campaign=bad%2Fvalue"))
+      .toEqual({ medium: "direct-contact" });
+    expect(getPublicCampaignAttribution("?utm_term=health" )).toBeUndefined();
+  });
   const centres = [{ id: "centre-a" }, { id: "centre-b" }];
 
   it("prefills a listed centre and editable service reference", () => {

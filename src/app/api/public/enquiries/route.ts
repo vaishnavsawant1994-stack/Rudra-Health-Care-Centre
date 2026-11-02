@@ -10,7 +10,7 @@ import { blindIndexLeadContact, decryptLeadValue, encryptLeadValue, type LeadPri
 import { addLeadActivity, saveLeadPrivateData } from "@/server/lead-private";
 import { getPublicCatalogueItem } from "@/server/public-catalogue";
 import { listPublicEnquiryCentres } from "@/server/public-enquiry-centres";
-import { publicEnquiryContext, publicEnquiryCreateSchema, publicEnquiryFingerprint, publicEnquiryRequestContext, publicEnquiryReviewSchema, verifyPublicEnquiryFingerprint, type PublicEnquiryPayload } from "@/server/public-enquiry-policy";
+import { formatPublicCampaignAttribution, publicEnquiryContext, publicEnquiryCreateSchema, publicEnquiryFingerprint, publicEnquiryRequestContext, publicEnquiryReviewSchema, verifyPublicEnquiryFingerprint, type PublicEnquiryPayload } from "@/server/public-enquiry-policy";
 import { leads, leadPrivateData } from "@/db/schema";
 import { hasLeadCentrePermission } from "@/server/lead-policy";
 import { isAssignableStaff } from "@/server/lead-assignments";
@@ -50,6 +50,7 @@ export async function POST(request: Request) {
       requestedService: selectedService ? `${selectedService.displayName} (${selectedService.serviceCode})` : parsed.data.requestedService || null,
       requestedCatalogueItemId: selectedService?.id ?? null,
       requestedCatalogueVersion: selectedService?.version ?? null,
+      campaignAttribution: parsed.data.campaignAttribution ?? null,
       preferredDate: parsed.data.preferredDate || null,
       preferredTimeWindow: parsed.data.preferredTimeWindow || null,
       visitType: parsed.data.visitType ?? null,
@@ -235,7 +236,7 @@ export async function PATCH(request: Request) {
         contactPermission: "PENDING", contactPermissionRecordedBy: null, contactPermissionRecordedAt: null,
         createdByStaffId: access.staff.staffUserId,
       }).returning({ id: leads.id, leadNumber: leads.leadNumber });
-      const privateLead: LeadPrivateData = { firstName: payload.firstName, lastName: payload.lastName, phone, email, interestedService: payload.requestedService, campaign: null, contactEvidenceReference: null, marketingEvidenceReference: null, lostReason: null };
+      const privateLead: LeadPrivateData = { firstName: payload.firstName, lastName: payload.lastName, phone, email, interestedService: payload.requestedService, campaign: formatPublicCampaignAttribution(payload.campaignAttribution), contactEvidenceReference: null, marketingEvidenceReference: null, lostReason: null };
       await saveLeadPrivateData(tx, { organizationId: row.organizationId, centreId: row.centreId, recordId: leadId }, privateLead);
       await addLeadActivity(tx, { organizationId: row.organizationId, centreId: row.centreId, leadId, actorStaffId: access.staff.staffUserId, activityType: "NOTE", body: payload.message, metadata: { source: "PUBLIC_ENQUIRY", requestTopic: payload.requestTopic, organizationName: payload.organizationName ?? null, requestKind: payload.requestKind, requestedService: payload.requestedService, preferredDate: payload.preferredDate, preferredTimeWindow: payload.preferredTimeWindow, visitType: payload.visitType, collectionAddress: payload.collectionAddress, responsePermission: payload.responsePermission, responsePermissionTextVersion: payload.responsePermissionTextVersion, submittedAt: payload.submittedAt } });
       await tx.update(publicEnquiries).set({ status: "CONVERTED_TO_LEAD", reviewedByStaffId: access.staff.staffUserId, reviewedAt: new Date(), resultingLeadId: lead.id, versionNumber: row.versionNumber + 1 }).where(eq(publicEnquiries.id, row.id));

@@ -4,6 +4,7 @@ import { fingerprintOperationalRequest, operationalContext, verifyOperationalReq
 
 const phone = z.string().trim().min(7).max(32).regex(/^[+0-9 ()-]+$/).optional().or(z.literal(""));
 const email = z.string().trim().email().max(254).optional().or(z.literal(""));
+const campaignLabel = z.string().regex(/^[a-z0-9._-]{1,24}$/);
 
 export const publicEnquiryCreateSchema = z.object({
   centreId: z.uuid(), firstName: z.string().trim().min(1).max(100), lastName: z.string().trim().min(1).max(100),
@@ -14,6 +15,7 @@ export const publicEnquiryCreateSchema = z.object({
   requestedService: z.string().trim().max(160).optional().or(z.literal("")),
   requestedCatalogueItemId: z.uuid().optional(),
   requestedCatalogueVersion: z.number().int().positive().optional(),
+  campaignAttribution: z.object({ source: campaignLabel.optional(), medium: campaignLabel.optional(), campaign: campaignLabel.optional() }).optional(),
   preferredDate: z.iso.date().optional().or(z.literal("")), preferredTimeWindow: z.string().trim().max(120).optional().or(z.literal("")),
   visitType: z.enum(["CENTRE", "HOME_COLLECTION"]).optional(),
   addressLine1: z.string().trim().max(160).optional().or(z.literal("")), addressLine2: z.string().trim().max(160).optional().or(z.literal("")),
@@ -35,7 +37,16 @@ export type PublicEnquiryPayload = {
   requestKind: "INQUIRY" | "BOOKING_REQUEST"; requestedService: string | null; requestedCatalogueItemId?: string | null; requestedCatalogueVersion?: number | null; preferredDate: string | null; preferredTimeWindow: string | null;
   visitType: "CENTRE" | "HOME_COLLECTION" | null; collectionAddress: { line1: string; line2?: string; city: string; state: string; postalCode: string } | null;
   responsePermission: boolean; responsePermissionTextVersion: "PUBLIC_ENQUIRY_RESPONSE_V1"; submittedAt: string; reviewReason?: string;
+  campaignAttribution?: { source?: string; medium?: string; campaign?: string } | null;
 };
+
+/** Compact, explicitly untrusted UTM metadata for the encrypted CRM campaign field. */
+export function formatPublicCampaignAttribution(value: PublicEnquiryPayload["campaignAttribution"]): string | null {
+  if (!value) return null;
+  const fields = [["utm_source", value.source], ["utm_medium", value.medium], ["utm_campaign", value.campaign]] as const;
+  const formatted = fields.flatMap(([name, label]) => label ? [`${name}=${label}`] : []).join(";");
+  return formatted && formatted.length <= 120 ? formatted : null;
+}
 
 export function publicEnquiryContext(input: { organizationId: string; centreId: string; id: string }) {
   return { organizationId: input.organizationId, centreId: input.centreId, recordId: input.id };

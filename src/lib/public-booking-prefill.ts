@@ -18,6 +18,24 @@ export function getPublicBookingPrefill(search: string, centres: readonly Public
   return { centreId, requestedService, requestedCatalogueItemId: requestedCatalogueVersion === null ? "" : requestedCatalogueItemId, requestedCatalogueVersion, visitType };
 }
 
+export type PublicCampaignAttribution = { source?: string; medium?: string; campaign?: string };
+
+/** Keep only short, non-personal UTM labels from the landing URL. */
+export function getPublicCampaignAttribution(search: string): PublicCampaignAttribution | undefined {
+  const params = new URLSearchParams(search);
+  const cleanLabel = (value: string | null) => {
+    if (!value) return undefined;
+    const normalized = value.trim().replace(/\s+/g, "-").toLowerCase();
+    return /^[a-z0-9._-]{1,24}$/.test(normalized) ? normalized : undefined;
+  };
+  const attribution = {
+    source: cleanLabel(params.get("utm_source")),
+    medium: cleanLabel(params.get("utm_medium")),
+    campaign: cleanLabel(params.get("utm_campaign")),
+  };
+  return Object.values(attribution).some(Boolean) ? attribution : undefined;
+}
+
 /** Copies only a service present in the currently loaded public catalogue into the editable request text. */
 export function getPublicBookingServiceText(serviceId: string, services: readonly PublicBookingService[]) {
   const service = services.find((item) => item.id === serviceId);

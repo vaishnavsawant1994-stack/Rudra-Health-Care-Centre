@@ -5,7 +5,7 @@ import { loadProjectEnvironment } from "../../../../../scripts/load-project-env.
 import { runMigrations } from "../../../../../scripts/migrate.mjs";
 import { openBusinessRelationship } from "@/server/business-relationship-data";
 import { encryptCentrePublicProfile } from "@/server/centre-public-profile";
-import { blindIndexLeadContact, decryptLeadValue, encryptLeadValue } from "@/server/lead-crypto";
+import { blindIndexLeadContact, decryptLeadPrivateData, decryptLeadValue, encryptLeadValue } from "@/server/lead-crypto";
 import { legacyPublicEnquiryFingerprint, publicEnquiryContext, type PublicEnquiryPayload } from "@/server/public-enquiry-policy";
 
 const mocks = vi.hoisted(() => ({ getApiAccess: vi.fn(), listPublicCatalogueCentres: vi.fn(), getPublicCatalogueItem: vi.fn() }));
@@ -175,10 +175,11 @@ describe("public enquiry PostgreSQL integration", () => {
 
   it("encrypts public intake, replays idempotently, converts transactionally, and leaves contact permission pending", async () => {
     const key = randomUUID();
-    const submitted = await post(submit(key, "+919876543210", centreId, { requestTopic: "CORPORATE", organizationName: "Synthetic Clinic Group" }));
+    const attribution = { source: "google-ads", medium: "cpc", campaign: "synthetic-winter" };
+    const submitted = await post(submit(key, "+919876543210", centreId, { requestTopic: "CORPORATE", organizationName: "Synthetic Clinic Group", campaignAttribution: attribution }));
     expect(submitted.status).toBe(202);
     const initial = await submitted.json() as { reference: string };
-    const replay = await post(submit(key, "+919876543210", centreId, { requestTopic: "CORPORATE", organizationName: "Synthetic Clinic Group" }));
+    const replay = await post(submit(key, "+919876543210", centreId, { requestTopic: "CORPORATE", organizationName: "Synthetic Clinic Group", campaignAttribution: attribution }));
     expect(replay.status).toBe(202);
     expect(await replay.json()).toEqual(initial);
     const [stored] = (await pool.query("SELECT id,status,private_data_ciphertext,phone_blind_index,request_fingerprint FROM public_enquiries WHERE organization_id=$1 AND idempotency_key=$2", [organizationId, key])).rows;
@@ -188,9 +189,10 @@ describe("public enquiry PostgreSQL integration", () => {
     expect(stored.phone_blind_index).toMatch(/^[a-f0-9]{64}$/);
     expect(stored.request_fingerprint).not.toContain("Synthetic");
     const storedPayload = decryptLeadValue<PublicEnquiryPayload>("private-data", stored.private_data_ciphertext, publicEnquiryContext({ organizationId, centreId, id: stored.id }));
+    expect(storedPayload.campaignAttribution).toEqual(attribution);
     const legacyFingerprintPayload = Object.fromEntries(Object.entries(storedPayload).filter(([field]) => field !== "submittedAt"));
     await pool.query("UPDATE public_enquiries SET request_fingerprint=$1 WHERE id=$2", [legacyPublicEnquiryFingerprint(legacyFingerprintPayload), stored.id]);
-    const legacyReplay = await post(submit(key, "+919876543210", centreId, { requestTopic: "CORPORATE", organizationName: "Synthetic Clinic Group" }));
+    const legacyReplay = await post(submit(key, "+919876543210", centreId, { requestTopic: "CORPORATE", organizationName: "Synthetic Clinic Group", campaignAttribution: attribution }));
     expect(legacyReplay.status).toBe(202);
     expect(await legacyReplay.json()).toEqual(initial);
     const response = await get(new Request(`http://localhost/api/public/enquiries?centreId=${centreId}`));
@@ -205,6 +207,8 @@ describe("public enquiry PostgreSQL integration", () => {
     expect(saved.rows[0]).toMatchObject({ status: "CONVERTED_TO_LEAD", reviewed_by_staff_id: staffUserId, resulting_lead_id: outcome.leadId });
     const lead = await pool.query("SELECT source,status,contact_permission,marketing_consent FROM leads WHERE id=$1", [outcome.leadId]);
     expect(lead.rows[0]).toMatchObject({ source: "WEBSITE", status: "NEW", contact_permission: "PENDING", marketing_consent: "NOT_REQUESTED" });
+    const [leadPrivate] = (await pool.query("SELECT payload_ciphertext FROM lead_private_data WHERE lead_id=$1", [outcome.leadId])).rows;
+    expect(decryptLeadPrivateData(leadPrivate.payload_ciphertext, { organizationId, centreId, recordId: outcome.leadId }).campaign).toBe("utm_source=google-ads;utm_medium=cpc;utm_campaign=synthetic-winter");
     const [activity] = (await pool.query("SELECT private_payload_ciphertext FROM lead_activities WHERE lead_id=$1", [outcome.leadId])).rows;
     expect(activity.private_payload_ciphertext).not.toContain("CORPORATE");
     expect(activity.private_payload_ciphertext).not.toContain("Synthetic Clinic Group");
