@@ -5,6 +5,12 @@
 - Matrix output and ignore behavior were verified. Application suite, PostgreSQL migration replay and build were not rerun for this inventory/source-control work. The latest recorded application checks remain 660/660 tests, TypeScript, lint and build from the 2026-11-02 checkpoint below.
 - Patient accounts remain disabled pending approved identity proofing. Key recovery/rotation/restore, configured scanner qualification, live authenticated authorization, browser/mobile acceptance, unapproved policy decisions and production qualification remain open. Synthetic data only.
 
+## Current security engineering checkpoint - Local key-file ACL hardening - 2026-11-03
+
+- On Windows, newly created encrypted key backups and temporary files used to restore encryption-key variables now receive an explicit ACL for the current account, SYSTEM and local Administrators before any key bytes are written. ACL failure removes the newly created file and aborts. Non-Windows platforms retain the existing restrictive creation mode.
+- Verification on the resulting tree: full default suite **662/662 across 162 files**, TypeScript, full lint and production build (**231 generated page entries**) passed. The key-recovery tests exercised encrypted synthetic backup/restore fixtures; no persistent key, `.env.local`, database or Owner account was read, replaced or rotated.
+- This is local-file permission hardening only. It does not qualify off-device backup handling, Windows media ACLs, coordinated PostgreSQL/report restore, key rotation, scanner deployment, live authorization, browser/mobile acceptance or production key custody. Synthetic data only.
+
 ## Historical verified checkpoint - Roster escalation scoping and test reliability - 2026-11-02
 
 - The encrypted website CMS supports optional reviewed SEO title/description overrides with page-copy fallback. Existing encrypted content remains compatible.

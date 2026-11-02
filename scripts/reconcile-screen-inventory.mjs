@@ -129,13 +129,15 @@ for (const screen of rows) {
   else if (key === "M") blocker = "Live platform credentials, publication authorization and ad-spend approval are absent.";
   const pageRef = screen.id === "W015" ? "No public report-entry route; /reports currently serves a staff-protected workspace (not equivalent)."
     : page ? `${routeForFile(page)} (${rel(page)})` : "No exact target route file found";
-  let implementation = "2. Partially implemented / mapping unresolved: proposed route is absent; inspect grouped routes and interactions.";
-  if (key === "P" || ["W014", "W015", "W016", "W017", "W023", "W024", "W025", "W026", "W009", "W010"].includes(screen.id)) implementation = "4. Blocked by external decision or integration; see blocker field.";
-  else if (!page && !apiCandidates.length && !groupedPages.length) implementation = "3. Not started: no exact route, related module page, or candidate API evidence found.";
-  else if (!page) implementation = "2. Partially implemented / mapping unresolved: related page/API evidence exists, but this screen's controls are not mapped or verified.";
-  else implementation = apiCandidates.length && relatedTests.length
-    ? "2. Partially implemented: page, module APIs and related tests exist; requirements still need action-by-action verification."
-    : "2. Partially implemented: page source exists, but matching API or test evidence is incomplete for this screen.";
+  const implementation = key === "P" || ["W014", "W015", "W016", "W017", "W023", "W024", "W025", "W026", "W009", "W010"].includes(screen.id)
+    ? "4. Blocked by external decision or integration; see blocker field."
+    : !page && !apiCandidates.length && !groupedPages.length
+      ? "3. Not started: no exact route, related module page, or candidate API evidence found."
+      : !page
+        ? "2. Partially implemented / mapping unresolved: related page/API evidence exists, but this screen's controls are not mapped or verified."
+        : apiCandidates.length && relatedTests.length
+          ? "2. Partially implemented: page, module APIs and related tests exist; requirements still need action-by-action verification."
+          : "2. Partially implemented: page source exists, but matching API or test evidence is incomplete for this screen.";
   const acceptance = "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.";
   const limitation = "API, schema and test lists are module-level candidates derived from file paths/imports; they do not prove every listed requirement or control works. See referenced source/tests before promotion to complete.";
   output.push([

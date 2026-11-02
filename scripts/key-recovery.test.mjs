@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { persistReportPdf, readReportPdf, removeReportPdf, safeReportStorageKey } from "../src/server/report-storage.ts";
 import { encryptOperationalData, decryptOperationalData } from "../src/server/operational-crypto.ts";
-import { collectEncryptionKeyMaterial, decryptKeyBackup, encryptKeyBackup, mergeRecoveredKeysIntoLocalEnv, readKeyBackup, writeNewKeyBackup } from "./key-recovery.mjs";
+import { collectEncryptionKeyMaterial, decryptKeyBackup, encryptKeyBackup, mergeRecoveredKeysIntoLocalEnv, readKeyBackup, secureLocalSecretFile, writeNewKeyBackup } from "./key-recovery.mjs";
 
 const passphrase = "synthetic-recovery-passphrase-2026";
 const env = {
@@ -87,6 +87,43 @@ describe("local encryption key recovery", () => {
     expect(await readKeyBackup(destination)).toEqual(envelope);
     await expect(writeNewKeyBackup(destination, envelope)).rejects.toMatchObject({ code: "EEXIST" });
     await expect(writeNewKeyBackup(path.join(path.dirname(fileURLToPath(import.meta.url)), "should-not-write.enc"), envelope)).rejects.toThrow("backup_destination_must_be_outside_project");
+  });
+
+  it("applies a restrictive Windows ACL before backup or recovered key bytes are written", () => {
+    let invocation;
+    secureLocalSecretFile("C:\\synthetic\\backup.enc", {
+      platform: "win32",
+      environment: { USERDOMAIN: "SYNTHETIC", USERNAME: "test-user" },
+      run: (...args) => { invocation = args; return { status: 0 }; },
+    });
+    expect(invocation?.[0]).toBe("icacls.exe");
+    expect(invocation?.[1]).toEqual([
+      "C:\\synthetic\\backup.enc",
+      "/inheritance:r",
+      "/grant:r",
+      "SYNTHETIC\\test-user:(F)",
+      "NT AUTHORITY\\SYSTEM:(F)",
+      "*S-1-5-32-544:(F)",
+    ]);
+    expect(invocation?.[2]).toMatchObject({ encoding: "utf8", windowsHide: true });
+  });
+
+  it("fails closed if Windows backup ACL setup is unavailable", () => {
+    expect(() => secureLocalSecretFile("C:\\synthetic\\backup.enc", {
+      platform: "win32",
+      environment: { USERNAME: "test-user" },
+      run: () => ({ status: 1 }),
+    })).toThrow("backup_permissions_unavailable");
+    expect(() => secureLocalSecretFile("C:\\synthetic\\backup.enc", {
+      platform: "win32",
+      environment: {},
+      run: () => ({ status: 0 }),
+    })).toThrow("backup_permissions_unavailable");
+    expect(() => secureLocalSecretFile("/tmp/synthetic-backup.enc", {
+      platform: "linux",
+      environment: {},
+      run: () => { throw new Error("must_not_run"); },
+    })).not.toThrow();
   });
 
   it("rejects backup paths redirected into the repository through a directory junction", async () => {

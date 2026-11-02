@@ -1,5 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes, scrypt as scryptCallback, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
+import { spawnSync } from "node:child_process";
 import { lstat, open, readFile, realpath, rename, rm, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -129,10 +130,29 @@ export async function writeNewKeyBackup(destination, envelope) {
   const filePath = await assertOutsideProject(path.resolve(destination), "backup_destination");
   if (path.extname(filePath).toLowerCase() !== ".enc") throw new Error("backup_extension_invalid");
   const handle = await open(filePath, "wx", 0o600);
-  try { await handle.writeFile(serializeKeyBackup(envelope), { encoding: "utf8" }); await handle.sync(); }
+  try {
+    await secureLocalSecretFile(filePath);
+    await handle.writeFile(serializeKeyBackup(envelope), { encoding: "utf8" });
+    await handle.sync();
+  }
   catch (error) { await handle.close().catch(() => {}); await rm(filePath, { force: true }).catch(() => {}); throw error; }
   await handle.close();
   return filePath;
+}
+
+export function secureLocalSecretFile(filePath, { platform = process.platform, environment = process.env, run = spawnSync } = {}) {
+  if (platform !== "win32") return;
+  const account = `${environment.USERDOMAIN ?? ""}\\${environment.USERNAME ?? ""}`.replace(/^\\/, "");
+  if (!account || account === "\\") throw new Error("backup_permissions_unavailable");
+  const result = run("icacls.exe", [
+    filePath,
+    "/inheritance:r",
+    "/grant:r",
+    `${account}:(F)`,
+    "NT AUTHORITY\\SYSTEM:(F)",
+    "*S-1-5-32-544:(F)",
+  ], { encoding: "utf8", windowsHide: true });
+  if (result.error || result.status !== 0) throw new Error("backup_permissions_unavailable");
 }
 
 export async function readKeyBackup(filePath) {
@@ -172,7 +192,11 @@ export async function mergeRecoveredKeysIntoLocalEnv(environmentFile, material, 
   const content = `${merged.filter((line, index, list) => line !== "" || index < list.length - 1).join("\n").replace(/\n*$/, "\n")}`;
   const temporary = path.join(projectRoot, `.env.local.restore-${process.pid}-${randomBytes(6).toString("hex")}.tmp`);
   const handle = await open(temporary, "wx", 0o600);
-  try { await handle.writeFile(content, { encoding: "utf8" }); await handle.sync(); }
+  try {
+    await secureLocalSecretFile(temporary);
+    await handle.writeFile(content, { encoding: "utf8" });
+    await handle.sync();
+  }
   catch (error) { await handle.close().catch(() => {}); await rm(temporary, { force: true }).catch(() => {}); throw error; }
   await handle.close();
   try { await rename(temporary, filePath); }
