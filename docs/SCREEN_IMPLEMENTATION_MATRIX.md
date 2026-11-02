@@ -12,9 +12,9 @@ node scripts/reconcile-screen-inventory.mjs
 ## Current source reconciliation
 
 - Parsed **178/178** screen IDs from the proposal.
-- **30** IDs have an exact target-route page file plus candidate module API and related test evidence. They remain **partially implemented** until the listed screen requirements and actions are checked individually.
+- **29** IDs have an exact target-route page file plus candidate module API and related test evidence. They remain **partially implemented** until the listed screen requirements and actions are checked individually.
 - **123** IDs have no exact page at the proposed URL. The matrix lists possible module-level source routes, APIs and tests where found. These could be consolidated or renamed routes; the screen-to-source/action mapping is unresolved and must be inspected before treating them as absent or complete.
-- **25** IDs are blocked by the patient identity-proofing gate or by external/policy dependencies recorded in their row.
+- **26** IDs are blocked by the patient identity-proofing gate or by external/policy dependencies recorded in their row. W015 is specifically not satisfied by the existing staff-only `/reports` route.
 - No screen is marked fully implemented or “implementation complete, acceptance pending” by this generator. File presence, route manifests, tests in the same module and candidate API matches are not enough evidence to make that claim.
 
 ## Reading the CSV

@@ -127,9 +127,10 @@ for (const screen of rows) {
   else if (["W009", "W010"].includes(screen.id)) blocker = "Live checkout/payment provider and verified-patient delivery are not configured.";
   else if (["A002", "A003", "A004", "A005"].includes(screen.id)) blocker = "Real communications providers and consent/policy approvals are not configured.";
   else if (key === "M") blocker = "Live platform credentials, publication authorization and ad-spend approval are absent.";
-  const pageRef = page ? `${routeForFile(page)} (${rel(page)})` : "No exact target route file found";
+  const pageRef = screen.id === "W015" ? "No public report-entry route; /reports currently serves a staff-protected workspace (not equivalent)."
+    : page ? `${routeForFile(page)} (${rel(page)})` : "No exact target route file found";
   let implementation = "2. Partially implemented / mapping unresolved: proposed route is absent; inspect grouped routes and interactions.";
-  if (key === "P" || (!page && ["W014", "W015", "W016", "W017"].includes(screen.id)) || ["W023", "W024", "W025", "W026", "W009", "W010"].includes(screen.id)) implementation = "4. Blocked by external decision or integration; see blocker field.";
+  if (key === "P" || ["W014", "W015", "W016", "W017", "W023", "W024", "W025", "W026", "W009", "W010"].includes(screen.id)) implementation = "4. Blocked by external decision or integration; see blocker field.";
   else if (!page && !apiCandidates.length && !groupedPages.length) implementation = "3. Not started: no exact route, related module page, or candidate API evidence found.";
   else if (!page) implementation = "2. Partially implemented / mapping unresolved: related page/API evidence exists, but this screen's controls are not mapped or verified.";
   else implementation = apiCandidates.length && relatedTests.length
