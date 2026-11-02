@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { PageTitle } from "@/components/ui/page-title";
 import { PublicFaq } from "@/components/website/public-faq";
 import { getPublishedWebsiteContent, getPublishedWebsiteMetadata } from "@/server/public-website-content";
@@ -16,9 +17,14 @@ const defaultQuestions: PublicFaqItem[] = [
   { question: "How do I confirm collection coverage or preparation?", answer: "Check published service information, then confirm centre-specific availability and instructions directly with Rudra before acting. This site does not determine clinical preparation or specimen handling requirements.", topic: "Home collection" },
 ];
 
-function FaqContent({ items }: { items: PublicFaqItem[] }) {
+export function FaqContent({ items }: { items: PublicFaqItem[] }) {
   return <div className="inner-page"><div className="page-container">
     <PageTitle eyebrow="Helpful information" title="Frequently asked questions" description="What the public catalogue and booking information can and cannot confirm today." />
+    <section className="admin-card" aria-labelledby="faq-service-guide-title">
+      <h2 id="faq-service-guide-title">Need a guided next step?</h2>
+      <p>Use the Rudra service guide for fixed-choice help with the verified catalogue, visit requests and contacting the team. It is not an AI or medical-advice service.</p>
+      <Link className="button-link" href="/chat">Open Rudra service guide</Link>
+    </section>
     <PublicFaq items={items} />
   </div></div>;
 }
