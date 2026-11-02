@@ -2003,3 +2003,7 @@ The 178-screen matrix now maps W008's `/book/review` target to the verified in-f
 ### 2026-11-03 checkpoint - FAQ service-guide handoff (W022 partial)
 
 The public FAQ now links to `/chat`, the existing fixed-choice Rudra service guide. The wording explicitly says it is not an AI or medical-advice service. Focused test passed 1/1; full default suite passed 673/673 across 165 files; TypeScript, lint, and production build passed (232 page entries). This presentation-only handoff adds no database behavior or external service. W022 remains partial; browser/mobile acceptance and the broader public-site backlog remain pending. Patient accounts remain disabled until identity proofing is approved. Synthetic-data development only.
+
+### 2026-11-03 checkpoint - Staff-triggered due approval checks
+
+Supervisor approvals now expose a manual trigger for due task-completion expiry/escalation checks. It uses the existing same-origin, MFA-protected, centre-scoped endpoint and does not approve or reject tasks. Focused UI/API tests passed 4/4; full default suite passed 674/674 across 166 files; TypeScript, lint, and production build passed (232 page entries). No migration was required. No production scheduler/caller is configured, so automatic deadline processing remains pending. Sensitive-domain approval types stay disabled pending explicit policy approval. Synthetic data only; live role/browser acceptance remains deferred.

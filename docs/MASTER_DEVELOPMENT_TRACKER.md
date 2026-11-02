@@ -2380,3 +2380,9 @@ Verification: scanner and system API focused tests **12/12**; default `npm.cmd t
 - Added server-rendered regression coverage for the FAQ handoff. Focused test passed **1/1**; full default suite **673/673 across 165 files**; TypeScript and lint passed; production build passed with **232 page entries**. No PostgreSQL migration replay was needed because this is a presentation-only cross-link.
 - W022 remains partial because the guide is deterministic, not AI, and final public browser/mobile review remains pending. Patient portal accounts stay disabled pending identity-proofing approval. Other P2-09 security gates, provider integrations, remaining roadmap modules and production qualification remain open. Synthetic-data development only.
 
+## 2026-11-03 checkpoint - Staff-triggered due approval checks
+
+- The Supervisor approvals workspace now exposes the existing due-approval processor to sessions already authorized for `tasks.approve`. It processes only due task-completion approval expiry/escalation checks in the caller's permitted centre scope; it cannot approve or reject tasks. The API continues enforcing same-origin requests, complete authenticated access (including MFA), and bounded/transactional processing. The UI reports counts and generic errors only.
+- Added a server-rendered control test. Focused UI/API tests passed **4/4**; full default suite passed **674/674 across 166 files**; TypeScript, lint and production build passed (**232 page entries**). Existing PostgreSQL worker lifecycle integration remained part of the full suite; no migration or persistent data change.
+- This provides an authorized manual trigger only. No production scheduler or caller is configured, so automatic deadline processing remains an operational dependency. Sensitive-domain approval actions remain disabled pending policy approval. Live role/browser acceptance and other security/production gates remain open. Synthetic data only.
+
