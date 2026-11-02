@@ -1,3 +1,9 @@
+## 2026-11-03 checkpoint - Referral attribution report (C005 partial)
+
+- Added `/relationships/referrals` and `/api/relationships/referrals` for authorized, centre-scoped counts of doctor/corporate/partner-attributed CRM leads and recorded patient conversions. The report requires the same staff identity to hold both `leads.read` and the corresponding relationship read permission for the selected centre. It excludes patient/contact data, supports bounded date filters and pagination, and is exposed in staff navigation only when compatible grants exist.
+- This is attribution reporting only. It does not reconcile referral evidence, infer consent/entitlement, calculate revenue or validate clinical outcomes. C005 remains partial and browser/mobile acceptance remains pending. No schema/migration, dependency, credential, key, persistent data or external service changed.
+- Verification: focused route tests **4/4**; full default suite **678/678 across 167 files** (includes PostgreSQL-backed route integration suites); TypeScript, lint and production build passed (**234 generated page entries**). The conservative 178-screen matrix now maps the exact page route while retaining partial status. Synthetic data only; portal accounts remain disabled pending identity-proofing approval.
+
 ## 2026-11-03 checkpoint - Public booking request review step (W008 partial)
 
 - The public booking request form now has a review-before-submit step. It summarizes the selected centre, visitor contact, requested service, visit type, preferred date/window and home-collection address, and offers Edit or Send for staff review. The final action continues through the existing encrypted, rate-limited, same-origin, idempotent public-enquiry API. It states that no slot or fee is reserved/quoted and no appointment is confirmed; staff must verify eligibility, pricing and availability. It does not expose patient account access or external payment.
