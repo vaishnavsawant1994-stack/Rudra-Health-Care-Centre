@@ -4,7 +4,7 @@ import pg from "pg";
 import { loadProjectEnvironment } from "../../../../../scripts/load-project-env.mjs";
 import { runMigrations } from "../../../../../scripts/migrate.mjs";
 import { decryptOperationalData, encryptOperationalData, operationalContext } from "@/server/operational-crypto";
-import { escalationActionFingerprint } from "@/server/escalation-request-fingerprint";
+import { escalationActionFingerprint, escalationRequestFingerprint } from "@/server/escalation-request-fingerprint";
 
 const mocks = vi.hoisted(() => ({ getApiAccess: vi.fn() }));
 vi.mock("@/server/access", () => ({ getApiAccess: mocks.getApiAccess }));
@@ -24,6 +24,7 @@ describe("escalation action replay authorization PostgreSQL integration", () => 
   let commentEscalationId: string;
   let idempotencyKey: string;
   let requestHash: string;
+  let createEscalation: typeof import("../route").POST;
 
   beforeAll(async () => {
     loadProjectEnvironment();
@@ -61,6 +62,7 @@ describe("escalation action replay authorization PostgreSQL integration", () => 
       ? { staff: { organizationId, staffUserId, grants: [{ key: "escalations.read", centreId }] }, response: null }
       : { staff: null, response: Response.json({ error: "forbidden" }, { status: 403 }) });
     ({ PATCH: patch } = await import("./route"));
+    ({ POST: createEscalation } = await import("../route"));
   }, 120_000);
 
   afterAll(async () => {
@@ -151,5 +153,44 @@ describe("escalation action replay authorization PostgreSQL integration", () => 
     expect(body.escalation).toMatchObject({ title: "Preserve source title", description: "Original escalation description" });
     expect(body.history).toHaveLength(1);
     expect(body.history[0]).toMatchObject({ eventType: "COMMENTED", comment });
+  });
+
+  it("denies PostgreSQL duplicate-suppression replay after escalation centre access is lost", async () => {
+    const sourceId = randomUUID(); const sourceEscalationId = randomUUID(); const sourceEventId = randomUUID();
+    const requestKey = randomUUID();
+    const requestBody = {
+      centreId,
+      source: { type: "LEAD", id: sourceId },
+      title: "Synthetic duplicate replay authorization",
+      description: "Synthetic escalation record used only by the PostgreSQL test.",
+      severity: "MODERATE",
+      priority: "NORMAL",
+      assignedOwnerStaffId: staffUserId,
+      dueAt: "2099-01-01T10:00:00.000Z",
+      deduplicateOpenSource: true,
+    };
+    const sourceRequestHash = escalationRequestFingerprint(requestBody);
+    const ciphertext = encryptOperationalData({ title: requestBody.title, description: requestBody.description }, operationalContext({ organizationId, centreId, recordId: sourceEscalationId }, "staff-escalation"));
+    const eventCiphertext = encryptOperationalData({ result: { alreadyOpen: true }, privateRequest: { title: requestBody.title, description: requestBody.description }, sourceType: "LEAD" }, operationalContext({ organizationId, centreId, recordId: sourceEventId }, "staff-escalation-event"));
+    const assignedReadRoleId = randomUUID();
+    await pool!.query("INSERT INTO roles(id,organization_id,key,name,scope) VALUES($1,$2,$3,$4,'CENTRE')", [assignedReadRoleId, organizationId, `synthetic_escalation_replay_${assignedReadRoleId.slice(0, 8)}`, "Synthetic assigned escalation reader"]);
+    await pool!.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='escalations.assigned.read'", [assignedReadRoleId]);
+    await pool!.query("INSERT INTO staff_role_assignments(organization_id,staff_user_id,role_id,centre_id,assigned_by_staff_id) VALUES($1,$2,$3,$4,$2)", [organizationId, staffUserId, assignedReadRoleId, centreId]);
+    await pool!.query("INSERT INTO staff_escalations(id,organization_id,centre_id,escalation_number,source_type,source_id,private_data_ciphertext,severity,priority,status,assigned_owner_staff_id,created_by_staff_id,due_at,idempotency_key,request_hash,version_number) VALUES($1,$2,$3,$4,'LEAD',$5,$6,'MODERATE','NORMAL','OPEN',$7,$7,now()+interval '1 hour',$8,$9,1)", [sourceEscalationId, organizationId, centreId, `RHC-E-REPLAY-${randomUUID().slice(0, 8)}`, sourceId, ciphertext, staffUserId, randomUUID(), "c".repeat(64)]);
+    await pool!.query("INSERT INTO staff_escalation_events(id,organization_id,centre_id,escalation_id,event_type,private_data_ciphertext,actor_staff_id,idempotency_key,request_hash) VALUES($1,$2,$3,$4,'DUPLICATE_SUPPRESSED',$5,$6,$7,$8)", [sourceEventId, organizationId, centreId, sourceEscalationId, eventCiphertext, staffUserId, requestKey, sourceRequestHash]);
+
+    mocks.getApiAccess.mockImplementation(async (permission: string) => permission === "escalations.create"
+      ? { staff: { organizationId, staffUserId, grants: [{ key: "escalations.create", centreId }] }, response: null }
+      : { staff: null, response: Response.json({ error: "forbidden" }, { status: 403 }) });
+    const response = await createEscalation(new Request("http://localhost/api/escalations", {
+      method: "POST",
+      headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": requestKey },
+      body: JSON.stringify(requestBody),
+    }));
+    expect({ status: response.status, body: await response.json() }).toEqual({ status: 404, body: { error: "not_found" } });
+    const persisted = await pool!.query("SELECT count(*)::int AS count FROM staff_escalations WHERE organization_id=$1 AND centre_id=$2 AND source_id=$3", [organizationId, centreId, sourceId]);
+    expect(persisted.rows[0].count).toBe(1);
+    const events = await pool!.query("SELECT count(*)::int AS count FROM staff_escalation_events WHERE organization_id=$1 AND centre_id=$2 AND escalation_id=$3 AND idempotency_key=$4", [organizationId, centreId, sourceEscalationId, requestKey]);
+    expect(events.rows[0].count).toBe(1);
   });
 });
