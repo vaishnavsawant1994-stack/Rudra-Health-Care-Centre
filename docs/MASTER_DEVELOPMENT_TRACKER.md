@@ -1,4 +1,11 @@
-## Current verified checkpoint - Roster escalation scoping and test reliability - 2026-11-02
+## Current verified checkpoint - Local source baseline and 178-screen index - 2026-11-03
+
+- Local project-only Git repository initialized with initial commit `f708b48`; no remote is configured. Ignore rules cover local environment, report/database/key material, logs, dependencies and build output. The index was checked for those categories before commit.
+- `scripts/reconcile-screen-inventory.mjs` generates `docs/SCREEN_IMPLEMENTATION_MATRIX.csv` from the authoritative 178-ID proposal and current source tree. Current conservative classifications: 30 exact-route rows have page + module API + related-test evidence but remain partial; 123 proposed URLs need grouped-route/source mapping; 25 rows are blocked by identity-proofing or external/policy dependencies. None is automatically marked fully implemented.
+- Matrix output and ignore behavior were verified. Application suite, PostgreSQL migration replay and build were not rerun for this inventory/source-control work. The latest recorded application checks remain 660/660 tests, TypeScript, lint and build from the 2026-11-02 checkpoint below.
+- Patient accounts remain disabled pending approved identity proofing. Key recovery/rotation/restore, configured scanner qualification, live authenticated authorization, browser/mobile acceptance, unapproved policy decisions and production qualification remain open. Synthetic data only.
+
+## Historical verified checkpoint - Roster escalation scoping and test reliability - 2026-11-02
 
 - The encrypted website CMS supports optional reviewed SEO title/description overrides with page-copy fallback. Existing encrypted content remains compatible.
 - PostgreSQL integration fixtures close and clear the process-global application pool before dropping disposable schemas, then restore `DATABASE_URL` to the dedicated test database. This resolved accumulated connection and teardown failures in the default suite.
