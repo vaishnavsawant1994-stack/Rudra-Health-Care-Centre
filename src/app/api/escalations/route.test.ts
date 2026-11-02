@@ -103,4 +103,60 @@ describe("escalation source deduplication", () => {
     expect(tx.insert).not.toHaveBeenCalled();
     expect(resolveTaskReference).toHaveBeenCalledOnce();
   });
+
+  it("does not replay a duplicate-suppression result after centre read access is lost", async () => {
+    const key = "33333333-3333-4333-8333-333333333333";
+    const requestBody = { centreId: "44444444-4444-4444-8444-444444444444", source: { type: "LEAD_FOLLOWUP", id: "66666666-6666-4666-8666-666666666666" }, title: "Review lead callback", description: "Synthetic CRM follow-up escalation", severity: "MODERATE", priority: "NORMAL", assignedOwnerStaffId: "11111111-1111-4111-8111-111111111111", dueAt: "2099-01-01T10:00:00.000Z", deduplicateOpenSource: true };
+    const idempotencyLookup = { from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue([]) };
+    const priorEventLookup = { from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue([{ escalationId: "55555555-5555-4555-8555-555555555555", centreId: requestBody.centreId, requestHash: escalationRequestFingerprint(requestBody), privateDataCiphertext: "ciphertext", eventId: "77777777-7777-4777-8777-777777777777" }]) };
+    const tx = { execute: vi.fn(), select: vi.fn().mockReturnValueOnce(idempotencyLookup).mockReturnValueOnce(priorEventLookup), insert: vi.fn() };
+    const staffLookup = { from: vi.fn().mockReturnThis(), innerJoin: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue([{ id: requestBody.assignedOwnerStaffId }]) };
+    getDb.mockReturnValue({ select: vi.fn(() => staffLookup), transaction: vi.fn(async (callback: (transaction: typeof tx) => Promise<unknown>) => callback(tx)) });
+    const staff = { organizationId: "22222222-2222-4222-8222-222222222222", staffUserId: requestBody.assignedOwnerStaffId };
+    getApiAccess.mockImplementation(async (permission: string) => permission === "escalations.create"
+      ? { staff, response: null }
+      : { staff, response: Response.json({ error: "forbidden" }, { status: 403 }) });
+    resolveTaskReference.mockResolvedValue("Synthetic lead follow-up");
+    const crypto = await import("@/server/operational-crypto");
+    vi.mocked(crypto.decryptOperationalData).mockReturnValueOnce({ result: { alreadyOpen: true }, privateRequest: { title: requestBody.title, description: requestBody.description } } as never);
+
+    const { POST } = await import("./route");
+    const response = await POST(new Request("http://localhost/api/escalations", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": key }, body: JSON.stringify(requestBody) }));
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: "not_found" });
+    expect(getApiAccess.mock.calls.map(([permission]) => permission)).toEqual(["escalations.create", "escalations.read", "escalations.assigned.read"]);
+    expect(tx.insert).not.toHaveBeenCalled();
+  });
+
+  it("permits assigned-only replay only to the linked escalation owner", async () => {
+    const key = "33333333-3333-4333-8333-333333333333";
+    const requestBody = { centreId: "44444444-4444-4444-8444-444444444444", source: { type: "LEAD_FOLLOWUP", id: "66666666-6666-4666-8666-666666666666" }, title: "Review lead callback", description: "Synthetic CRM follow-up escalation", severity: "MODERATE", priority: "NORMAL", assignedOwnerStaffId: "11111111-1111-4111-8111-111111111111", dueAt: "2099-01-01T10:00:00.000Z", deduplicateOpenSource: true };
+    const staff = { organizationId: "22222222-2222-4222-8222-222222222222", staffUserId: requestBody.assignedOwnerStaffId, grants: [{ key: "escalations.assigned.read", centreId: requestBody.centreId }] };
+
+    async function replay(assigneeId: string) {
+      getApiAccess.mockReset(); getDb.mockReset(); resolveTaskReference.mockReset();
+      const idempotencyLookup = { from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue([]) };
+      const priorEventLookup = { from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue([{ escalationId: "55555555-5555-4555-8555-555555555555", centreId: requestBody.centreId, requestHash: escalationRequestFingerprint(requestBody), privateDataCiphertext: "ciphertext", eventId: "77777777-7777-4777-8777-777777777777" }]) };
+      const assignedEscalationLookup = { from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue([{ assignedOwnerStaffId: assigneeId }]) };
+      const tx = { execute: vi.fn(), select: vi.fn().mockReturnValueOnce(idempotencyLookup).mockReturnValueOnce(priorEventLookup).mockReturnValueOnce(assignedEscalationLookup), insert: vi.fn() };
+      const staffLookup = { from: vi.fn().mockReturnThis(), innerJoin: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue([{ id: requestBody.assignedOwnerStaffId }]) };
+      getDb.mockReturnValue({ select: vi.fn(() => staffLookup), transaction: vi.fn(async (callback: (transaction: typeof tx) => Promise<unknown>) => callback(tx)) });
+      getApiAccess.mockImplementation(async (permission: string) => permission === "escalations.read"
+        ? { staff: null, response: Response.json({ error: "forbidden" }, { status: 403 }) }
+        : { staff, response: null });
+      resolveTaskReference.mockResolvedValue("Synthetic lead follow-up");
+      const crypto = await import("@/server/operational-crypto");
+      vi.mocked(crypto.decryptOperationalData).mockReturnValueOnce({ result: { alreadyOpen: true }, privateRequest: { title: requestBody.title, description: requestBody.description } } as never);
+      const { POST } = await import("./route");
+      return POST(new Request("http://localhost/api/escalations", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": key }, body: JSON.stringify(requestBody) }));
+    }
+
+    const authorized = await replay(staff.staffUserId);
+    expect(authorized.status).toBe(200);
+    expect(await authorized.json()).toEqual({ escalation: { replayed: true, alreadyOpen: true } });
+    const denied = await replay("88888888-8888-4888-8888-888888888888");
+    expect(denied.status).toBe(404);
+    expect(await denied.json()).toEqual({ error: "not_found" });
+  });
 });

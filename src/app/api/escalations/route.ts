@@ -115,6 +115,13 @@ export async function POST(request: Request) {
         const hashMatches = priorEvent.requestHash === requestHash || priorEvent.requestHash === legacyRequestHash;
         if (!hashMatches || !sameEscalationPrivateRequest(eventResult.privateRequest, data)) throw new Error("idempotency_conflict");
         if (!eventResult.result) throw new Error("idempotency_result_unavailable");
+        const priorAccess = await readAccess(priorEvent.centreId);
+        if (priorAccess.response) throw new Error("not_found");
+        if (priorAccess.assignedOnly) {
+          const [assignedEscalation] = await tx.select({ assignedOwnerStaffId: staffEscalations.assignedOwnerStaffId }).from(staffEscalations)
+            .where(and(eq(staffEscalations.id, priorEvent.escalationId), eq(staffEscalations.organizationId, staff.organizationId), eq(staffEscalations.centreId, priorEvent.centreId))).limit(1);
+          if (assignedEscalation?.assignedOwnerStaffId !== priorAccess.staff.staffUserId) throw new Error("not_found");
+        }
         return { replayed: true, alreadyOpen: eventResult.result.alreadyOpen === true };
       }
       if (data.deduplicateOpenSource) {
@@ -141,6 +148,6 @@ export async function POST(request: Request) {
     return Response.json({ escalation: result }, { status: result.replayed || result.alreadyOpen ? 200 : 201 });
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
-    return Response.json({ error: ["idempotency_conflict", "assignee_not_found"].includes(code) ? code : "escalation_creation_failed" }, { status: code === "idempotency_conflict" ? 409 : code === "assignee_not_found" ? 400 : 500 });
+    return Response.json({ error: ["not_found", "idempotency_conflict", "assignee_not_found"].includes(code) ? code : "escalation_creation_failed" }, { status: code === "idempotency_conflict" ? 409 : code === "assignee_not_found" ? 400 : code === "not_found" ? 404 : 500 });
   }
 }

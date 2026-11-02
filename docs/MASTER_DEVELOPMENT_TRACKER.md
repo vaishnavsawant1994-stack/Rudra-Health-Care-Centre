@@ -11,6 +11,12 @@
 - Verification on the resulting tree: full default suite **662/662 across 162 files**, TypeScript, full lint and production build (**231 generated page entries**) passed. The key-recovery tests exercised encrypted synthetic backup/restore fixtures; no persistent key, `.env.local`, database or Owner account was read, replaced or rotated.
 - This is local-file permission hardening only. It does not qualify off-device backup handling, Windows media ACLs, coordinated PostgreSQL/report restore, key rotation, scanner deployment, live authorization, browser/mobile acceptance or production key custody. Synthetic data only.
 
+## Current Centre Operations checkpoint - Escalation replay authorization - 2026-11-03
+
+- Duplicate-suppression idempotency replay in `POST /api/escalations` now rechecks read permission for the recorded centre before returning the saved `alreadyOpen` outcome. Assigned-only readers additionally must own the linked escalation. Out-of-scope replays return the same 404 as an unavailable record; no escalation details are returned. This closes a narrow disclosure path and does not complete Centre & Staff Operations.
+- Verification: escalation route tests **7/7** including loss-of-centre-read regression; default suite **664/664 across 162 files**; typecheck, full lint and production build (**231 page entries**) passed. The new regression is mocked route-level coverage; no live authenticated replay or dedicated PostgreSQL integration for this case was performed. No migration or persistent record changed.
+- Remaining: full role workflow/browser acceptance, production approval-deadline scheduler configuration, generic sensitive-domain approval policies (still disabled pending authorization), key recovery/rotation and scanner qualification, plus the rest of the development roadmap. Synthetic data only.
+
 ## Historical verified checkpoint - Roster escalation scoping and test reliability - 2026-11-02
 
 - The encrypted website CMS supports optional reviewed SEO title/description overrides with page-copy fallback. Existing encrypted content remains compatible.
