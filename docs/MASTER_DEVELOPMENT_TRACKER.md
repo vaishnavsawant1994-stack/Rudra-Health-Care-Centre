@@ -1,3 +1,9 @@
+## 2026-11-03 checkpoint - Public partner enquiry route alias (W020)
+
+- Added the proposed public `/partner` path as a redirect to canonical `/partners`, which renders the existing partner landing page and staff-reviewed encrypted public enquiry form. Partner submissions remain enquiries only: they do not create an agreement, referral entitlement, commission, patient access, or external contact. No CRM or authorization workflow was duplicated.
+- The 178-screen source matrix was regenerated and now identifies the exact W020 route, while conservatively retaining its partial status pending action-level acceptance. Verification: focused redirect test **1/1**; full default suite **669/669 across 163 files**; typecheck, full lint and production build passed (**232 page entries**). No migration, dependency, persistent data, account, key or external service changed.
+- Public browser/mobile review and content/legal approval remain pending. Other Public Website/Portal screens and the overall backlog remain incomplete; patient portal accounts remain disabled pending identity proofing. Synthetic-data development only.
+
 ## 2026-11-03 checkpoint - Centre-scoped campaign attribution validation
 
 - Public enquiry conversion now maps the allowlisted `utm_campaign` label to `leads.marketingCampaignId` only when it exactly matches an active campaign code in the same organization and centre. The lookup runs within the conversion transaction. Visitor-provided labels without a matching active Rudra campaign remain only in encrypted lead metadata and are excluded from verified campaign metrics. Source remains `WEBSITE`, contact permission remains pending, and marketing consent stays `NOT_REQUESTED`.
