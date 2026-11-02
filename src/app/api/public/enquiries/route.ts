@@ -11,7 +11,7 @@ import { addLeadActivity, saveLeadPrivateData } from "@/server/lead-private";
 import { getPublicCatalogueItem } from "@/server/public-catalogue";
 import { listPublicEnquiryCentres } from "@/server/public-enquiry-centres";
 import { formatPublicCampaignAttribution, publicEnquiryContext, publicEnquiryCreateSchema, publicEnquiryFingerprint, publicEnquiryRequestContext, publicEnquiryReviewSchema, verifyPublicEnquiryFingerprint, type PublicEnquiryPayload } from "@/server/public-enquiry-policy";
-import { leads, leadPrivateData } from "@/db/schema";
+import { leads, leadPrivateData, marketingCampaigns } from "@/db/schema";
 import { hasLeadCentrePermission } from "@/server/lead-policy";
 import { isAssignableStaff } from "@/server/lead-assignments";
 import { sealBusinessRelationship, sealBusinessRelationshipEvent, type BusinessRelationshipType, type BusinessRelationshipPrivateData } from "@/server/business-relationship-data";
@@ -227,6 +227,13 @@ export async function PATCH(request: Request) {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${identityLock}, 0))`);
       const duplicate = await tx.select({ id: leadPrivateData.leadId }).from(leadPrivateData).where(and(eq(leadPrivateData.organizationId, row.organizationId), eq(leadPrivateData.centreId, row.centreId), sql`(${phoneIndex ? sql`${leadPrivateData.phoneBlindIndex} = ${phoneIndex}` : sql`false`} OR ${emailIndex ? sql`${leadPrivateData.emailBlindIndex} = ${emailIndex}` : sql`false`})`)).limit(1);
       if (duplicate.length) throw new Error("possible_duplicate_review_required");
+      let marketingCampaignId: string | null = null;
+      const campaignCode = payload.campaignAttribution?.campaign;
+      if (campaignCode) {
+        const [campaign] = await tx.select({ id: marketingCampaigns.id }).from(marketingCampaigns)
+          .where(and(eq(marketingCampaigns.organizationId, row.organizationId), eq(marketingCampaigns.centreId, row.centreId), eq(marketingCampaigns.status, "ACTIVE"), sql`lower(${marketingCampaigns.campaignCode}) = ${campaignCode}`)).limit(1);
+        marketingCampaignId = campaign?.id ?? null;
+      }
       const leadId = randomUUID();
       const leadNumber = `RHC-L-${new Date().getFullYear()}-${leadId.slice(0, 8).toUpperCase()}`;
       const [lead] = await tx.insert(leads).values({
@@ -234,6 +241,7 @@ export async function PATCH(request: Request) {
         enquiryCategory: payload.category, homeCollectionInterest: payload.category === "HOME_COLLECTION", source: "WEBSITE", status: "NEW", priority: "NORMAL",
         assignedStaffId: action.data.assignedStaffId, preferredChannel: phone ? "PHONE" : "EMAIL",
         contactPermission: "PENDING", contactPermissionRecordedBy: null, contactPermissionRecordedAt: null,
+        marketingCampaignId,
         createdByStaffId: access.staff.staffUserId,
       }).returning({ id: leads.id, leadNumber: leads.leadNumber });
       const privateLead: LeadPrivateData = { firstName: payload.firstName, lastName: payload.lastName, phone, email, interestedService: payload.requestedService, campaign: formatPublicCampaignAttribution(payload.campaignAttribution), contactEvidenceReference: null, marketingEvidenceReference: null, lostReason: null };

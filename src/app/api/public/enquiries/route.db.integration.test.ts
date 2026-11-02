@@ -174,6 +174,10 @@ describe("public enquiry PostgreSQL integration", () => {
   });
 
   it("encrypts public intake, replays idempotently, converts transactionally, and leaves contact permission pending", async () => {
+    const { encryptOperationalData, operationalContext } = await import("@/server/operational-crypto");
+    const campaignId = randomUUID();
+    const campaignCiphertext = encryptOperationalData({ name: "Synthetic winter campaign", description: null }, operationalContext({ organizationId, centreId, recordId: campaignId }, "marketing-campaign"));
+    await pool.query("INSERT INTO marketing_campaigns(id,organization_id,centre_id,campaign_code,channel,status,private_data_ciphertext,created_by_staff_id,updated_by_staff_id,idempotency_key,request_hash) VALUES($1,$2,$3,'SYNTHETIC-WINTER','WEBSITE','ACTIVE',$4,$5,$5,$6,$7)", [campaignId, organizationId, centreId, campaignCiphertext, staffUserId, randomUUID(), "c".repeat(64)]);
     const key = randomUUID();
     const attribution = { source: "google-ads", medium: "cpc", campaign: "synthetic-winter" };
     const submitted = await post(submit(key, "+919876543210", centreId, { requestTopic: "CORPORATE", organizationName: "Synthetic Clinic Group", campaignAttribution: attribution }));
@@ -205,8 +209,8 @@ describe("public enquiry PostgreSQL integration", () => {
     expect(outcome.status).toBe("CONVERTED_TO_LEAD");
     const saved = await pool.query("SELECT status,reviewed_by_staff_id,resulting_lead_id FROM public_enquiries WHERE id=$1", [list.enquiries[0].id]);
     expect(saved.rows[0]).toMatchObject({ status: "CONVERTED_TO_LEAD", reviewed_by_staff_id: staffUserId, resulting_lead_id: outcome.leadId });
-    const lead = await pool.query("SELECT source,status,contact_permission,marketing_consent FROM leads WHERE id=$1", [outcome.leadId]);
-    expect(lead.rows[0]).toMatchObject({ source: "WEBSITE", status: "NEW", contact_permission: "PENDING", marketing_consent: "NOT_REQUESTED" });
+    const lead = await pool.query("SELECT source,status,contact_permission,marketing_consent,marketing_campaign_id FROM leads WHERE id=$1", [outcome.leadId]);
+    expect(lead.rows[0]).toMatchObject({ source: "WEBSITE", status: "NEW", contact_permission: "PENDING", marketing_consent: "NOT_REQUESTED", marketing_campaign_id: campaignId });
     const [leadPrivate] = (await pool.query("SELECT payload_ciphertext FROM lead_private_data WHERE lead_id=$1", [outcome.leadId])).rows;
     expect(decryptLeadPrivateData(leadPrivate.payload_ciphertext, { organizationId, centreId, recordId: outcome.leadId }).campaign).toBe("utm_source=google-ads;utm_medium=cpc;utm_campaign=synthetic-winter");
     const [activity] = (await pool.query("SELECT private_payload_ciphertext FROM lead_activities WHERE lead_id=$1", [outcome.leadId])).rows;
@@ -234,6 +238,20 @@ describe("public enquiry PostgreSQL integration", () => {
     const history = await pool.query("SELECT event_type,private_data_ciphertext FROM public_enquiry_events WHERE enquiry_id=$1 AND event_type='DISMISSED'", [duplicate.id]);
     expect(history.rows).toHaveLength(1);
     expect(history.rows[0].private_data_ciphertext).not.toContain("Duplicate needs manual CRM review");
+  });
+
+  it("keeps visitor-supplied campaign labels out of verified campaign metrics when no active campaign matches", async () => {
+    const submitted = await post(submit(randomUUID(), "+919876543286", centreId, { campaignAttribution: { source: "newsletter", campaign: "not-configured" } }));
+    expect(submitted.status).toBe(202);
+    const reference = (await submitted.json() as { reference: string }).reference;
+    const [enquiry] = (await pool.query("SELECT id FROM public_enquiries WHERE organization_id=$1 AND enquiry_number=$2", [organizationId, reference])).rows;
+    const converted = await patch(new Request("http://localhost/api/public/enquiries", { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json" }, body: JSON.stringify({ id: enquiry.id, action: "CONVERT_TO_LEAD", expectedVersion: 1, assignedStaffId: staffUserId }) }));
+    expect(converted.status).toBe(200);
+    const { leadId } = await converted.json() as { leadId: string };
+    const [lead] = (await pool.query("SELECT marketing_campaign_id FROM leads WHERE id=$1", [leadId])).rows;
+    expect(lead.marketing_campaign_id).toBeNull();
+    const [privateLead] = (await pool.query("SELECT payload_ciphertext FROM lead_private_data WHERE lead_id=$1", [leadId])).rows;
+    expect(decryptLeadPrivateData(privateLead.payload_ciphertext, { organizationId, centreId, recordId: leadId }).campaign).toBe("utm_source=newsletter;utm_campaign=not-configured");
   });
 
   it("converts a response-approved corporate enquiry into an inactive encrypted relationship profile", async () => {
