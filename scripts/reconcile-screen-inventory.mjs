@@ -6,6 +6,19 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const specPath = path.join(root, "docs", "SCREEN_SPEC_178.md");
 const outputPath = path.join(root, "docs", "SCREEN_IMPLEMENTATION_MATRIX.csv");
 
+// Explicit mappings are for a proposed screen implemented as a distinct state
+// inside another route. Each entry is validated against live source markers so
+// the inventory does not silently treat a matching module as screen evidence.
+const explicitGroupedMappings = {
+  W008: {
+    route: "/book",
+    source: "src/components/leads/public-enquiry-workbench.tsx",
+    pageMarker: "<PublicEnquiryForm mode=\"booking\" />",
+    sourceMarkers: ["id=\"booking-review-title\"", "Edit request", "Send request for staff review"],
+    note: "Booking review is an in-form state in /book; it is not a separate route and does not confirm or reserve an appointment.",
+  },
+};
+
 async function walk(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = [];
@@ -65,11 +78,23 @@ for (const line of lines) {
   rows.push({ id, group, title: clean(title), route, access: clean(cells[2]), requirements: clean(cells[3]), entities: clean(cells[4]) });
 }
 
-const header = ["ID", "Experience group", "Target screen", "Target route", "Access in spec", "Required controls/workflow", "Authoritative objects in spec", "Exact source route", "Potential grouped source routes", "Direct page imports", "Candidate API routes by module", "Schema symbols in candidate APIs", "Permission checks found in candidate APIs", "Related test files", "Implementation status (evidence-based)", "Acceptance status", "External or policy blockers", "Evidence limitations"];
+const header = ["ID", "Experience group", "Target screen", "Target route", "Access in spec", "Required controls/workflow", "Authoritative objects in spec", "Exact source route", "Potential grouped source routes", "Explicit grouped screen mapping", "Direct page imports", "Candidate API routes by module", "Schema symbols in candidate APIs", "Permission checks found in candidate APIs", "Related test files", "Implementation status (evidence-based)", "Acceptance status", "External or policy blockers", "Evidence limitations"];
 const output = [header.map(csv).join(",")];
 for (const screen of rows) {
   const candidates = routeCandidates(screen.route);
   const page = candidates.map((candidate) => pageByRoute.get(candidate)).find(Boolean);
+  const groupedMapping = explicitGroupedMappings[screen.id];
+  let groupedMappingDescription = "";
+  if (groupedMapping) {
+    const groupedPage = pageByRoute.get(groupedMapping.route);
+    const groupedSource = path.join(root, groupedMapping.source);
+    if (!groupedPage || !allFiles.includes(groupedSource)) throw new Error(`${screen.id} grouped mapping source is missing.`);
+    const [pageText, sourceText] = await Promise.all([readFile(groupedPage, "utf8"), readFile(groupedSource, "utf8")]);
+    if (!pageText.includes(groupedMapping.pageMarker) || groupedMapping.sourceMarkers.some((marker) => !sourceText.includes(marker))) {
+      throw new Error(`${screen.id} grouped mapping markers no longer match the implementation.`);
+    }
+    groupedMappingDescription = `${groupedMapping.route} (${rel(groupedPage)}); ${groupedMapping.source}; ${groupedMapping.note}`;
+  }
   const routeRoot = screen.route.split("/").filter(Boolean)[0] ?? "";
   const key = screen.id[0];
   const moduleRoots = {
@@ -131,6 +156,8 @@ for (const screen of rows) {
     : page ? `${routeForFile(page)} (${rel(page)})` : "No exact target route file found";
   const implementation = key === "P" || ["W014", "W015", "W016", "W017", "W023", "W024", "W025", "W026", "W009", "W010"].includes(screen.id)
     ? "4. Blocked by external decision or integration; see blocker field."
+    : groupedMapping
+      ? "2. Partially implemented: explicit grouped-route mapping is source-validated; individual acceptance requirements remain open."
     : !page && !apiCandidates.length && !groupedPages.length
       ? "3. Not started: no exact route, related module page, or candidate API evidence found."
       : !page
@@ -139,10 +166,12 @@ for (const screen of rows) {
           ? "2. Partially implemented: page, module APIs and related tests exist; requirements still need action-by-action verification."
           : "2. Partially implemented: page source exists, but matching API or test evidence is incomplete for this screen.";
   const acceptance = "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.";
-  const limitation = "API, schema and test lists are module-level candidates derived from file paths/imports; they do not prove every listed requirement or control works. See referenced source/tests before promotion to complete.";
+  const limitation = groupedMapping
+    ? "The explicit mapping proves the review state is embedded in the listed page/component; it does not prove every W008 requirement, confirmation, slot reservation, pricing, or appointment creation."
+    : "API, schema and test lists are module-level candidates derived from file paths/imports; they do not prove every listed requirement or control works. See referenced source/tests before promotion to complete.";
   output.push([
     screen.id, screen.group, screen.title, screen.route, screen.access, screen.requirements, screen.entities,
-    pageRef, groupedPages.join("; "), imports.join("; "), apiCandidates.join("; "), [...schemaSymbols].sort().join("; "), [...permissions].sort().join("; "),
+    pageRef, groupedPages.join("; "), groupedMappingDescription, imports.join("; "), apiCandidates.join("; "), [...schemaSymbols].sort().join("; "), [...permissions].sort().join("; "),
     relatedTests.join("; "), implementation, acceptance, blocker, limitation,
   ].map(csv).join(","));
 }
