@@ -27,6 +27,8 @@ export function PublicEnquiryForm({ mode = "inquiry", topic = "GENERAL" }: { mod
   const [state, setState] = useState("Loading currently listed centres…");
   const [busy, setBusy] = useState(false);
   const [visitType, setVisitType] = useState("CENTRE");
+  const [reviewingBooking, setReviewingBooking] = useState(false);
+  const [bookingReview, setBookingReview] = useState<{ centre: string; name: string; contact: string; service: string; visit: string; preferredDate: string; timeWindow: string; address: string; message: string } | null>(null);
   const submissionAttempt = useRef(new IdempotencyAttempt());
   const catalogueRequestSequence = useRef(0);
   useEffect(() => { let live = true; void fetch("/api/public/centres", { cache: "no-store" }).then(async (response) => ({ response, body: await response.json() as { centres?: Centre[] } })).then(({ response, body }) => { if (!live) return; const rows = response.ok ? body.centres ?? [] : []; setCentres(rows); if (mode === "booking") { const prefill = getPublicBookingPrefill(window.location.search, rows); setSelectedCentreId(prefill.centreId); setRequestedService(prefill.requestedService); setVisitType(prefill.visitType); setCataloguePrefill(prefill.requestedCatalogueVersion === null ? null : { itemId: prefill.requestedCatalogueItemId, version: prefill.requestedCatalogueVersion }); } setState(rows.length ? "" : "No Rudra centre is currently accepting public enquiries."); }).catch(() => { if (live) setState("Centre information is unavailable. Please try again later."); }); return () => { live = false; }; }, [mode]);
@@ -81,6 +83,26 @@ export function PublicEnquiryForm({ mode = "inquiry", topic = "GENERAL" }: { mod
       .catch(() => { if (live) { setCataloguePrefill(null); setCatalogueState("The linked catalogue service could not be verified. Please select a currently published service."); } });
     return () => { live = false; };
   }, [cataloguePrefill, mode, selectedCentreId]);
+  function reviewBookingRequest(form: HTMLFormElement | null) {
+    if (mode !== "booking" || !form || !form.reportValidity()) return;
+    const values = new FormData(form);
+    const selected = catalogueServices.find((item) => item.id === selectedCatalogueServiceId);
+    const centre = centres.find((item) => item.id === String(values.get("centreId")));
+    const address = ["addressLine1", "addressLine2", "city", "state", "postalCode"].map((name) => String(values.get(name) ?? "").trim()).filter(Boolean).join(", ");
+    setBookingReview({
+      centre: centre ? `${centre.name} (${centre.code})` : "Selected Rudra centre",
+      name: `${String(values.get("firstName") ?? "").trim()} ${String(values.get("lastName") ?? "").trim()}`.trim(),
+      contact: [values.get("phone"), values.get("email")].map((value) => String(value ?? "").trim()).filter(Boolean).join(" · "),
+      service: selected ? `${selected.displayName} (${selected.serviceCode})` : String(values.get("requestedService") ?? "").trim() || "Service to be reviewed by Rudra staff",
+      visit: visitType === "HOME_COLLECTION" ? "Home collection request" : "Centre visit request",
+      preferredDate: String(values.get("preferredDate") ?? ""),
+      timeWindow: String(values.get("preferredTimeWindow") ?? "").trim(),
+      address,
+      message: String(values.get("message") ?? "").trim(),
+    });
+    setReviewingBooking(true);
+    setState("");
+  }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const form = event.currentTarget; const values = Object.fromEntries(new FormData(form).entries());
     const selectedService = catalogueServices.find((item) => item.id === selectedCatalogueServiceId);
@@ -91,7 +113,7 @@ export function PublicEnquiryForm({ mode = "inquiry", topic = "GENERAL" }: { mod
       const idempotencyKey = await submissionAttempt.current.keyFor(serializedBody);
       const response = await fetch("/api/public/enquiries", { method: "POST", headers: { "content-type": "application/json", "idempotency-key": idempotencyKey }, body: serializedBody });
       const result = await response.json() as { accepted?: boolean; reference?: string; error?: string };
-      if (response.status === 202 && result.accepted) { submissionAttempt.current.clear(); form.reset(); setVisitType("CENTRE"); setSelectedCentreId(""); setRequestedService(""); setSelectedCatalogueServiceId(""); setCatalogueQuery(""); setAppliedCatalogueQuery(""); setState(`${mode === "booking" ? "Booking request" : "Enquiry"} received for staff review. Reference: ${result.reference ?? "recorded"}. This is not an appointment or confirmed service.`); return; }
+      if (response.status === 202 && result.accepted) { submissionAttempt.current.clear(); form.reset(); setVisitType("CENTRE"); setSelectedCentreId(""); setRequestedService(""); setSelectedCatalogueServiceId(""); setCatalogueQuery(""); setAppliedCatalogueQuery(""); setReviewingBooking(false); setBookingReview(null); setState(`${mode === "booking" ? "Booking request" : "Enquiry"} received for staff review. Reference: ${result.reference ?? "recorded"}. This is not an appointment or confirmed service.`); return; }
       // A definitive client response did not commit the request. Clear this
       // attempt; an edited retry also gets a new key through its body digest.
       if (response.status < 500) submissionAttempt.current.clear();
@@ -101,6 +123,7 @@ export function PublicEnquiryForm({ mode = "inquiry", topic = "GENERAL" }: { mod
   }
   return <section className="admin-card public-enquiry-form-card"><h2>{mode === "booking" ? "Request an appointment" : "Send an enquiry"}</h2><p>{mode === "booking" ? "Share your preferred service, date and visit type. This request does not reserve a slot or create an appointment. Staff must review it and confirm availability through Rudra's scheduling workflow." : "Use this form for a service question or callback request."} Do not include medical results or urgent health information. Staff review submissions; no message is sent automatically.</p>
     {centres.length > 0 ? <form className="admin-form public-enquiry-form" onSubmit={submit}>
+      <div hidden={reviewingBooking}>
       <label>Centre<select name="centreId" required value={selectedCentreId} onChange={(event) => { setSelectedCentreId(event.target.value); setSelectedCatalogueServiceId(""); setCatalogueServices([]); setRequestedService(""); setCataloguePrefill(null); }}><option value="" disabled>Select a listed centre</option>{centres.map((centre) => <option value={centre.id} key={centre.id}>{centre.name} ({centre.code})</option>)}</select></label>
       <label>First name<input name="firstName" autoComplete="given-name" required maxLength={100}/></label>
       <label>Last name<input name="lastName" autoComplete="family-name" required maxLength={100}/></label>
@@ -119,7 +142,11 @@ export function PublicEnquiryForm({ mode = "inquiry", topic = "GENERAL" }: { mod
       <label>How can we help?<textarea name="message" rows={4} minLength={5} maxLength={1200} required/></label>
       <label className="task-checkbox"><input type="checkbox" name="responsePermission"/>I am requesting a response to this enquiry. This does not opt me into marketing or establish ongoing contact consent.</label>
       <div className="public-enquiry-honeypot" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off"/></label></div>
-      <button className="button button-primary" disabled={busy}>{busy ? "Sending…" : mode === "booking" ? "Send booking request" : "Send enquiry"}</button><p role="status" aria-live="polite">{state}</p>
+      </div>
+      {mode === "booking" && reviewingBooking && bookingReview && <section className="notice" aria-labelledby="booking-review-title"><div><h3 id="booking-review-title">Review your visit request</h3><dl className="lead-details"><div><dt>Centre</dt><dd>{bookingReview.centre}</dd></div><div><dt>Name</dt><dd>{bookingReview.name}</dd></div><div><dt>Contact details</dt><dd>{bookingReview.contact}</dd></div><div><dt>Requested service</dt><dd>{bookingReview.service}</dd></div><div><dt>Visit type</dt><dd>{bookingReview.visit}</dd></div><div><dt>Preferred date</dt><dd>{bookingReview.preferredDate}</dd></div>{bookingReview.timeWindow && <div><dt>Preferred time</dt><dd>{bookingReview.timeWindow}</dd></div>}{bookingReview.address && <div><dt>Requested address</dt><dd>{bookingReview.address}</dd></div>}<div><dt>Message</dt><dd>{bookingReview.message}</dd></div></dl><p>No appointment slot or fee is reserved or quoted here. Rudra staff must verify service eligibility, pricing, and availability before confirming a booking.</p><div className="page-actions"><button type="button" className="button button-secondary" disabled={busy} onClick={() => setReviewingBooking(false)}>Edit request</button><button type="submit" className="button button-primary" disabled={busy}>{busy ? "Sending…" : "Send request for staff review"}</button></div></div></section>}
+      {mode === "booking" && !reviewingBooking && <button type="button" className="button button-primary" disabled={busy || !selectedCentreId} onClick={(event) => reviewBookingRequest(event.currentTarget.form)}>Review request</button>}
+      {mode === "inquiry" && <button type="submit" className="button button-primary" disabled={busy}>{busy ? "Sending…" : "Send enquiry"}</button>}
+      <p role="status" aria-live="polite">{state}</p>
     </form> : <p role="status">{state}</p>}
   </section>;
 }

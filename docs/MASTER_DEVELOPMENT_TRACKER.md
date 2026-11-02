@@ -1,3 +1,9 @@
+## 2026-11-03 checkpoint - Public booking request review step (W008 partial)
+
+- The public booking request form now has a review-before-submit step. It summarizes the selected centre, visitor contact, requested service, visit type, preferred date/window and home-collection address, and offers Edit or Send for staff review. The final action continues through the existing encrypted, rate-limited, same-origin, idempotent public-enquiry API. It states that no slot or fee is reserved/quoted and no appointment is confirmed; staff must verify eligibility, pricing and availability. It does not expose patient account access or external payment.
+- Verification on the final tree: default suite **669/669 across 163 files**; TypeScript, full lint and production build passed (**232 page entries**). The affected public enquiry PostgreSQL lifecycle is in the full suite; focused public route/policy tests passed **33/33** before the final review-summary-only display addition. No schema, dependency, account, key, persistent development-data or external-service changes.
+- W008 remains partial because verified-patient booking, authoritative fee quote, slot/capacity reservation, diagnostic order creation and actual appointment confirmation are not enabled through this public path. Patient identity proofing remains unapproved; portal accounts stay disabled. Browser/mobile acceptance and legal/content review remain pending. Synthetic data only.
+
 ## 2026-11-03 checkpoint - Public partner enquiry route alias (W020)
 
 - Added the proposed public `/partner` path as a redirect to canonical `/partners`, which renders the existing partner landing page and staff-reviewed encrypted public enquiry form. Partner submissions remain enquiries only: they do not create an agreement, referral entitlement, commission, patient access, or external contact. No CRM or authorization workflow was duplicated.
