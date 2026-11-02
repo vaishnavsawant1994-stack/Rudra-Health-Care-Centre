@@ -254,6 +254,24 @@ describe("public enquiry PostgreSQL integration", () => {
     expect(decryptLeadPrivateData(privateLead.payload_ciphertext, { organizationId, centreId, recordId: leadId }).campaign).toBe("utm_source=newsletter;utm_campaign=not-configured");
   });
 
+  it("keeps a public service issue in staff review instead of converting it into a sales lead", async () => {
+    const submitted = await post(submit(randomUUID(), "+919876543285", centreId, { category: "SUPPORT", message: "Synthetic service feedback for staff review.", responsePermission: true }));
+    expect(submitted.status).toBe(202);
+    const reference = (await submitted.json() as { reference: string }).reference;
+    const listed = await (await get(new Request(`http://localhost/api/public/enquiries?centreId=${centreId}`))).json() as { enquiries: Array<{ id: string; reference: string; category: string; version: number }> };
+    const enquiry = listed.enquiries.find((row) => row.reference === reference)!;
+    expect(enquiry.category).toBe("SUPPORT");
+    const converted = await patch(new Request("http://localhost/api/public/enquiries", { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json" }, body: JSON.stringify({ id: enquiry.id, action: "CONVERT_TO_LEAD", expectedVersion: enquiry.version, assignedStaffId: staffUserId }) }));
+    expect(converted.status).toBe(409);
+    expect(await converted.json()).toMatchObject({ error: "support_enquiry_requires_support_task" });
+    expect((await pool.query("SELECT lead_id FROM lead_private_data WHERE organization_id=$1 AND centre_id=$2 AND phone_blind_index=$3", [organizationId, centreId, blindIndexLeadContact("phone", "+919876543285")])).rowCount).toBe(0);
+    const [stillPending] = (await pool.query("SELECT status,version_number FROM public_enquiries WHERE id=$1", [enquiry.id])).rows;
+    expect(stillPending).toMatchObject({ status: "PENDING_REVIEW", version_number: enquiry.version });
+    const [stored] = (await pool.query("SELECT id,private_data_ciphertext FROM public_enquiries WHERE id=$1", [enquiry.id])).rows;
+    const payload = decryptLeadValue<PublicEnquiryPayload>("private-data", stored.private_data_ciphertext, publicEnquiryContext({ organizationId, centreId, id: stored.id }));
+    expect(payload).toMatchObject({ category: "SUPPORT", message: "Synthetic service feedback for staff review.", responsePermission: true });
+  });
+
   it("converts a response-approved corporate enquiry into an inactive encrypted relationship profile", async () => {
     const response = await post(submit(randomUUID(), "+919876543298", centreId, { requestTopic: "CORPORATE", organizationName: "Synthetic Partner Group", responsePermission: true, message: "Please have Rudra review a possible employer relationship." }));
     expect(response.status).toBe(202);

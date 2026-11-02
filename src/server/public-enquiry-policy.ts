@@ -9,7 +9,7 @@ const campaignLabel = z.string().regex(/^[a-z0-9._-]{1,24}$/);
 export const publicEnquiryCreateSchema = z.object({
   centreId: z.uuid(), firstName: z.string().trim().min(1).max(100), lastName: z.string().trim().min(1).max(100),
   organizationName: z.string().trim().max(160).optional().or(z.literal("")),
-  phone, email, category: z.enum(["TEST", "PACKAGE", "HOME_COLLECTION", "GENERAL", "OTHER"]),
+  phone, email, category: z.enum(["TEST", "PACKAGE", "HOME_COLLECTION", "GENERAL", "OTHER", "SUPPORT"]),
   requestTopic: z.enum(["GENERAL", "CORPORATE", "DOCTOR", "PARTNER"]).default("GENERAL"),
   requestKind: z.enum(["INQUIRY", "BOOKING_REQUEST"]).default("INQUIRY"),
   requestedService: z.string().trim().max(160).optional().or(z.literal("")),

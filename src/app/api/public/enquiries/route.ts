@@ -183,6 +183,7 @@ export async function PATCH(request: Request) {
       reviewStage = "decrypt_enquiry";
       const context = publicEnquiryContext({ organizationId: row.organizationId, centreId: row.centreId, id: row.id });
       const payload = decryptLeadValue<PublicEnquiryPayload>("private-data", row.privateDataCiphertext, context);
+      if (action.data.action === "CONVERT_TO_LEAD" && payload.category === "SUPPORT") throw new Error("support_enquiry_requires_support_task");
       const eventId = randomUUID();
       if (action.data.action === "DISMISS") {
         const dismissedPayload = encryptLeadValue("activity", { reason: action.data.reason }, { organizationId: row.organizationId, centreId: row.centreId, recordId: eventId });
@@ -238,7 +239,7 @@ export async function PATCH(request: Request) {
       const leadNumber = `RHC-L-${new Date().getFullYear()}-${leadId.slice(0, 8).toUpperCase()}`;
       const [lead] = await tx.insert(leads).values({
         id: leadId, organizationId: row.organizationId, centreId: row.centreId, leadNumber,
-        enquiryCategory: payload.category, homeCollectionInterest: payload.category === "HOME_COLLECTION", source: "WEBSITE", status: "NEW", priority: "NORMAL",
+        enquiryCategory: payload.category === "SUPPORT" ? "OTHER" : payload.category, homeCollectionInterest: payload.category === "HOME_COLLECTION", source: "WEBSITE", status: "NEW", priority: "NORMAL",
         assignedStaffId: action.data.assignedStaffId, preferredChannel: phone ? "PHONE" : "EMAIL",
         contactPermission: "PENDING", contactPermissionRecordedBy: null, contactPermissionRecordedAt: null,
         marketingCampaignId,
@@ -246,7 +247,7 @@ export async function PATCH(request: Request) {
       }).returning({ id: leads.id, leadNumber: leads.leadNumber });
       const privateLead: LeadPrivateData = { firstName: payload.firstName, lastName: payload.lastName, phone, email, interestedService: payload.requestedService, campaign: formatPublicCampaignAttribution(payload.campaignAttribution), contactEvidenceReference: null, marketingEvidenceReference: null, lostReason: null };
       await saveLeadPrivateData(tx, { organizationId: row.organizationId, centreId: row.centreId, recordId: leadId }, privateLead);
-      await addLeadActivity(tx, { organizationId: row.organizationId, centreId: row.centreId, leadId, actorStaffId: access.staff.staffUserId, activityType: "NOTE", body: payload.message, metadata: { source: "PUBLIC_ENQUIRY", requestTopic: payload.requestTopic, organizationName: payload.organizationName ?? null, requestKind: payload.requestKind, requestedService: payload.requestedService, preferredDate: payload.preferredDate, preferredTimeWindow: payload.preferredTimeWindow, visitType: payload.visitType, collectionAddress: payload.collectionAddress, responsePermission: payload.responsePermission, responsePermissionTextVersion: payload.responsePermissionTextVersion, submittedAt: payload.submittedAt } });
+      await addLeadActivity(tx, { organizationId: row.organizationId, centreId: row.centreId, leadId, actorStaffId: access.staff.staffUserId, activityType: "NOTE", body: payload.message, metadata: { source: "PUBLIC_ENQUIRY", requestTopic: payload.requestTopic, enquiryCategory: payload.category, organizationName: payload.organizationName ?? null, requestKind: payload.requestKind, requestedService: payload.requestedService, preferredDate: payload.preferredDate, preferredTimeWindow: payload.preferredTimeWindow, visitType: payload.visitType, collectionAddress: payload.collectionAddress, responsePermission: payload.responsePermission, responsePermissionTextVersion: payload.responsePermissionTextVersion, submittedAt: payload.submittedAt } });
       await tx.update(publicEnquiries).set({ status: "CONVERTED_TO_LEAD", reviewedByStaffId: access.staff.staffUserId, reviewedAt: new Date(), resultingLeadId: lead.id, versionNumber: row.versionNumber + 1 }).where(eq(publicEnquiries.id, row.id));
       await tx.insert(publicEnquiryEvents).values({ id: eventId, organizationId: row.organizationId, centreId: row.centreId, enquiryId: row.id, eventType: "CONVERTED_TO_LEAD", privateDataCiphertext: encryptLeadValue("activity", { leadId: lead.id }, { organizationId: row.organizationId, centreId: row.centreId, recordId: eventId }), actorStaffId: access.staff.staffUserId });
       await appendAuditEvent(tx, { organizationId: row.organizationId, centreId: row.centreId, actorStaffId: access.staff.staffUserId, action: "public_enquiry.converted_to_lead", entityType: "lead", entityId: lead.id, details: { source: "WEBSITE", status: "NEW" } });
@@ -258,7 +259,7 @@ export async function PATCH(request: Request) {
     const postgresError = error && typeof error === "object" ? error as { code?: unknown; constraint?: unknown } : {};
     const cause = error instanceof Error && error.cause && typeof error.cause === "object" ? error.cause as { name?: unknown; code?: unknown; constraint?: unknown } : {};
     console.error("public_enquiry_review_persistence_failed", { stage: reviewStage, errorType: error instanceof Error && /^[A-Za-z]{1,40}$/.test(error.name) ? error.name : typeof error === "string" && /^[a-z_]{1,50}$/.test(error) ? error : "UnknownError", errorCode: message && /^[a-z_]{1,60}$/.test(message) ? message : undefined, postgresCode: typeof postgresError.code === "string" && /^[A-Z0-9]{5}$/.test(postgresError.code) ? postgresError.code : undefined, constraint: typeof postgresError.constraint === "string" && /^[a-z0-9_]{1,80}$/.test(postgresError.constraint) ? postgresError.constraint : undefined, causeType: typeof cause.name === "string" && /^[A-Za-z]{1,40}$/.test(cause.name) ? cause.name : undefined, causeCode: typeof cause.code === "string" && /^[A-Z0-9]{5}$/.test(cause.code) ? cause.code : undefined, causeConstraint: typeof cause.constraint === "string" && /^[a-z0-9_]{1,80}$/.test(cause.constraint) ? cause.constraint : undefined });
-    const known = ["state_conflict", "invalid_assignee", "possible_duplicate_review_required", "relationship_conversion_not_available"];
+    const known = ["state_conflict", "invalid_assignee", "possible_duplicate_review_required", "relationship_conversion_not_available", "support_enquiry_requires_support_task"];
     return Response.json({ error: known.includes(message) ? message : "review_unavailable" }, { status: message === "invalid_assignee" ? 403 : known.includes(message) ? 409 : 503 });
   }
 }
