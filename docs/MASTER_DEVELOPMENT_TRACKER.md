@@ -1,3 +1,9 @@
+## 2026-11-03 checkpoint - Preserve centre scope in appointment workbench links
+
+- Centre Operations appointment links now carry the selected centre. The appointment directory validates a requested centre against the session's authorized centre list before filtering; pending confirmations additionally request `REQUESTED`. Appointment overview uses the requested centre only when authorized. This prevents the destination view from silently dropping the centre context or accepting an unauthorized centre ID.
+- Added unit coverage for authorized-centre selection and appointment deep-link status handling. Verification on this tree: default `npm.cmd test -- --reporter=dot` passed **691/691 across 172 files**; `npm.cmd run typecheck`, `npm.cmd run lint`, and `npm.cmd run build` passed (**234 page entries**). No database migration or dependency changed. Browser acceptance was not performed.
+- This is a centre-scoped navigation improvement only. Centre & Staff Operations and the broader 178-screen backlog remain incomplete. Live role/MFA and cross-centre acceptance, browser/mobile review, key restore/rotation, configured malware scanning and production qualification remain open. Synthetic data only.
+
 ## 2026-11-03 checkpoint - Campaign-to-booking cohort metrics (M012/M017 partial)
 
 - Extended the internal, centre-scoped campaign cohort report to count appointments linked to attributed CRM leads. It reports total appointment records, active appointments (excluding cancelled/no-show) and confirmed-state appointments (`CONFIRMED`, `ASSIGNED`, `RESCHEDULED`) alongside attributed leads and recorded patient conversions. The same lead-created cohort filter applies, so later appointments for cohort leads are included. The response remains aggregate-only and contains no patient, contact or appointment detail.

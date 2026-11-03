@@ -6,6 +6,7 @@ import { formatCentreQueueTime } from "@/lib/centre-queue-time";
 
 type QueueItem = { id: string; kind: string; title: string; reference: string; status: string; at: string; href: string };
 type CentreSummary = { id: string; code: string; name: string; timeZone: string; metrics: { appointmentsNext24Hours?: number; appointmentsWithoutArrivalToday?: number; pendingConfirmations?: number; pendingWebsiteEnquiries?: number; openOrders?: number; activeCollections?: number; pendingReceiving?: number; pendingDispatch?: number; openExceptions?: number; overdueLeadFollowups?: number; overdueReportFollowups?: number; openTasks?: number; pendingTaskApprovals?: number; taskApprovalExpiryDue?: number; taskApprovalEscalationDue?: number; overdueTasks?: number; scheduledStaff?: number; staffUnavailable?: number; openEscalations?: number; overdueEscalations?: number; financePendingPayments?: number; financeDisputes?: number; financeRefundRequests?: number }; queue: QueueItem[]; omittedByKind?: Record<string, number> };
+const centreHref = (path: string, centreId: string, filters: Record<string, string> = {}) => `${path}?${new URLSearchParams({ centreId, ...filters })}`;
 
 export function CentreOperationsSummary() {
   const [centres, setCentres] = useState<CentreSummary[] | null>(null);
@@ -57,9 +58,10 @@ export function CentreOperationsSummary() {
       </dl>
       <section aria-label={`${centre.name} combined operational queue`}><h3>Combined operational queue preview</h3><p className="admin-muted">Showing up to 10 items per queue and 50 overall. Only records covered by your active grants are included. Patient names, addresses and private notes are omitted; each destination rechecks access.</p>{Object.keys(centre.omittedByKind ?? {}).length > 0 && <p className="admin-muted" role="status">Additional work is not shown in this preview: {Object.entries(centre.omittedByKind ?? {}).map(([kind, count]) => `${kind.replaceAll("_", " ").toLowerCase()} (${count})`).join(", ")}. Use the full work-queue links below.</p>}{centre.queue.length ? <ul className="centre-operations-queue">{centre.queue.map((item) => <li key={`${item.kind}:${item.id}`}><span><strong>{item.title}</strong><small>{item.reference} · {item.status.replaceAll("_", " ").toLowerCase()} · <time dateTime={item.at}>{formatCentreQueueTime(item.at, centre.timeZone)}</time></small></span><Link href={item.href}>Open</Link></li>)}</ul> : <p>No open work items in the queues visible to this session.</p>}</section>
       <nav className="centre-operations-actions" aria-label={`${centre.name} work queues`}>
-        {centre.metrics.pendingConfirmations !== undefined && <Link href="/appointments">Open appointments</Link>}
+        {centre.metrics.pendingConfirmations !== undefined && <Link href={centreHref("/appointments", centre.id)}>Open appointments</Link>}
+        {centre.metrics.pendingConfirmations !== undefined && <Link href={centreHref("/appointments", centre.id, { status: "REQUESTED" })}>Review pending confirmations</Link>}
         {centre.metrics.pendingWebsiteEnquiries !== undefined && <Link href="/leads/public-enquiries">Review website enquiries</Link>}
-        {centre.metrics.appointmentsWithoutArrivalToday !== undefined && <Link href="/appointments/arrivals">Open arrival queue</Link>}
+        {centre.metrics.appointmentsWithoutArrivalToday !== undefined && <Link href={centreHref("/appointments/arrivals", centre.id)}>Open arrival queue</Link>}
         {centre.metrics.openOrders !== undefined && <Link href="/orders">Open orders</Link>}
         {centre.metrics.activeCollections !== undefined && <Link href="/collections">Open collections</Link>}
         {centre.metrics.pendingReceiving !== undefined && <Link href="/branch/receiving">Open receiving queue</Link>}
