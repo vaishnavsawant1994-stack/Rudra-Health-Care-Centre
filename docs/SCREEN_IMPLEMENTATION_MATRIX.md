@@ -13,8 +13,8 @@ node scripts/reconcile-screen-inventory.mjs
 
 - Parsed **178/178** screen IDs from the proposal.
 - **32** IDs have an exact page file at the proposed route. This is route evidence only; it does not establish functional completion.
-- **146** IDs have no exact page at the proposed URL. One of those (W008) has an explicit source-validated mapping to an in-form review state inside `/book`; **145** proposed routes still need an explicit screen-to-source/action mapping. The matrix lists candidate module routes, APIs and tests, which must not be mistaken for screen-specific evidence.
-- Current evidence-based classifications are **31 partially implemented with page/API/test candidates**, **1 partially implemented with an explicit grouped-route mapping**, **120 partially implemented with source/action mapping unresolved**, and **26 blocked by an identity-proofing, policy or external dependency**. These total 178 and are the generator's mutually exclusive labels, not a measure of completed functionality.
+- **146** IDs have no exact page at the proposed URL. Two of those have explicit source-validated mappings: W008 to an in-form review state inside `/book`, and M017 to the aggregate campaign cohort report inside `/marketing/campaigns`. **144** proposed routes still need an explicit screen-to-source/action mapping. The matrix lists candidate module routes, APIs and tests, which must not be mistaken for screen-specific evidence.
+- Current evidence-based classifications are **31 partially implemented with page/API/test candidates**, **2 partially implemented with explicit grouped-route mappings**, **119 partially implemented with source/action mapping unresolved**, and **26 blocked by an identity-proofing, policy or external dependency**. These total 178 and are the generator's mutually exclusive labels, not a measure of completed functionality.
 - No screen is marked fully implemented or “implementation complete, acceptance pending” by this generator. File presence, route manifests, tests in the same module and candidate API matches are not enough evidence to make that claim.
 
 ## Reading the CSV
@@ -35,4 +35,4 @@ The user-approved identity-proofing decision is to keep patient portal accounts 
 
 ## Next reconciliation work
 
-Resolve the remaining 145 proposed-route mappings against the actual consolidated pages, then inspect every mapped screen's rendered controls, API mutations, database records, permissions and automated test scope. Update classifications only with that evidence. Reconcile any approved scope changes without deleting the original IDs. The 26 blocked rows still require their named identity, policy or external dependency before those capabilities can be enabled.
+Resolve the remaining 144 proposed-route mappings against the actual consolidated pages, then inspect every mapped screen's rendered controls, API mutations, database records, permissions and automated test scope. Update classifications only with that evidence. Reconcile any approved scope changes without deleting the original IDs. The 26 blocked rows still require their named identity, policy or external dependency before those capabilities can be enabled.

@@ -16,6 +16,15 @@ const explicitGroupedMappings = {
     pageMarker: "<PublicEnquiryForm mode=\"booking\" />",
     sourceMarkers: ["id=\"booking-review-title\"", "Edit request", "Send request for staff review"],
     note: "Booking review is an in-form state in /book; it is not a separate route and does not confirm or reserve an appointment.",
+    limitation: "The explicit mapping proves the review state is embedded in the listed page/component; it does not prove every W008 requirement, confirmation, slot reservation, pricing, or appointment creation.",
+  },
+  M017: {
+    route: "/marketing/campaigns",
+    source: "src/components/marketing/campaign-workbench.tsx",
+    pageMarker: "<CampaignWorkbench managedCentreIds=",
+    sourceMarkers: ["aria-label=\"Campaign attribution date filter\"", "Counts leads created", "Read-only campaign attribution access."],
+    note: "Consent-safe campaign and CRM lead-cohort aggregates are rendered in the campaign workbench; booking/payment attribution is not part of this mapping.",
+    limitation: "The mapping proves campaign cohort filtering and aggregate lead/conversion display in the listed component; it does not provide booking/payment funnel attribution, platform data, revenue or every M017 requirement.",
   },
 };
 
@@ -167,7 +176,7 @@ for (const screen of rows) {
           : "2. Partially implemented: page source exists, but matching API or test evidence is incomplete for this screen.";
   const acceptance = "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.";
   const limitation = groupedMapping
-    ? "The explicit mapping proves the review state is embedded in the listed page/component; it does not prove every W008 requirement, confirmation, slot reservation, pricing, or appointment creation."
+    ? groupedMapping.limitation
     : "API, schema and test lists are module-level candidates derived from file paths/imports; they do not prove every listed requirement or control works. See referenced source/tests before promotion to complete.";
   output.push([
     screen.id, screen.group, screen.title, screen.route, screen.access, screen.requirements, screen.entities,
