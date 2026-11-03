@@ -1,3 +1,9 @@
+## 2026-11-03 checkpoint - Public relationship pages connect to verified catalogue (W018-W020 partial)
+
+- Corporate, Doctors and Partners landing pages now link directly to the existing public diagnostic-test, package and centre directories. The pages continue to use their topic-specific encrypted, staff-reviewed enquiry flow and make no claims about contracts, referral entitlement, pricing, patient access or confirmed service availability.
+- Verification: component rendering tests **3/3**; full default suite **685/685 across 170 files**; TypeScript, lint and production build passed (**234 generated page entries**). Screen-inventory generator regression passed **1/1** and the 178-row matrix was refreshed. No schema/migration, dependency, account, key, persistent data or external service changed. Synthetic-data development only.
+- W018-W020 remain partial pending approved content and action-level review; browser/mobile acceptance and all production/security gates remain open. Patient accounts remain disabled pending approved identity proofing.
+
 ## 2026-11-03 checkpoint - Published centre contacts on Contact page (W021 partial)
 
 - The public Contact page now includes the existing centre directory beside the staff-reviewed enquiry form. It displays only centre details already explicitly published through the protected CMS profile workflow; no unverified phone, address, hours or service coverage is invented. Existing safety notice continues to state that the form does not activate patient accounts, external messages, medical advice or emergency handling.
