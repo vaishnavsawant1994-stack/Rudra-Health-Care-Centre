@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chooseAuthorizedCentre, resolveAppointmentDeepLink } from "./authorized-centre-selection";
+import { chooseAuthorizedCentre, resolveAppointmentDeepLink, resolveAuthorizedCentreFilter } from "./authorized-centre-selection";
 
 describe("authorized centre deep links", () => {
   const centres = [{ id: "centre-a" }, { id: "centre-b" }];
@@ -9,6 +9,12 @@ describe("authorized centre deep links", () => {
     expect(chooseAuthorizedCentre(centres, "outside-scope")).toBe("centre-a");
     expect(chooseAuthorizedCentre(centres, null)).toBe("centre-a");
     expect(chooseAuthorizedCentre([], "centre-b")).toBe("");
+  });
+
+  it("uses no centre filter for a missing or unauthorized list deep link", () => {
+    expect(resolveAuthorizedCentreFilter(centres, "centre-b")).toBe("centre-b");
+    expect(resolveAuthorizedCentreFilter(centres, "outside-scope")).toBe("");
+    expect(resolveAuthorizedCentreFilter(centres, null)).toBe("");
   });
 
   it("accepts only known appointment filters from a deep link and preserves fixed queue status", () => {

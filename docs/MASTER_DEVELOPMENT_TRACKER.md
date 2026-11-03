@@ -1,3 +1,9 @@
+## 2026-11-03 checkpoint - Preserve selected centre in appointment and order workbenches
+
+- Centre Operations appointment links preserve their centre and pending-confirmation links apply `REQUESTED`; the appointment workbench validates the requested centre against the authenticated API's authorized centre list. The dashboard's Open orders link now carries its centre to the order directory, where the same API-authorized list validates the requested centre before retaining the filter. An invalid order deep-link is not used to return data; the API denies it and the workbench falls back to the user's authorized scope.
+- Automated verification on this tree: default `npm.cmd test -- --reporter=dot` passed **692/692 across 172 files**; helper tests passed **3/3**; `npm.cmd run typecheck`, full lint and production build passed (**234 page entries**). The first build caught `/orders` reading `searchParams` outside Suspense; the page now defers that read within a Suspense child, and the final build passed. No migration or dependency changed. No browser acceptance was performed.
+- This improves Centre Operations navigation only; the operations wave and full 178-screen backlog remain incomplete. Live role/MFA and cross-centre acceptance, browser/mobile review, key restore/rotation, configured malware scanning and production qualification remain open. Synthetic data only.
+
 ## 2026-11-03 checkpoint - Preserve centre scope in appointment workbench links
 
 - Centre Operations appointment links now carry the selected centre. The appointment directory validates a requested centre against the session's authorized centre list before filtering; pending confirmations additionally request `REQUESTED`. Appointment overview uses the requested centre only when authorized. This prevents the destination view from silently dropping the centre context or accepting an unauthorized centre ID.
