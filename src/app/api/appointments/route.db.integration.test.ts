@@ -886,6 +886,19 @@ describe("appointment creation PostgreSQL integration", () => {
     expect(mixedQueueBody.jobs.map((job) => job.id)).toEqual(expect.arrayContaining([assignedJobId, unrelatedJobId, assignedOutsideManagementCentre]));
     expect(mixedQueueBody.jobs.map((job) => job.id)).not.toContain(crossCentreJobId);
     expect(mixedQueueBody.summary).toEqual({ total: 3, byStatus: { ASSIGNED: 3 } });
+    const selectedCentreQueueResponse = await collectionListHandler(new Request(`http://localhost/api/collections?centreId=${otherCentreId}`));
+    expect(selectedCentreQueueResponse.status).toBe(200);
+    const selectedCentreQueue = await selectedCentreQueueResponse.json() as { jobs: Array<{ id: string }>; summary: { total: number } };
+    expect(selectedCentreQueue.jobs.map((job) => job.id)).toEqual([assignedOutsideManagementCentre]);
+    expect(selectedCentreQueue.summary.total).toBe(1);
+    expect((await collectionListHandler(new Request("http://localhost/api/collections?centreId=not-a-uuid"))).status).toBe(400);
+    mocks.getApiAccess.mockImplementation(async (permission: string, requestedCentre?: string) => grants.some((grant) => grant.key === permission && (!requestedCentre || grant.centreId === null || grant.centreId === requestedCentre))
+      ? { staff: collector, response: null }
+      : { staff: null, response: Response.json({ error: "forbidden" }, { status: 403 }) });
+    expect((await collectionListHandler(new Request(`http://localhost/api/collections?centreId=${otherCentreId}`))).status).toBe(403);
+    mocks.getApiAccess.mockImplementation(async (permission: string, requestedCentre?: string) => mixedGrants.some((grant) => grant.key === permission && (!requestedCentre || grant.centreId === null || grant.centreId === requestedCentre))
+      ? { staff: mixedCollector, response: null }
+      : { staff: null, response: Response.json({ error: "forbidden" }, { status: 403 }) });
     const mixedDailyQueue = await collectionListHandler(new Request("http://localhost/api/collections?date=2099-01-05"));
     const mixedDailyBody = await mixedDailyQueue.json() as { jobs: Array<{ id: string }>; summary: { total: number } };
     expect(mixedDailyBody.summary.total).toBe(3);

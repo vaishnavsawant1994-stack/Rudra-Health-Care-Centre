@@ -63,7 +63,7 @@ export function CentreOperationsSummary() {
         {centre.metrics.pendingWebsiteEnquiries !== undefined && <Link href="/leads/public-enquiries">Review website enquiries</Link>}
         {centre.metrics.appointmentsWithoutArrivalToday !== undefined && <Link href={centreHref("/appointments/arrivals", centre.id)}>Open arrival queue</Link>}
         {centre.metrics.openOrders !== undefined && <Link href={centreHref("/orders", centre.id)}>Open orders</Link>}
-        {centre.metrics.activeCollections !== undefined && <Link href="/collections">Open collections</Link>}
+        {centre.metrics.activeCollections !== undefined && <Link href={centreHref("/collections", centre.id)}>Open collections</Link>}
         {centre.metrics.pendingReceiving !== undefined && <Link href="/branch/receiving">Open receiving queue</Link>}
         {centre.metrics.pendingDispatch !== undefined && <Link href="/branch/dispatch">Open dispatch queue</Link>}
         {centre.metrics.openExceptions !== undefined && <Link href="/samples/exceptions">Review exceptions</Link>}

@@ -13,17 +13,20 @@ import { isValidScheduleDate } from "@/server/collection-schedule-policy";
 
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
+  const requestedCentreId = params.get("centreId") ?? undefined;
+  if (requestedCentreId && !zUuid(requestedCentreId)) return Response.json({ error: "invalid_centre" }, { status: 400 });
   const page = Number(params.get("page") ?? 1);
   const pageSize = Number(params.get("pageSize") ?? 50);
   if (!Number.isInteger(page) || page < 1 || page > 10_000 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) return Response.json({ error: "invalid_pagination" }, { status: 400 });
   const scheduleDate = params.get("date");
   if (scheduleDate !== null && !isValidScheduleDate(scheduleDate)) return Response.json({ error: "invalid_schedule_date" }, { status: 400 });
-  const access = await getCollectionReadAccess();
+  const access = await getCollectionReadAccess(requestedCentreId);
   if (access.response) return access.response;
   const { staff } = access;
   const visibility = collectionAssignmentVisibility(staff.grants);
   const scope = visibility.readCentres;
   const clauses = [eq(collectionJobs.organizationId, staff.organizationId)];
+  if (requestedCentreId) clauses.push(eq(collectionJobs.centreId, requestedCentreId));
   if (scope !== null) clauses.push(scope.length ? inArray(collectionJobs.centreId, scope) : eq(collectionJobs.centreId, "00000000-0000-0000-0000-000000000000"));
   if (visibility.restricted) {
     const permitted = [];
