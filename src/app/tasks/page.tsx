@@ -9,7 +9,7 @@ async function TaskQueue({ searchParams, staffId, grants }: { searchParams: Prom
   const params = await searchParams;
   const allowedReferenceTypes = getTaskRelationshipReferenceTypes(grants);
   const prefill = resolveTaskWorkbenchPrefill(params, grants, allowedReferenceTypes);
-  return <TaskWorkbench staffId={staffId} permissionGrants={grants} canRead={canReadTaskQueue(grants)} {...prefill} canCreate={grants.some((grant) => grant.key === "tasks.create")} canUpdate={grants.some((grant) => grant.key === "tasks.update")} canApprove={grants.some((grant) => grant.key === "tasks.approve")} canAssign={grants.some((grant) => grant.key === "tasks.assign")} canEscalate={grants.some((grant) => grant.key === "escalations.create")} canFilterCentre={grants.some((grant) => grant.key === "tasks.read")} relationshipReferenceTypes={allowedReferenceTypes} />;
+  return <TaskWorkbench staffId={staffId} permissionGrants={grants} canRead={canReadTaskQueue(grants)} {...prefill} initialQueueCentreId={params.centreId} canCreate={grants.some((grant) => grant.key === "tasks.create")} canUpdate={grants.some((grant) => grant.key === "tasks.update")} canApprove={grants.some((grant) => grant.key === "tasks.approve")} canAssign={grants.some((grant) => grant.key === "tasks.assign")} canEscalate={grants.some((grant) => grant.key === "escalations.create")} canFilterCentre={grants.some((grant) => grant.key === "tasks.read")} relationshipReferenceTypes={allowedReferenceTypes} />;
 }
 
 export default function TasksPage({ searchParams }: { searchParams: Promise<{ taskId?: string; centreId?: string; referenceType?: string; referenceId?: string; taskType?: string }> }) {

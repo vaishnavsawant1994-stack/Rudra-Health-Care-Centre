@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { getStaffTaskQueueBadges } from "@/lib/staff-task-queue-badges";
 import { IdempotencyAttempt } from "@/lib/idempotency-attempt";
-import { taskWorkbenchInitialTypeFilter } from "@/lib/task-workbench-filters";
+import { taskWorkbenchAuthorizedQueueCentre, taskWorkbenchInitialTypeFilter } from "@/lib/task-workbench-filters";
 import { canApproveTaskInCentre, canAssignTaskInCentre, canEscalateTaskInCentre, canUpdateTask } from "@/lib/task-permissions";
 import type { TaskReferencePrefillType, TaskRelationshipReferenceType } from "@/lib/task-reference-permissions";
 import type { PermissionGrant } from "@/server/permissions";
@@ -35,7 +35,7 @@ function taskReferenceHref(type: string, id: string) {
   return null;
 }
 
-export function TaskWorkbench({ staffId, permissionGrants = [], canCreate, canRead = true, canUpdate, canApprove, canFilterCentre = false, relationshipReferenceTypes = [], initialFilter = "", initialTaskType = "", initialTaskId, initialCentreId, initialReferenceType, initialReferenceId, fixedTaskType }: { staffId: string; permissionGrants?: PermissionGrant[]; canCreate: boolean; canRead?: boolean; canUpdate: boolean; canApprove: boolean; canAssign: boolean; canEscalate?: boolean; canFilterCentre?: boolean; relationshipReferenceTypes?: TaskRelationshipReferenceType[]; initialFilter?: string; initialTaskType?: string; initialTaskId?: string; initialCentreId?: string; initialReferenceType?: TaskReferencePrefillType; initialReferenceId?: string; fixedTaskType?: string }) {
+export function TaskWorkbench({ staffId, permissionGrants = [], canCreate, canRead = true, canUpdate, canApprove, canFilterCentre = false, relationshipReferenceTypes = [], initialFilter = "", initialTaskType = "", initialTaskId, initialCentreId, initialQueueCentreId, initialReferenceType, initialReferenceId, fixedTaskType }: { staffId: string; permissionGrants?: PermissionGrant[]; canCreate: boolean; canRead?: boolean; canUpdate: boolean; canApprove: boolean; canAssign: boolean; canEscalate?: boolean; canFilterCentre?: boolean; relationshipReferenceTypes?: TaskRelationshipReferenceType[]; initialFilter?: string; initialTaskType?: string; initialTaskId?: string; initialCentreId?: string; initialQueueCentreId?: string; initialReferenceType?: TaskReferencePrefillType; initialReferenceId?: string; fixedTaskType?: string }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [centres, setCentres] = useState<Centre[]>([]);
   const [readCentres, setReadCentres] = useState<Centre[]>([]);
@@ -52,7 +52,7 @@ export function TaskWorkbench({ staffId, permissionGrants = [], canCreate, canRe
   const taskActionAttempts = useRef(new Map<string, IdempotencyAttempt>());
   const taskEscalationAttempts = useRef(new Map<string, IdempotencyAttempt>());
   const [centreId, setCentreId] = useState(initialCentreId ?? "");
-  const [centreFilter, setCentreFilter] = useState("");
+  const [centreFilter, setCentreFilter] = useState(initialQueueCentreId ?? "");
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [title, setTitle] = useState("");
@@ -128,9 +128,9 @@ export function TaskWorkbench({ staffId, permissionGrants = [], canCreate, canRe
   useEffect(() => {
     if (!canFilterCentre) return;
     let active = true;
-    fetch("/api/tasks/centres?view=read", { cache: "no-store" }).then((response) => responseBody<{ centres?: Centre[] }>(response)).then((body) => { if (active) setReadCentres(body.centres ?? []); }).catch(() => { if (active) setReadCentres([]); });
+    fetch("/api/tasks/centres?view=read", { cache: "no-store" }).then((response) => responseBody<{ centres?: Centre[] }>(response)).then((body) => { if (active) { const items = body.centres ?? []; setReadCentres(items); setCentreFilter(taskWorkbenchAuthorizedQueueCentre(initialQueueCentreId, items.map((centre) => centre.id))); } }).catch(() => { if (active) { setReadCentres([]); setCentreFilter(""); } });
     return () => { active = false; };
-  }, [canFilterCentre]);
+  }, [canFilterCentre, initialQueueCentreId]);
   useEffect(() => {
     if (!centreId || !mayAssign(centreId)) return;
     let active = true;

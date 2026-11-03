@@ -69,9 +69,9 @@ export function CentreOperationsSummary() {
         {centre.metrics.openExceptions !== undefined && <Link href={centreHref("/samples/exceptions", centre.id)}>Review exceptions</Link>}
         {centre.metrics.overdueLeadFollowups !== undefined && <Link href="/leads/followups">Open lead follow-ups</Link>}
         {centre.metrics.overdueReportFollowups !== undefined && <Link href="/reports/followups">Open report follow-ups</Link>}
-        {centre.metrics.openTasks !== undefined && <Link href="/tasks">Open staff tasks</Link>}
-        {centre.metrics.taskApprovalExpiryDue !== undefined && <Link href="/tasks/approvals?queue=expiry-due">Review expired approvals</Link>}
-        {centre.metrics.taskApprovalEscalationDue !== undefined && <Link href="/tasks/approvals?queue=escalation-due">Review task approval escalations</Link>}
+        {centre.metrics.openTasks !== undefined && <Link href={centreHref("/tasks", centre.id)}>Open staff tasks</Link>}
+        {centre.metrics.taskApprovalExpiryDue !== undefined && <Link href={centreHref("/tasks/approvals", centre.id, { queue: "expiry-due" })}>Review expired approvals</Link>}
+        {centre.metrics.taskApprovalEscalationDue !== undefined && <Link href={centreHref("/tasks/approvals", centre.id, { queue: "escalation-due" })}>Review task approval escalations</Link>}
         {centre.metrics.openEscalations !== undefined && <Link href="/escalations">Open escalation queue</Link>}
         {centre.metrics.financePendingPayments !== undefined && <Link href="/finance">Open accounts workbench</Link>}
         {centre.metrics.scheduledStaff !== undefined && <Link href="/roster">Open staff roster</Link>}
