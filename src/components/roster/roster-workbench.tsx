@@ -7,6 +7,7 @@ import { buildRosterCalendarDays } from "@/lib/roster-calendar";
 import { formatDateInZone, formatDateTimeInZone, localInputToIsoInZone, toDateTimeInputInZone, zonedWeekRange } from "@/lib/zoned-date-time";
 import { rosterConflictEscalationSourceType } from "@/server/staff-roster-policy";
 import { escalationDeepLinkHref } from "@/lib/escalation-deep-link";
+import { resolveAuthorizedCentreFilter } from "@/lib/authorized-centre-selection";
 import type { PermissionGrant } from "@/server/permissions";
 import { canAssignAppointmentsInCentre, canAssignCollectionsInCentre, canCreateEscalationInCentre, canManageRosterInCentre } from "@/lib/roster-permissions";
 
@@ -21,7 +22,7 @@ async function body<T>(response: Response) { return response.json().catch(() => 
 const weekFrom = (offset = 0) => { const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() - ((date.getDay() + 6) % 7) + offset * 7); return date; };
 const localInput = (date: Date) => { const offset = date.getTimezoneOffset(); return new Date(date.getTime() - offset * 60_000).toISOString().slice(0, 16); };
 
-export function RosterWorkbench({ grants, sessionStaffId }: { grants: readonly PermissionGrant[]; sessionStaffId?: string }) {
+export function RosterWorkbench({ grants, sessionStaffId, initialCentreId }: { grants: readonly PermissionGrant[]; sessionStaffId?: string; initialCentreId?: string }) {
   const [centres, setCentres] = useState<Centre[]>([]); const [staff, setStaff] = useState<Staff[]>([]); const [shifts, setShifts] = useState<Shift[]>([]);
   const [shiftPage, setShiftPage] = useState(1); const [shiftsHaveMore, setShiftsHaveMore] = useState(false);
   const [workload, setWorkload] = useState<Workload[]>([]);
@@ -75,9 +76,9 @@ export function RosterWorkbench({ grants, sessionStaffId }: { grants: readonly P
 
   useEffect(() => {
     let active = true;
-    fetch("/api/roster/centres", { cache: "no-store" }).then((r) => body<{ centres?: Centre[] }>(r)).then((data) => { if (!active) return; const rows = data.centres ?? []; setCentres(rows); if (rows.length) { const first = rows[0]; const today = toDateTimeInputInZone(new Date(), first.timeZone).slice(0, 10); setCentreId(first.id); setTimeZone(first.timeZone); setStartsAt(`${today}T09:00`); setEndsAt(`${today}T17:00`); } }).catch(() => { if (active) setMessage("Centre list is unavailable."); });
+    fetch("/api/roster/centres", { cache: "no-store" }).then((r) => body<{ centres?: Centre[] }>(r)).then((data) => { if (!active) return; const rows = data.centres ?? []; setCentres(rows); const selectedId = resolveAuthorizedCentreFilter(rows, initialCentreId) || rows[0]?.id; const selected = rows.find((centre) => centre.id === selectedId); if (selected) { const today = toDateTimeInputInZone(new Date(), selected.timeZone).slice(0, 10); setCentreId(selected.id); setTimeZone(selected.timeZone); setStartsAt(`${today}T09:00`); setEndsAt(`${today}T17:00`); } }).catch(() => { if (active) setMessage("Centre list is unavailable."); });
     return () => { active = false; };
-  }, [canManage]);
+  }, [initialCentreId]);
   useEffect(() => {
     if (!centreId) return;
     let active = true;
@@ -116,7 +117,7 @@ export function RosterWorkbench({ grants, sessionStaffId }: { grants: readonly P
     refreshDueDate();
     const timer = window.setInterval(refreshDueDate, 60_000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [initialCentreId]);
 
   function selectCentre(nextCentreId: string) {
     setShifts([]); setStaff([]); setConflicts([]); setShiftPage(1); setConflictPage(1); setCentreId(nextCentreId);

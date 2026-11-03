@@ -38,6 +38,7 @@ export async function GET(request:Request){
   const access=await getApiAccess("finance.read"); if(access.response)return access.response;
   const scopes=visibleLeadCentres(access.staff.grants,"finance.read");
   const params=new URL(request.url).searchParams; const centreId=params.get("centreId");
+  if(centreId&&!z.uuid().safeParse(centreId).success)return Response.json({error:"invalid_centre"},{status:400});
   const rawPage=params.get("page")??"1"; const page=Number(rawPage);
   if(!/^\d{1,6}$/.test(rawPage)||!Number.isSafeInteger(page)||page<1)return Response.json({error:"invalid_page"},{status:400});
   const paymentStatus=params.get("paymentStatus");

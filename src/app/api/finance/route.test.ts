@@ -22,4 +22,10 @@ describe("finance API boundary",()=>{
     getApiAccess.mockResolvedValueOnce({staff:null,response:Response.json({error:"authentication_required"},{status:401})});
     expect((await GET(new Request("http://localhost/api/finance"))).status).toBe(401);
   });
+  it("rejects malformed centre filters before issuing financial SQL",async()=>{
+    getApiAccess.mockResolvedValueOnce({staff:{organizationId:"org-synthetic",staffUserId:"staff-synthetic",grants:[{key:"finance.read",centreId:null}]},response:null});
+    const response=await GET(new Request("http://localhost/api/finance?centreId=not-a-uuid"));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({error:"invalid_centre"});
+  });
 });

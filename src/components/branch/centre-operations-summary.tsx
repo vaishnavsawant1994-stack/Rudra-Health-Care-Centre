@@ -73,8 +73,8 @@ export function CentreOperationsSummary() {
         {centre.metrics.taskApprovalExpiryDue !== undefined && <Link href={centreHref("/tasks/approvals", centre.id, { queue: "expiry-due" })}>Review expired approvals</Link>}
         {centre.metrics.taskApprovalEscalationDue !== undefined && <Link href={centreHref("/tasks/approvals", centre.id, { queue: "escalation-due" })}>Review task approval escalations</Link>}
         {centre.metrics.openEscalations !== undefined && <Link href={centreHref("/escalations", centre.id)}>Open escalation queue</Link>}
-        {centre.metrics.financePendingPayments !== undefined && <Link href="/finance">Open accounts workbench</Link>}
-        {centre.metrics.scheduledStaff !== undefined && <Link href="/roster">Open staff roster</Link>}
+        {centre.metrics.financePendingPayments !== undefined && <Link href={centreHref("/finance", centre.id)}>Open accounts workbench</Link>}
+        {centre.metrics.scheduledStaff !== undefined && <Link href={centreHref("/roster", centre.id)}>Open staff roster</Link>}
       </nav>
     </section>)}
   </div>;
