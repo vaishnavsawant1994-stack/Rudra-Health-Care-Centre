@@ -20,6 +20,7 @@ describe("public enquiry PostgreSQL integration", () => {
   let post: typeof import("./route").POST;
   let get: typeof import("./route").GET;
   let patch: typeof import("./route").PATCH;
+  let getLead: typeof import("../../leads/[id]/route").GET;
   let organizationId: string;
   let centreId: string;
   let staffUserId: string;
@@ -53,6 +54,7 @@ describe("public enquiry PostgreSQL integration", () => {
     });
     mocks.listPublicCatalogueCentres.mockResolvedValue([{ id: centreId, code: `WEB-${seed}`, name: "Synthetic web centre" }]);
     ({ POST: post, GET: get, PATCH: patch } = await import("./route"));
+    ({ GET: getLead } = await import("../../leads/[id]/route"));
   }, 30_000);
 
   afterAll(async () => {
@@ -303,9 +305,11 @@ describe("public enquiry PostgreSQL integration", () => {
     grants = ["leads.read", "leads.create", "leads.update"];
   });
 
-  it("keeps home-collection booking requests encrypted and converts them only to unconfirmed CRM follow-up", async () => {
+  it("carries a selected catalogue snapshot into the CRM booking history while restricting collection addresses", async () => {
     const key = randomUUID();
-    const response = await post(submit(key, "+919876543219", centreId, { requestKind: "BOOKING_REQUEST", category: "HOME_COLLECTION", requestedService: "Synthetic test service", preferredDate: "2027-01-20", preferredTimeWindow: "Morning", visitType: "HOME_COLLECTION", addressLine1: "123 Synthetic Road", addressLine2: "Unit 4", city: "Sample City", state: "Test State", postalCode: "400001" }));
+    const catalogueItemId = randomUUID();
+    mocks.getPublicCatalogueItem.mockResolvedValueOnce({ id: catalogueItemId, centreId, centreName: "Synthetic web centre", serviceType: "TEST", serviceCode: "SYN-TEST-01", version: 3, displayName: "Synthetic complete blood count", specimenRequirements: null, preparationInstructions: null, priceAmount: "250.00", currency: "INR", effectiveFrom: "2026-01-01", effectiveUntil: null });
+    const response = await post(submit(key, "+919876543219", centreId, { requestKind: "BOOKING_REQUEST", category: "HOME_COLLECTION", requestedCatalogueItemId: catalogueItemId, requestedCatalogueVersion: 3, preferredDate: "2027-01-20", preferredTimeWindow: "Morning", visitType: "HOME_COLLECTION", addressLine1: "123 Synthetic Road", addressLine2: "Unit 4", city: "Sample City", state: "Test State", postalCode: "400001" }));
     expect(response.status).toBe(202);
     const reference = (await response.json() as { reference: string }).reference;
     const [stored] = (await pool.query("SELECT id,private_data_ciphertext FROM public_enquiries WHERE enquiry_number=$1", [reference])).rows;
@@ -319,8 +323,19 @@ describe("public enquiry PostgreSQL integration", () => {
     const leadId = (await converted.json() as { leadId: string }).leadId;
     const [activity] = (await pool.query("SELECT private_payload_ciphertext FROM lead_activities WHERE lead_id=$1", [leadId])).rows;
     expect(activity.private_payload_ciphertext).not.toContain("123 Synthetic Road");
+    expect(activity.private_payload_ciphertext).not.toContain(catalogueItemId);
     const lead = (await pool.query("SELECT payload_ciphertext FROM lead_private_data WHERE lead_id=$1", [leadId])).rows[0];
-    expect(JSON.stringify(lead)).not.toContain("Synthetic test service");
+    expect(JSON.stringify(lead)).not.toContain("Synthetic complete blood count");
+    const detail = await getLead(new Request("http://localhost/api/leads/" + leadId), { params: Promise.resolve({ id: leadId }) });
+    expect(detail.status).toBe(200);
+    const detailBody = await detail.json() as { activity: Array<{ metadata: Record<string, unknown> }> };
+    const booking = detailBody.activity.find((entry) => entry.metadata.requestKind === "BOOKING_REQUEST");
+    expect(booking?.metadata).toMatchObject({ requestedCatalogueItemId: catalogueItemId, requestedCatalogueVersion: 3, preferredDate: "2027-01-20", preferredTimeWindow: "Morning", visitType: "HOME_COLLECTION" });
+    expect(booking?.metadata).not.toHaveProperty("collectionAddress");
+    grants = [...grants, "appointments.read"];
+    const authorizedDetail = await getLead(new Request("http://localhost/api/leads/" + leadId), { params: Promise.resolve({ id: leadId }) });
+    const authorizedBody = await authorizedDetail.json() as { activity: Array<{ metadata: Record<string, unknown> }> };
+    expect(authorizedBody.activity.find((entry) => entry.metadata.requestKind === "BOOKING_REQUEST")?.metadata.collectionAddress).toMatchObject({ line1: "123 Synthetic Road", postalCode: "400001" });
   });
 
   it("requires lead update permission to dismiss and hides cross-centre records", async () => {

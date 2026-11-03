@@ -55,7 +55,15 @@ export async function getLeadDetail(staff: StaffContext, leadId: string) {
     const [patient] = await db.select({ patientId:patients.id,patientNumber: patients.patientNumber,centreId:patients.centreId,encryptionKeyId:patientContactSecrets.encryptionKeyId,nameCiphertext:patientContactSecrets.nameCiphertext }).from(patients).innerJoin(patientContactSecrets,and(eq(patientContactSecrets.patientId,patients.id),eq(patientContactSecrets.organizationId,patients.organizationId),eq(patientContactSecrets.centreId,patients.centreId))).where(and(eq(patients.id, conversion[0].patientId), eq(patients.organizationId, staff.organizationId), eq(patients.centreId, lead.centreId))).limit(1);
     if(patient){const identity=decryptPatientIdentity(patient,{organizationId:staff.organizationId,centreId:patient.centreId,patientId:patient.patientId});convertedPatient={patientNumber:patient.patientNumber,...identity};}
   }
-  const activityView=activity.map(({privatePayloadCiphertext,...event})=>({...event,...decryptLeadValue<{body:string|null;metadata:Record<string,unknown>}>("activity",privatePayloadCiphertext,{organizationId:staff.organizationId,centreId:lead.centreId,recordId:event.id})}));
+  const canReadAppointmentDetails = hasLeadCentrePermission(staff.grants, "appointments.read", lead.centreId)
+    || hasLeadCentrePermission(staff.grants, "collections.read", lead.centreId);
+  const activityView=activity.map(({privatePayloadCiphertext,...event})=>{
+    const decrypted = decryptLeadValue<{body:string|null;metadata:Record<string,unknown> }>("activity",privatePayloadCiphertext,{organizationId:staff.organizationId,centreId:lead.centreId,recordId:event.id});
+    const metadata = { ...decrypted.metadata };
+    // A CRM read grant alone does not disclose a home-collection address.
+    if (!canReadAppointmentDetails && metadata.source === "PUBLIC_ENQUIRY" && metadata.requestKind === "BOOKING_REQUEST") delete metadata.collectionAddress;
+    return { ...event, ...decrypted, metadata };
+  });
   const followupView=followups.map(({outcomeNoteCiphertext,centreId,...item})=>({...item,outcomeNote:outcomeNoteCiphertext?decryptLeadValue<string>("followup-note",outcomeNoteCiphertext,{organizationId:staff.organizationId,centreId,recordId:item.id}):null}));
   return Response.json({ lead:leadView, activity:activityView, followups:followupView, conversion: conversion[0] ? { ...conversion[0], patientId: canReadPatient ? conversion[0].patientId : null, patient: convertedPatient } : null, capabilities: {
     update: hasLeadCentrePermission(staff.grants, "leads.update", lead.centreId),
