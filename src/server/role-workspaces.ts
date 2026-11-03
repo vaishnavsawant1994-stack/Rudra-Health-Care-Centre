@@ -44,6 +44,7 @@ export const roleWorkspaceDefinitions = {
     ["/relationships/doctors", "Doctor relationships", "doctors.read", "Review doctor relationships and permitted referral activity."],
     ["/relationships/corporate", "Corporate clients", "corporate.read", "Manage authorized corporate relationship records and activity."],
     ["/relationships/partners", "Referral partners", "partners.read", "Manage authorized partner relationship records and activity."],
+    ["/relationships/referrals", "Referral attribution", "leads.read", "Review centre-scoped lead and recorded-conversion counts when relationship access overlaps."],
     ["/roster/handovers", "Shift handover", "roster.handover", "Hand over open work with an explicit receiving staff acknowledgment."],
     ["/leads", "Leads and pipeline", "leads.read", "Manage enquiries within assigned centre permissions."],
     ["/leads/analytics", "CRM acquisition overview", "leads.read", "Review aggregate lead volume and conversion within authorized centres."],
@@ -118,6 +119,7 @@ export function getRoleWorkspaceLinks(key: RoleWorkspaceKey, grants: readonly Pe
   return roleWorkspaceDefinitions[key].links.filter(([href, , permission]) => {
     if (href === "/reports/followups") return hasOverlappingPermissionScope(grants, ["reports.read", "reports.followups.manage"]);
     if (href === "/leads/followups") return hasOverlappingPermissionScope(grants, ["leads.read", "leads.followups.manage"]);
+    if (href === "/relationships/referrals") return ["doctors.read", "corporate.read", "partners.read"].some((permission) => hasOverlappingPermissionScope(grants, ["leads.read", permission]));
     // Approval authority does not make a user's task list visible. The current
     // approval queue is centre-wide and therefore requires its explicit reader grant.
     if (href === "/tasks/approvals") return hasOverlappingPermissionScope(grants, ["tasks.approve", "tasks.read"]);

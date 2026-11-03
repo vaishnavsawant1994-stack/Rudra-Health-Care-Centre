@@ -73,6 +73,11 @@ describe("role workspace permission filtering", () => {
     expect(both).toContain("/relationships/corporate");
     expect(both).toContain("/relationships/partners");
   });
+  it("shows referral attribution only where lead and relationship reads overlap in a centre", () => {
+    expect(getRoleWorkspaceLinks("sales", [{ key: "leads.read", centreId: "c1" }, { key: "doctors.read", centreId: "c1" }]).some(([href]) => href === "/relationships/referrals")).toBe(true);
+    expect(getRoleWorkspaceLinks("sales", [{ key: "leads.read", centreId: "c1" }, { key: "partners.read", centreId: "c2" }]).some(([href]) => href === "/relationships/referrals")).toBe(false);
+    expect(getRoleWorkspaceLinks("sales", [{ key: "leads.read", centreId: "c1" }]).some(([href]) => href === "/relationships/referrals")).toBe(false);
+  });
   it("shows an assigned-only appointment queue to any role without broad appointment access", () => {
     expect(getRoleWorkspacePanels("phlebotomist", [{ key: "appointments.assigned.read", centreId: "c1" }])).toContain("assigned_appointments");
     expect(getRoleWorkspacePanels("support", [{ key: "appointments.assigned.read", centreId: "c1" }])).toContain("assigned_appointments");
