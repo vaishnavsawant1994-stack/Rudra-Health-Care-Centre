@@ -56,7 +56,7 @@ describe("marketing campaign conversion metrics PostgreSQL integration", () => {
     if (testUrl) process.env.DATABASE_URL = testUrl;
   }, 60_000);
 
-  it("counts only centre-matched recorded conversions and uses attributed leads as denominator", async () => {
+  it("counts only centre-matched recorded conversions and bookings for the attributed lead cohort", async () => {
     const { encryptOperationalData, operationalContext } = await import("@/server/operational-crypto");
     const campaignIds = [randomUUID(), randomUUID(), randomUUID()];
     const campaignRows = [
@@ -73,26 +73,39 @@ describe("marketing campaign conversion metrics PostgreSQL integration", () => {
     const leadForOtherCentre = randomUUID();
     for (const [index, leadId] of leadsForA.entries()) await pool.query("INSERT INTO leads(id,organization_id,centre_id,lead_number,enquiry_category,source,status,assigned_staff_id,created_by_staff_id,marketing_campaign_id,converted_at,created_at,updated_at) VALUES($1,$2,$3,$4,'GENERAL','CAMPAIGN',$5,$6,$6,$7,$8,$9,$9)", [leadId, organizationId, centreId, `LA-${leadId.slice(0, 8)}`, index < 2 ? "CONVERTED" : "NEW", staffUserId, campaignIds[0], index < 2 ? new Date("2026-11-02T00:00:00Z") : null, new Date(["2026-10-01T00:00:00Z", "2026-10-02T00:00:00Z", "2026-09-30T00:00:00Z"][index]!)]);
     for (const [leadId, targetCentre, campaignId, code] of [[leadForB, centreId, campaignIds[1], "LB"], [leadForOtherCentre, otherCentreId, campaignIds[2], "LX"]] as const) await pool.query("INSERT INTO leads(id,organization_id,centre_id,lead_number,enquiry_category,source,assigned_staff_id,created_by_staff_id,marketing_campaign_id,created_at,updated_at) VALUES($1,$2,$3,$4,'GENERAL','CAMPAIGN',$5,$5,$6,now(),now())", [leadId, organizationId, targetCentre, `${code}-${leadId.slice(0, 8)}`, staffUserId, campaignId]);
+    const conversionPatientIds = new Map<string, string>();
     for (const leadId of [leadsForA[0]!, leadsForA[1]!]) {
       const patientId = randomUUID();
       await pool.query("INSERT INTO patients(id,organization_id,centre_id,patient_number,consent_status,created_by_staff_id) VALUES($1,$2,$3,$4,'NOT_RECORDED',$5)", [patientId, organizationId, centreId, `P-${patientId.slice(0, 8)}`, staffUserId]);
+      conversionPatientIds.set(leadId, patientId);
       await pool.query("INSERT INTO lead_conversions(id,organization_id,centre_id,lead_id,patient_id,conversion_mode,converted_by_staff_id) VALUES($1,$2,$3,$4,$5,'NEW',$6)", [randomUUID(), organizationId, centreId, leadId, patientId, staffUserId]);
+    }
+    const appointmentSeeds = [
+      { leadId: leadsForA[0]!, patientId: conversionPatientIds.get(leadsForA[0]!)!, status: "CONFIRMED" },
+      { leadId: leadsForA[0]!, patientId: conversionPatientIds.get(leadsForA[0]!)!, status: "CANCELLED" },
+      { leadId: leadsForA[2]!, patientId: randomUUID(), status: "REQUESTED" },
+    ];
+    for (const seed of appointmentSeeds) {
+      if (!conversionPatientIds.has(seed.leadId)) await pool.query("INSERT INTO patients(id,organization_id,centre_id,patient_number,consent_status,created_by_staff_id) VALUES($1,$2,$3,$4,'NOT_RECORDED',$5)", [seed.patientId, organizationId, centreId, `P-${seed.patientId.slice(0, 8)}`, staffUserId]);
+      const appointmentId = randomUUID();
+      const privateData = encryptOperationalData({ homeCollectionAddress: null, collectionInstructions: null, communicationEvidenceReference: null, homeChargeReason: null }, operationalContext({ organizationId, centreId, recordId: appointmentId }, "appointment"));
+      await pool.query("INSERT INTO appointments(id,organization_id,centre_id,appointment_number,patient_id,lead_id,booking_source,visit_type,scheduled_at,duration_minutes,time_zone,status,private_data_ciphertext,created_by_staff_id,idempotency_key,request_hash) VALUES($1,$2,$3,$4,$5,$6,'CRM_LEAD','CENTRE',$7,30,'Asia/Kolkata',$8,$9,$10,$11,$12)", [appointmentId, organizationId, centreId, `AP-${appointmentId.slice(0, 8)}`, seed.patientId, seed.leadId, new Date("2026-11-04T10:00:00Z"), seed.status, privateData, staffUserId, randomUUID(), "a".repeat(64)]);
     }
 
     const response = await handler(new Request(`http://localhost/api/marketing/campaigns?centreId=${centreId}`));
     expect(response.status).toBe(200);
-    const body = await response.json() as { campaigns: Array<{ campaignCode: string; attributedLeadCount: number; convertedLeadCount: number; conversionRatePercent: number | null }> };
+    const body = await response.json() as { campaigns: Array<{ campaignCode: string; attributedLeadCount: number; convertedLeadCount: number; conversionRatePercent: number | null; appointmentCount: number; activeAppointmentCount: number; confirmedAppointmentCount: number }> };
     expect(body.campaigns).toHaveLength(2);
-    expect(body.campaigns.find((campaign) => campaign.campaignCode === "SYN-A")).toMatchObject({ attributedLeadCount: 3, convertedLeadCount: 2, conversionRatePercent: 66.7 });
-    expect(body.campaigns.find((campaign) => campaign.campaignCode === "SYN-B")).toMatchObject({ attributedLeadCount: 1, convertedLeadCount: 0, conversionRatePercent: 0 });
+    expect(body.campaigns.find((campaign) => campaign.campaignCode === "SYN-A")).toMatchObject({ attributedLeadCount: 3, convertedLeadCount: 2, conversionRatePercent: 66.7, appointmentCount: 3, activeAppointmentCount: 2, confirmedAppointmentCount: 1 });
+    expect(body.campaigns.find((campaign) => campaign.campaignCode === "SYN-B")).toMatchObject({ attributedLeadCount: 1, convertedLeadCount: 0, conversionRatePercent: 0, appointmentCount: 0, activeAppointmentCount: 0, confirmedAppointmentCount: 0 });
     expect(JSON.stringify(body)).not.toContain(leadForOtherCentre);
     expect(JSON.stringify(body)).not.toContain(staffUserId);
 
     const cohortResponse = await handler(new Request(`http://localhost/api/marketing/campaigns?centreId=${centreId}&from=2026-10-01&to=2026-10-01`));
     expect(cohortResponse.status).toBe(200);
-    const cohort = await cohortResponse.json() as { attributionWindow: { from: string; to: string; basis: string }; campaigns: Array<{ campaignCode: string; attributedLeadCount: number; convertedLeadCount: number; conversionRatePercent: number | null }> };
+    const cohort = await cohortResponse.json() as { attributionWindow: { from: string; to: string; basis: string }; campaigns: Array<{ campaignCode: string; attributedLeadCount: number; convertedLeadCount: number; conversionRatePercent: number | null; appointmentCount: number; activeAppointmentCount: number; confirmedAppointmentCount: number }> };
     expect(cohort.attributionWindow).toEqual({ from: "2026-10-01", to: "2026-10-01", basis: "LEAD_CREATED_COHORT" });
-    expect(cohort.campaigns.find((campaign) => campaign.campaignCode === "SYN-A")).toMatchObject({ attributedLeadCount: 1, convertedLeadCount: 1, conversionRatePercent: 100 });
+    expect(cohort.campaigns.find((campaign) => campaign.campaignCode === "SYN-A")).toMatchObject({ attributedLeadCount: 1, convertedLeadCount: 1, conversionRatePercent: 100, appointmentCount: 2, activeAppointmentCount: 1, confirmedAppointmentCount: 1 });
     expect(cohort.campaigns.find((campaign) => campaign.campaignCode === "SYN-B")).toMatchObject({ attributedLeadCount: 0, convertedLeadCount: 0, conversionRatePercent: null });
   });
 });

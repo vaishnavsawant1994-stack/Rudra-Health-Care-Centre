@@ -22,9 +22,9 @@ const explicitGroupedMappings = {
     route: "/marketing/campaigns",
     source: "src/components/marketing/campaign-workbench.tsx",
     pageMarker: "<CampaignWorkbench managedCentreIds=",
-    sourceMarkers: ["aria-label=\"Campaign attribution date filter\"", "Counts leads created", "Read-only campaign attribution access."],
-    note: "Consent-safe campaign and CRM lead-cohort aggregates are rendered in the campaign workbench; booking/payment attribution is not part of this mapping.",
-    limitation: "The mapping proves campaign cohort filtering and aggregate lead/conversion display in the listed component; it does not provide booking/payment funnel attribution, platform data, revenue or every M017 requirement.",
+    sourceMarkers: ["aria-label=\"Campaign attribution date filter\"", "Counts leads created", "Read-only campaign attribution access.", "confirmedAppointmentCount", "Active bookings"],
+    note: "Consent-safe campaign and CRM lead-cohort aggregates, including linked booking states, are rendered in the campaign workbench; payment attribution and external platform data are not part of this mapping.",
+    limitation: "The mapping proves campaign cohort filtering and aggregate lead, recorded conversion and linked appointment counts in the listed component; it does not provide payment/revenue attribution, platform data or every M017 requirement.",
   },
 };
 

@@ -42,7 +42,7 @@ describe("marketing campaign access controls", () => {
   it("returns centre-scoped attributed and converted lead counts from conversion records", async () => {
     mocks.getApiAccess.mockResolvedValue({ staff: { organizationId: "org-a", staffUserId: "staff-a", grants: [{ key: "marketing.read", centreId }] }, response: null });
     const campaign = { id: "campaign-a", organizationId: "org-a", centreId, campaignCode: "SYN-01", channel: "WEBSITE", status: "ACTIVE", startsOn: null, endsOn: null, versionNumber: 1, privateDataCiphertext: "ciphertext", createdByStaffId: "staff-a", updatedByStaffId: "staff-a", idempotencyKey: "key", requestHash: "hash", createdAt: new Date("2026-11-01T00:00:00Z"), updatedAt: new Date("2026-11-01T00:00:00Z") };
-    const results = [[campaign], [{ campaignId: campaign.id, count: 12 }], [{ campaignId: campaign.id, count: 3 }]];
+    const results = [[campaign], [{ campaignId: campaign.id, count: 12 }], [{ campaignId: campaign.id, count: 3 }], [{ campaignId: campaign.id, appointmentCount: 5, activeAppointmentCount: 3, confirmedAppointmentCount: 2 }]];
     mocks.selectedQueries.length = 0;
     mocks.getDb.mockReturnValue({ select: vi.fn(() => {
       const call = mocks.selectedQueries.length;
@@ -56,11 +56,13 @@ describe("marketing campaign access controls", () => {
     const response = await GET(new Request(`http://localhost/api/marketing/campaigns?centreId=${centreId}`));
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body.campaigns[0]).toMatchObject({ campaignCode: "SYN-01", attributedLeadCount: 12, convertedLeadCount: 3, conversionRatePercent: 25 });
+    expect(body.campaigns[0]).toMatchObject({ campaignCode: "SYN-01", attributedLeadCount: 12, convertedLeadCount: 3, conversionRatePercent: 25, appointmentCount: 5, activeAppointmentCount: 3, confirmedAppointmentCount: 2 });
     expect(body.attributionWindow).toEqual({ from: null, to: null, basis: "ALL_RECORDED_LEADS" });
-    expect(mocks.selectedQueries).toHaveLength(3);
+    expect(mocks.selectedQueries).toHaveLength(4);
     expect(mocks.selectedQueries[2]?.innerJoin).toHaveBeenCalledOnce();
     expect(mocks.selectedQueries[2]?.where).toHaveBeenCalledOnce();
+    expect(mocks.selectedQueries[3]?.innerJoin).toHaveBeenCalledOnce();
+    expect(mocks.selectedQueries[3]?.where).toHaveBeenCalledOnce();
   });
 
   it("rejects cross-origin and invalid campaign writes before database access", async () => {

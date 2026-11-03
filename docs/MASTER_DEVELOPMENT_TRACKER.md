@@ -1,3 +1,10 @@
+## 2026-11-03 checkpoint - Campaign-to-booking cohort metrics (M012/M017 partial)
+
+- Extended the internal, centre-scoped campaign cohort report to count appointments linked to attributed CRM leads. It reports total appointment records, active appointments (excluding cancelled/no-show) and confirmed-state appointments (`CONFIRMED`, `ASSIGNED`, `RESCHEDULED`) alongside attributed leads and recorded patient conversions. The same lead-created cohort filter applies, so later appointments for cohort leads are included. The response remains aggregate-only and contains no patient, contact or appointment detail.
+- The campaign workbench displays these booking measures with definitions. No revenue, service completion, external attribution, live marketing action or provider integration is inferred. No migration, dependency or persistent data changed.
+- Verification: focused campaign API and disposable PostgreSQL integration **6/6**; full default suite **689/689 across 171 files**; TypeScript passed; targeted ESLint passed for the changed application/test files; production build passed (**234 page entries**). The PostgreSQL test used encrypted synthetic appointment rows and verified centre and cohort filtering, plus active/confirmed status definitions. The 178-screen source matrix was regenerated.
+- M012/M017 remain partial; external marketing attribution/publishing, browser/mobile acceptance, patient identity proofing, key recovery/rotation/restore, configured scanning and production qualification remain open. Patient accounts remain disabled pending identity-proofing approval. Synthetic data only.
+
 ## 2026-11-03 checkpoint - Campaign cohort analytics and read-only access (M012/M017 partial)
 
 - The internal campaign report now accepts an optional paired `from`/`to` filter (maximum 366 days) and reports an explicitly labeled lead-created cohort. Attributed lead counts are based on `leads.created_at`; conversion counts include recorded conversions for that same lead cohort, even when conversion occurs later. The response contains campaign aggregates only and remains organization/centre-scoped.

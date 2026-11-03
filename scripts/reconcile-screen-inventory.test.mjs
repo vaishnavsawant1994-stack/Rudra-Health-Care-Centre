@@ -37,7 +37,7 @@ describe("178-screen inventory reconciliation", () => {
     expect(row[header.indexOf("Evidence limitations")]).toContain("does not prove every W008 requirement");
   });
 
-  it("maps M017 to the campaign cohort report without claiming booking or payment attribution", async () => {
+  it("maps M017 to campaign and linked appointment aggregates without claiming payment or platform attribution", async () => {
     const run = spawnSync(process.execPath, [path.join(root, "scripts", "reconcile-screen-inventory.mjs")], { cwd: root, encoding: "utf8" });
     expect(run.status, run.stderr).toBe(0);
     const csv = await readFile(path.join(root, "docs", "SCREEN_IMPLEMENTATION_MATRIX.csv"), "utf8");
@@ -46,8 +46,8 @@ describe("178-screen inventory reconciliation", () => {
     const row = parseCsvRow(lines.find((line) => line.startsWith('"M017",')));
     expect(row[header.indexOf("Exact source route")]).toBe("No exact target route file found");
     expect(row[header.indexOf("Explicit grouped screen mapping")]).toContain("/marketing/campaigns (src/app/marketing/campaigns/page.tsx)");
-    expect(row[header.indexOf("Explicit grouped screen mapping")]).toContain("booking/payment attribution is not part of this mapping");
+    expect(row[header.indexOf("Explicit grouped screen mapping")]).toContain("payment attribution and external platform data are not part of this mapping");
     expect(row[header.indexOf("Implementation status (evidence-based)")]).toContain("explicit grouped-route mapping is source-validated");
-    expect(row[header.indexOf("Evidence limitations")]).toContain("does not provide booking/payment funnel attribution");
+    expect(row[header.indexOf("Evidence limitations")]).toContain("does not provide payment/revenue attribution, platform data");
   });
 });

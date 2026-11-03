@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { and, count, desc, eq, gte, isNotNull, lt, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db/client";
-import { leadConversions, leads, marketingCampaignEvents, marketingCampaigns } from "@/db/schema";
+import { appointments, leadConversions, leads, marketingCampaignEvents, marketingCampaigns } from "@/db/schema";
 import { appendAuditEvent } from "@/server/audit";
 import { getApiAccess } from "@/server/access";
 import { csrfRejected, isSameOriginRequest } from "@/server/csrf";
@@ -45,10 +45,21 @@ export async function GET(request: Request) {
     .where(and(eq(leadConversions.organizationId, access.staff.organizationId), eq(leadConversions.centreId, centreId), eq(leads.organizationId, access.staff.organizationId), eq(leads.centreId, centreId), isNotNull(leads.marketingCampaignId), cohortDateFilter))
     .groupBy(leads.marketingCampaignId);
   const convertedByCampaign = new Map(conversionCounts.filter((row) => row.campaignId).map((row) => [row.campaignId!, row.count]));
+  const appointmentCounts = await getDb().select({
+    campaignId: leads.marketingCampaignId,
+    appointmentCount: count(),
+    activeAppointmentCount: count(sql`CASE WHEN ${appointments.status} NOT IN ('CANCELLED', 'NO_SHOW') THEN 1 END`),
+    confirmedAppointmentCount: count(sql`CASE WHEN ${appointments.status} IN ('CONFIRMED', 'ASSIGNED', 'RESCHEDULED') THEN 1 END`),
+  }).from(appointments)
+    .innerJoin(leads, and(eq(appointments.leadId, leads.id), eq(appointments.organizationId, leads.organizationId), eq(appointments.centreId, leads.centreId)))
+    .where(and(eq(appointments.organizationId, access.staff.organizationId), eq(appointments.centreId, centreId), eq(leads.organizationId, access.staff.organizationId), eq(leads.centreId, centreId), isNotNull(leads.marketingCampaignId), cohortDateFilter))
+    .groupBy(leads.marketingCampaignId);
+  const appointmentCountsByCampaign = new Map(appointmentCounts.filter((row) => row.campaignId).map((row) => [row.campaignId!, row]));
   return Response.json({ attributionWindow: from && toDate ? { from: from.toISOString().slice(0, 10), to: toDate.toISOString().slice(0, 10), basis: "LEAD_CREATED_COHORT" } : { from: null, to: null, basis: "ALL_RECORDED_LEADS" }, campaigns: rows.map((row) => {
     const attributedLeadCount = countByCampaign.get(row.id) ?? 0;
     const convertedLeadCount = convertedByCampaign.get(row.id) ?? 0;
-    return { ...reveal(row), attributedLeadCount, convertedLeadCount, conversionRatePercent: attributedLeadCount === 0 ? null : Math.round((convertedLeadCount / attributedLeadCount) * 1000) / 10 };
+    const appointmentMetrics = appointmentCountsByCampaign.get(row.id);
+    return { ...reveal(row), attributedLeadCount, convertedLeadCount, conversionRatePercent: attributedLeadCount === 0 ? null : Math.round((convertedLeadCount / attributedLeadCount) * 1000) / 10, appointmentCount: appointmentMetrics?.appointmentCount ?? 0, activeAppointmentCount: appointmentMetrics?.activeAppointmentCount ?? 0, confirmedAppointmentCount: appointmentMetrics?.confirmedAppointmentCount ?? 0 };
   }), actions: { publishing: "DISABLED", messaging: "DISABLED", advertisingSpend: "DISABLED" } }, { headers: { "cache-control": "private, no-store" } });
 }
 
