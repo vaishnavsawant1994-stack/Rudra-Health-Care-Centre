@@ -64,9 +64,9 @@ export function CentreOperationsSummary() {
         {centre.metrics.appointmentsWithoutArrivalToday !== undefined && <Link href={centreHref("/appointments/arrivals", centre.id)}>Open arrival queue</Link>}
         {centre.metrics.openOrders !== undefined && <Link href={centreHref("/orders", centre.id)}>Open orders</Link>}
         {centre.metrics.activeCollections !== undefined && <Link href={centreHref("/collections", centre.id)}>Open collections</Link>}
-        {centre.metrics.pendingReceiving !== undefined && <Link href="/branch/receiving">Open receiving queue</Link>}
+        {centre.metrics.pendingReceiving !== undefined && <Link href={centreHref("/branch/receiving", centre.id)}>Open receiving queue</Link>}
         {centre.metrics.pendingDispatch !== undefined && <Link href="/branch/dispatch">Open dispatch queue</Link>}
-        {centre.metrics.openExceptions !== undefined && <Link href="/samples/exceptions">Review exceptions</Link>}
+        {centre.metrics.openExceptions !== undefined && <Link href={centreHref("/samples/exceptions", centre.id)}>Review exceptions</Link>}
         {centre.metrics.overdueLeadFollowups !== undefined && <Link href="/leads/followups">Open lead follow-ups</Link>}
         {centre.metrics.overdueReportFollowups !== undefined && <Link href="/reports/followups">Open report follow-ups</Link>}
         {centre.metrics.openTasks !== undefined && <Link href="/tasks">Open staff tasks</Link>}

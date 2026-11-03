@@ -18,8 +18,10 @@ const actionSchema = z.discriminatedUnion("action", [
 ]);
 
 export async function GET(request: Request) {
-  const access = await getApiAccess("samples.read"); if (access.response) return access.response;
   const params = new URL(request.url).searchParams;
+  const requestedCentreId = params.get("centreId") ?? undefined;
+  if (requestedCentreId && !z.string().uuid().safeParse(requestedCentreId).success) return Response.json({ error: "invalid_centre" }, { status: 400 });
+  const access = await getApiAccess("samples.read", requestedCentreId); if (access.response) return access.response;
   const page = Number(params.get("page") ?? 1);
   const pageSize = Number(params.get("pageSize") ?? 50);
   if (!Number.isInteger(page) || page < 1 || page > 10_000 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) return Response.json({ error: "invalid_pagination" }, { status: 400 });
@@ -28,6 +30,7 @@ export async function GET(request: Request) {
   const visibility = assignmentVisibility(access.staff.grants, "samples.read", "collections.assign", ["samples.collect", "collections.visit.record"]);
   const scope = visibility.readCentres;
   const clauses = [eq(specimens.organizationId, access.staff.organizationId)];
+  if (requestedCentreId) clauses.push(eq(specimens.centreId, requestedCentreId));
   const statuses = sampleDirectoryStatuses(parsedView.data);
   if (statuses) clauses.push(inArray(specimens.status, [...statuses]));
   if (scope !== null) clauses.push(scope.length ? inArray(specimens.centreId, scope) : eq(specimens.centreId, "00000000-0000-0000-0000-000000000000"));

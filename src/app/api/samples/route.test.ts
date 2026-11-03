@@ -23,6 +23,16 @@ describe("specimen collection API boundary", () => {
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: "invalid_sample_view" });
   });
+  it("validates and rechecks a selected centre before querying samples", async () => {
+    const centreId = "c1aeacbb-bf66-44f0-a27a-7bf06c60a6b5";
+    getApiAccess.mockResolvedValueOnce({ staff: null, response: Response.json({ error: "forbidden" }, { status: 403 }) });
+    expect((await GET(new Request(`http://localhost/api/samples?centreId=${centreId}`))).status).toBe(403);
+    expect(getApiAccess).toHaveBeenCalledWith("samples.read", centreId);
+    getApiAccess.mockResolvedValueOnce({ staff: { grants: [] }, response: null });
+    const invalid = await GET(new Request("http://localhost/api/samples?centreId=not-a-uuid"));
+    expect(invalid.status).toBe(400);
+    expect(await invalid.json()).toEqual({ error: "invalid_centre" });
+  });
   it("requires an idempotency key and rejects unauthenticated or MFA-incomplete requests", async () => {
     expect((await POST(req())).status).toBe(400);
     getApiAccess.mockResolvedValueOnce({ staff: null, response: Response.json({ error: "authentication_required" }, { status: 401 }) });
