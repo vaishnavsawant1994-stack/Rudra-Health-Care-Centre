@@ -1,3 +1,10 @@
+## 2026-11-03 checkpoint - Campaign cohort analytics and read-only access (M012/M017 partial)
+
+- The internal campaign report now accepts an optional paired `from`/`to` filter (maximum 366 days) and reports an explicitly labeled lead-created cohort. Attributed lead counts are based on `leads.created_at`; conversion counts include recorded conversions for that same lead cohort, even when conversion occurs later. The response contains campaign aggregates only and remains organization/centre-scoped.
+- Users with `marketing.read` can view the report without `marketing.manage`. Create/edit/status actions remain hidden unless the selected centre is in the user's `marketing.manage` grant scope; the write APIs continue to enforce that permission independently. No content publishing, real communications, ad spend, external attribution claim, or revenue calculation is enabled.
+- Verification: campaign API unit and disposable PostgreSQL tests plus role-view rendering tests **8/8**; full default suite **688/688 across 171 files**; TypeScript, full lint and production build passed (**234 generated page entries**). The PostgreSQL test used synthetic lead/cohort/conversion rows in a disposable schema and verifies later conversion within a filtered lead cohort. No migration or dependency changed. The 178-screen matrix was regenerated and its regression passed **1/1**.
+- This advances campaign reporting only; M012/M017 remain partial. External platform attribution, marketing publication, live browser/mobile review and the overall product/security acceptance remain open. Patient accounts remain disabled pending identity-proofing approval. Synthetic data only.
+
 ## 2026-11-03 checkpoint - Public relationship pages connect to verified catalogue (W018-W020 partial)
 
 - Corporate, Doctors and Partners landing pages now link directly to the existing public diagnostic-test, package and centre directories. The pages continue to use their topic-specific encrypted, staff-reviewed enquiry flow and make no claims about contracts, referral entitlement, pricing, patient access or confirmed service availability.

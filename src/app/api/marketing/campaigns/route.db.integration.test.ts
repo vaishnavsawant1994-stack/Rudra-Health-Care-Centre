@@ -71,7 +71,7 @@ describe("marketing campaign conversion metrics PostgreSQL integration", () => {
     const leadsForA = [0, 1, 2].map(() => randomUUID());
     const leadForB = randomUUID();
     const leadForOtherCentre = randomUUID();
-    for (const [index, leadId] of leadsForA.entries()) await pool.query("INSERT INTO leads(id,organization_id,centre_id,lead_number,enquiry_category,source,status,assigned_staff_id,created_by_staff_id,marketing_campaign_id,converted_at,created_at,updated_at) VALUES($1,$2,$3,$4,'GENERAL','CAMPAIGN',$5,$6,$6,$7,$8,now(),now())", [leadId, organizationId, centreId, `LA-${leadId.slice(0, 8)}`, index < 2 ? "CONVERTED" : "NEW", staffUserId, campaignIds[0], index < 2 ? new Date() : null]);
+    for (const [index, leadId] of leadsForA.entries()) await pool.query("INSERT INTO leads(id,organization_id,centre_id,lead_number,enquiry_category,source,status,assigned_staff_id,created_by_staff_id,marketing_campaign_id,converted_at,created_at,updated_at) VALUES($1,$2,$3,$4,'GENERAL','CAMPAIGN',$5,$6,$6,$7,$8,$9,$9)", [leadId, organizationId, centreId, `LA-${leadId.slice(0, 8)}`, index < 2 ? "CONVERTED" : "NEW", staffUserId, campaignIds[0], index < 2 ? new Date("2026-11-02T00:00:00Z") : null, new Date(["2026-10-01T00:00:00Z", "2026-10-02T00:00:00Z", "2026-09-30T00:00:00Z"][index]!)]);
     for (const [leadId, targetCentre, campaignId, code] of [[leadForB, centreId, campaignIds[1], "LB"], [leadForOtherCentre, otherCentreId, campaignIds[2], "LX"]] as const) await pool.query("INSERT INTO leads(id,organization_id,centre_id,lead_number,enquiry_category,source,assigned_staff_id,created_by_staff_id,marketing_campaign_id,created_at,updated_at) VALUES($1,$2,$3,$4,'GENERAL','CAMPAIGN',$5,$5,$6,now(),now())", [leadId, organizationId, targetCentre, `${code}-${leadId.slice(0, 8)}`, staffUserId, campaignId]);
     for (const leadId of [leadsForA[0]!, leadsForA[1]!]) {
       const patientId = randomUUID();
@@ -87,5 +87,12 @@ describe("marketing campaign conversion metrics PostgreSQL integration", () => {
     expect(body.campaigns.find((campaign) => campaign.campaignCode === "SYN-B")).toMatchObject({ attributedLeadCount: 1, convertedLeadCount: 0, conversionRatePercent: 0 });
     expect(JSON.stringify(body)).not.toContain(leadForOtherCentre);
     expect(JSON.stringify(body)).not.toContain(staffUserId);
+
+    const cohortResponse = await handler(new Request(`http://localhost/api/marketing/campaigns?centreId=${centreId}&from=2026-10-01&to=2026-10-01`));
+    expect(cohortResponse.status).toBe(200);
+    const cohort = await cohortResponse.json() as { attributionWindow: { from: string; to: string; basis: string }; campaigns: Array<{ campaignCode: string; attributedLeadCount: number; convertedLeadCount: number; conversionRatePercent: number | null }> };
+    expect(cohort.attributionWindow).toEqual({ from: "2026-10-01", to: "2026-10-01", basis: "LEAD_CREATED_COHORT" });
+    expect(cohort.campaigns.find((campaign) => campaign.campaignCode === "SYN-A")).toMatchObject({ attributedLeadCount: 1, convertedLeadCount: 1, conversionRatePercent: 100 });
+    expect(cohort.campaigns.find((campaign) => campaign.campaignCode === "SYN-B")).toMatchObject({ attributedLeadCount: 0, convertedLeadCount: 0, conversionRatePercent: null });
   });
 });

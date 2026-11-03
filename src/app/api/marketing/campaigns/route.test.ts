@@ -29,6 +29,16 @@ describe("marketing campaign access controls", () => {
     expect(mocks.getDb).not.toHaveBeenCalled();
   });
 
+  it("rejects incomplete and invalid attribution date windows before querying", async () => {
+    mocks.getApiAccess.mockResolvedValue({ staff: { organizationId: "org-a", grants: [{ key: "marketing.read", centreId }] }, response: null });
+    for (const query of ["from=2026-10-01", "from=2026-02-30&to=2026-03-01", "from=2025-01-01&to=2026-02-01"]) {
+      const response = await GET(new Request(`http://localhost/api/marketing/campaigns?centreId=${centreId}&${query}`));
+      expect(response.status).toBe(400);
+      expect((await response.json()).error).toMatch(/invalid_date_range|date_range_too_large/);
+    }
+    expect(mocks.getDb).not.toHaveBeenCalled();
+  });
+
   it("returns centre-scoped attributed and converted lead counts from conversion records", async () => {
     mocks.getApiAccess.mockResolvedValue({ staff: { organizationId: "org-a", staffUserId: "staff-a", grants: [{ key: "marketing.read", centreId }] }, response: null });
     const campaign = { id: "campaign-a", organizationId: "org-a", centreId, campaignCode: "SYN-01", channel: "WEBSITE", status: "ACTIVE", startsOn: null, endsOn: null, versionNumber: 1, privateDataCiphertext: "ciphertext", createdByStaffId: "staff-a", updatedByStaffId: "staff-a", idempotencyKey: "key", requestHash: "hash", createdAt: new Date("2026-11-01T00:00:00Z"), updatedAt: new Date("2026-11-01T00:00:00Z") };
@@ -47,6 +57,7 @@ describe("marketing campaign access controls", () => {
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.campaigns[0]).toMatchObject({ campaignCode: "SYN-01", attributedLeadCount: 12, convertedLeadCount: 3, conversionRatePercent: 25 });
+    expect(body.attributionWindow).toEqual({ from: null, to: null, basis: "ALL_RECORDED_LEADS" });
     expect(mocks.selectedQueries).toHaveLength(3);
     expect(mocks.selectedQueries[2]?.innerJoin).toHaveBeenCalledOnce();
     expect(mocks.selectedQueries[2]?.where).toHaveBeenCalledOnce();
