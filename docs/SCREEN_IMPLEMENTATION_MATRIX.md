@@ -13,9 +13,8 @@ node scripts/reconcile-screen-inventory.mjs
 
 - Parsed **178/178** screen IDs from the proposal.
 - **32** IDs have an exact page file at the proposed route. This is route evidence only; it does not establish functional completion.
-- **146** IDs have no exact page at the proposed URL. The matrix lists possible module-level source routes, APIs and tests where found. These could be consolidated or renamed routes; the screen-to-source/action mapping is unresolved and must be inspected before treating them as absent or complete.
-- **1** of those no-exact-route IDs, W008, now has an explicit source-validated mapping to an in-form review state inside `/book`. It remains partial and does not create or confirm an appointment.
-- **26** IDs are blocked by the patient identity-proofing gate or by external/policy dependencies recorded in their row. These status categories can overlap with route evidence. W015 is specifically not satisfied by the existing staff-only `/reports` route.
+- **146** IDs have no exact page at the proposed URL. One of those (W008) has an explicit source-validated mapping to an in-form review state inside `/book`; **145** proposed routes still need an explicit screen-to-source/action mapping. The matrix lists candidate module routes, APIs and tests, which must not be mistaken for screen-specific evidence.
+- Current evidence-based classifications are **31 partially implemented with page/API/test candidates**, **1 partially implemented with an explicit grouped-route mapping**, **120 partially implemented with source/action mapping unresolved**, and **26 blocked by an identity-proofing, policy or external dependency**. These total 178 and are the generator's mutually exclusive labels, not a measure of completed functionality.
 - No screen is marked fully implemented or “implementation complete, acceptance pending” by this generator. File presence, route manifests, tests in the same module and candidate API matches are not enough evidence to make that claim.
 
 ## Reading the CSV
@@ -28,7 +27,7 @@ The implementation classifications are evidence-conservative:
 
 1. **Fully implemented for local development:** none promoted automatically. Requires verified functional requirements and relevant automated evidence.
 2. **Partially implemented:** page source exists or related module sources suggest a grouped implementation, but individual behavior is not fully reconciled.
-3. **Not started:** no exact route or related page/API source is found.
+3. **Not started:** the generator does not currently assign this label when a proposed route lacks a file, because a consolidated implementation may exist. Those rows remain “mapping unresolved” until inspected; this avoids treating missing route files as proof of absent functionality.
 4. **Blocked:** identity proofing or a real external/business/clinical/legal decision blocks the proposed capability.
 5. **Implementation complete, acceptance pending:** none promoted automatically; requires evidence that functionality is complete before acceptance is the only remaining gate.
 
@@ -36,4 +35,4 @@ The user-approved identity-proofing decision is to keep patient portal accounts 
 
 ## Next reconciliation work
 
-Resolve the remaining 145 proposed-route mappings against the actual consolidated pages, then inspect every mapped screen's rendered controls, API mutations, database records, permissions and automated test scope. Update classifications only with that evidence. Reconcile any approved scope changes without deleting the original IDs.
+Resolve the remaining 145 proposed-route mappings against the actual consolidated pages, then inspect every mapped screen's rendered controls, API mutations, database records, permissions and automated test scope. Update classifications only with that evidence. Reconcile any approved scope changes without deleting the original IDs. The 26 blocked rows still require their named identity, policy or external dependency before those capabilities can be enabled.
