@@ -1,3 +1,9 @@
+## 2026-11-03 checkpoint - Published centre contacts on Contact page (W021 partial)
+
+- The public Contact page now includes the existing centre directory beside the staff-reviewed enquiry form. It displays only centre details already explicitly published through the protected CMS profile workflow; no unverified phone, address, hours or service coverage is invented. Existing safety notice continues to state that the form does not activate patient accounts, external messages, medical advice or emergency handling.
+- Verification: focused Contact page test **1/1**; full default suite **682/682 across 169 files**; TypeScript, lint and production build passed (**234 generated page entries**). Screen-inventory generator regression passed **1/1** and the 178-screen matrix maps W021 to the Contact route while retaining partial status. No schema/migration, dependency, account, key, persistent data or external service changed. Synthetic-data development only.
+- W021 remains partial pending content/legal review and final browser/mobile acceptance. Patient portal accounts remain disabled pending identity-proofing approval; key recovery/rotation, scanner qualification, live authorization and production qualification remain open.
+
 ## 2026-11-03 checkpoint - Referral attribution report (C005 partial)
 
 - Added `/relationships/referrals` and `/api/relationships/referrals` for authorized, centre-scoped counts of doctor/corporate/partner-attributed CRM leads and recorded patient conversions. The report requires the same staff identity to hold both `leads.read` and the corresponding relationship read permission for the selected centre. It excludes patient/contact data, supports bounded date filters and pagination, and is exposed in staff navigation and the Sales workspace only when compatible centre grants overlap.
