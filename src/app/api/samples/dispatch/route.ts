@@ -7,15 +7,19 @@ import { appendAuditEvent } from "@/server/audit";
 import { csrfRejected, isSameOriginRequest } from "@/server/csrf";
 import { dispatchCreateSchema } from "@/server/sample-policy";
 import { decryptOperationalData, encryptOperationalData, operationalContext } from "@/server/operational-crypto";
+import { z } from "zod";
 
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
+  const requestedCentreId = params.get("centreId") ?? undefined;
+  if (requestedCentreId && !z.uuid().safeParse(requestedCentreId).success) return Response.json({ error: "invalid_centre" }, { status: 400 });
   const page = Number(params.get("page") ?? 1);
   const pageSize = Number(params.get("pageSize") ?? 50);
   if (!Number.isInteger(page) || page < 1 || page > 10_000 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) return Response.json({ error: "invalid_pagination" }, { status: 400 });
-  const access = await getApiAccess("samples.read"); if (access.response) return access.response;
+  const access = await getApiAccess("samples.read", requestedCentreId); if (access.response) return access.response;
   const scopes = access.staff.grants.filter((g) => g.key === "samples.read").map((g) => g.centreId);
   const where = [eq(dispatchBatches.organizationId, access.staff.organizationId)];
+  if (requestedCentreId) where.push(eq(dispatchBatches.centreId, requestedCentreId));
   if (!scopes.includes(null)) where.push(scopes.length ? inArray(dispatchBatches.centreId, scopes.filter((id): id is string => Boolean(id))) : eq(dispatchBatches.centreId, "00000000-0000-0000-0000-000000000000"));
   const rows = await getDb().select({ id: dispatchBatches.id,organizationId:dispatchBatches.organizationId,centreId: dispatchBatches.centreId, batchNumber: dispatchBatches.batchNumber, status: dispatchBatches.status,privateDataCiphertext:dispatchBatches.privateDataCiphertext, handedOverAt: dispatchBatches.handedOverAt, versionNumber: dispatchBatches.versionNumber, createdAt: dispatchBatches.createdAt }).from(dispatchBatches).where(and(...where)).orderBy(desc(dispatchBatches.createdAt), desc(dispatchBatches.id)).limit(pageSize + 1).offset((page - 1) * pageSize);
   const hasMore = rows.length > pageSize;

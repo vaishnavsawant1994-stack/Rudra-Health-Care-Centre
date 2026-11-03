@@ -60,15 +60,15 @@ export function CentreOperationsSummary() {
       <nav className="centre-operations-actions" aria-label={`${centre.name} work queues`}>
         {centre.metrics.pendingConfirmations !== undefined && <Link href={centreHref("/appointments", centre.id)}>Open appointments</Link>}
         {centre.metrics.pendingConfirmations !== undefined && <Link href={centreHref("/appointments", centre.id, { status: "REQUESTED" })}>Review pending confirmations</Link>}
-        {centre.metrics.pendingWebsiteEnquiries !== undefined && <Link href="/leads/public-enquiries">Review website enquiries</Link>}
+        {centre.metrics.pendingWebsiteEnquiries !== undefined && <Link href={centreHref("/leads/public-enquiries", centre.id)}>Review website enquiries</Link>}
         {centre.metrics.appointmentsWithoutArrivalToday !== undefined && <Link href={centreHref("/appointments/arrivals", centre.id)}>Open arrival queue</Link>}
         {centre.metrics.openOrders !== undefined && <Link href={centreHref("/orders", centre.id)}>Open orders</Link>}
         {centre.metrics.activeCollections !== undefined && <Link href={centreHref("/collections", centre.id)}>Open collections</Link>}
         {centre.metrics.pendingReceiving !== undefined && <Link href={centreHref("/branch/receiving", centre.id)}>Open receiving queue</Link>}
-        {centre.metrics.pendingDispatch !== undefined && <Link href="/branch/dispatch">Open dispatch queue</Link>}
+        {centre.metrics.pendingDispatch !== undefined && <Link href={centreHref("/branch/dispatch", centre.id)}>Open dispatch queue</Link>}
         {centre.metrics.openExceptions !== undefined && <Link href={centreHref("/samples/exceptions", centre.id)}>Review exceptions</Link>}
-        {centre.metrics.overdueLeadFollowups !== undefined && <Link href="/leads/followups">Open lead follow-ups</Link>}
-        {centre.metrics.overdueReportFollowups !== undefined && <Link href="/reports/followups">Open report follow-ups</Link>}
+        {centre.metrics.overdueLeadFollowups !== undefined && <Link href={centreHref("/leads/followups", centre.id)}>Open lead follow-ups</Link>}
+        {centre.metrics.overdueReportFollowups !== undefined && <Link href={centreHref("/reports/followups", centre.id)}>Open report follow-ups</Link>}
         {centre.metrics.openTasks !== undefined && <Link href={centreHref("/tasks", centre.id)}>Open staff tasks</Link>}
         {centre.metrics.taskApprovalExpiryDue !== undefined && <Link href={centreHref("/tasks/approvals", centre.id, { queue: "expiry-due" })}>Review expired approvals</Link>}
         {centre.metrics.taskApprovalEscalationDue !== undefined && <Link href={centreHref("/tasks/approvals", centre.id, { queue: "escalation-due" })}>Review task approval escalations</Link>}
