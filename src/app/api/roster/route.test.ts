@@ -19,6 +19,16 @@ describe("roster queue pagination", () => {
     expect(getDb).not.toHaveBeenCalled();
   });
 
+  it("does not let a self-scoped roster reader request a coworker's schedule", async () => {
+    const staff = { organizationId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", staffUserId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", grants: [{ key: "roster.read", centreId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd" }] };
+    getApiAccess.mockResolvedValue({ staff, response: null });
+    const response = await GET(new Request("http://localhost/api/roster?centreId=dddddddd-dddd-4ddd-8ddd-dddddddddddd&staffId=eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee&from=2026-10-26T00%3A00%3A00.000Z&to=2026-11-02T00%3A00%3A00.000Z"));
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: "not_found" });
+    expect(getApiAccess).toHaveBeenCalledWith("roster.read", "dddddddd-dddd-4ddd-8ddd-dddddddddddd");
+    expect(getDb).not.toHaveBeenCalled();
+  });
+
   it("rejects a roster write whose timezone differs from the authorized centre", async () => {
     const staff = { organizationId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", staffUserId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" };
     getApiAccess.mockResolvedValue({ staff, response: null });
