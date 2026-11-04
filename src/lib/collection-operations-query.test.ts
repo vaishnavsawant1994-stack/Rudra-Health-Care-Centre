@@ -19,4 +19,10 @@ describe("collection operations schedule filtering", () => {
     const query = collectionOperationsQuery({ page: 1, pageSize: 100, centreId: "", scheduleDate: "2026-11-04", includeScheduleDate: true, assignedToMe: true });
     expect([...query.entries()]).toEqual([["page", "1"], ["pageSize", "100"], ["date", "2026-11-04"], ["assignedToMe", "1"]]);
   });
+
+  it("preserves an explicitly selected visit-stage filter", () => {
+    const query = collectionOperationsQuery({ page: 1, pageSize: 50, centreId: "centre-1", scheduleDate: "", includeScheduleDate: false, visitStage: "ARRIVED" });
+    expect(query.get("visitStage")).toBe("ARRIVED");
+    expect(query.has("date")).toBe(false);
+  });
 });

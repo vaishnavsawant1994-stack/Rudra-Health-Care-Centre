@@ -124,10 +124,15 @@ describe("personal collection route PostgreSQL integration", () => {
     expect(await delayedJobResponse.json()).toMatchObject({ job: { status: "IN_PROGRESS", versionNumber: 4 } });
     const travellingQueueResponse = await getHandler(new Request("http://localhost/api/collections?assignedToMe=1&date=2099-01-05&pageSize=100"));
     expect(await travellingQueueResponse.json()).toMatchObject({ jobs: [{ status: "IN_PROGRESS", visitStage: "TRAVELLING" }], summary: { byVisitStage: { travelling: 1, arrived: 0 } } });
+    const travellingOnlyResponse = await getHandler(new Request("http://localhost/api/collections?assignedToMe=1&date=2099-01-05&pageSize=100&visitStage=TRAVELLING"));
+    expect(await travellingOnlyResponse.json()).toMatchObject({ jobs: [{ id: permittedJob.id, visitStage: "TRAVELLING" }], summary: { total: 1 } });
+    expect((await getHandler(new Request("http://localhost/api/collections?visitStage=INVALID"))).status).toBe(400);
     const arrivedResponse = await patchJobHandler(new Request(`http://localhost/api/collections/${permittedJob.id}`, { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() }, body: JSON.stringify({ action: "arrive", expectedVersion: 4, reason: "Synthetic field worker arrival" }) }), { params: Promise.resolve({ id: permittedJob.id }) });
     expect(arrivedResponse.status).toBe(200);
     const arrivedQueueResponse = await getHandler(new Request("http://localhost/api/collections?assignedToMe=1&date=2099-01-05&pageSize=100"));
     expect(await arrivedQueueResponse.json()).toMatchObject({ jobs: [{ status: "IN_PROGRESS", visitStage: "ARRIVED" }], summary: { byVisitStage: { travelling: 0, arrived: 1 } } });
+    expect((await (await getHandler(new Request("http://localhost/api/collections?assignedToMe=1&date=2099-01-05&pageSize=100&visitStage=TRAVELLING"))).json()).jobs).toEqual([]);
+    expect(await (await getHandler(new Request("http://localhost/api/collections?assignedToMe=1&date=2099-01-05&pageSize=100&visitStage=ARRIVED"))).json()).toMatchObject({ jobs: [{ id: permittedJob.id, visitStage: "ARRIVED" }] });
     const delayEvent = await pool!.query("SELECT event_type FROM collection_job_events WHERE job_id=$1 ORDER BY recorded_at", [permittedJob.id]);
     expect(delayEvent.rows.map((row) => row.event_type)).toEqual(["ASSIGNED", "ASSIGNMENT_ACCEPTED", "TRAVEL_STARTED", "VISIT_DELAYED", "ARRIVED"]);
 

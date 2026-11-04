@@ -6,7 +6,7 @@ import { getDb } from "@/db/client";
 import { appointments, centres, collectionJobEvents, collectionJobs, diagnosticOrders, patientContactSecrets, patients } from "@/db/schema";
 import { appendAuditEvent } from "@/server/audit";
 import { csrfRejected, isSameOriginRequest } from "@/server/csrf";
-import { collectionJobCreateSchema, collectionVisitStage, collectionVisitStageCounts } from "@/server/sample-policy";
+import { collectionJobCreateSchema, collectionVisitStage, collectionVisitStageCounts, matchesCollectionVisitStage, type CollectionVisitStageFilter } from "@/server/sample-policy";
 import { decryptPatientIdentity } from "@/server/patient-contact-crypto";
 import { encryptOperationalData, operationalContext } from "@/server/operational-crypto";
 import { isValidScheduleDate } from "@/server/collection-schedule-policy";
@@ -20,6 +20,9 @@ export async function GET(request: Request) {
   if (!Number.isInteger(page) || page < 1 || page > 10_000 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) return Response.json({ error: "invalid_pagination" }, { status: 400 });
   const scheduleDate = params.get("date");
   const assignedToMe = params.get("assignedToMe") === "1";
+  const requestedVisitStage = params.get("visitStage");
+  const visitStageFilter: CollectionVisitStageFilter | null = requestedVisitStage === null ? null : ["TRAVELLING", "ARRIVED", "STAGE_PENDING"].includes(requestedVisitStage) ? requestedVisitStage as CollectionVisitStageFilter : null;
+  if (requestedVisitStage !== null && visitStageFilter === null) return Response.json({ error: "invalid_visit_stage" }, { status: 400 });
   if (scheduleDate !== null && !isValidScheduleDate(scheduleDate)) return Response.json({ error: "invalid_schedule_date" }, { status: 400 });
   const access = await getCollectionReadAccess(requestedCentreId);
   if (access.response) return access.response;
@@ -40,21 +43,23 @@ export async function GET(request: Request) {
     clauses.push(permitted.length ? or(...permitted)! : eq(collectionJobs.id, "00000000-0000-0000-0000-000000000000"));
   }
   if (scheduleDate) clauses.push(sql`(${collectionJobs.scheduledStart} AT TIME ZONE ${centres.timeZone})::date = ${scheduleDate}::date`);
-  const summaryRows = await getDb().select({ status: collectionJobs.status, count: count() }).from(collectionJobs).innerJoin(centres, and(eq(centres.id, collectionJobs.centreId), eq(centres.organizationId, collectionJobs.organizationId))).innerJoin(appointments, and(eq(appointments.id, collectionJobs.appointmentId), eq(appointments.organizationId, collectionJobs.organizationId), eq(appointments.centreId, collectionJobs.centreId))).innerJoin(patients, and(eq(patients.id, collectionJobs.patientId), eq(patients.organizationId, collectionJobs.organizationId), eq(patients.centreId, collectionJobs.centreId))).innerJoin(patientContactSecrets, and(eq(patientContactSecrets.patientId, patients.id), eq(patientContactSecrets.organizationId, patients.organizationId), eq(patientContactSecrets.centreId, patients.centreId))).where(and(...clauses)).groupBy(collectionJobs.status);
-  const rows = await getDb().select({ id: collectionJobs.id, jobNumber: collectionJobs.jobNumber, centreId: collectionJobs.centreId, centreTimeZone: centres.timeZone, appointmentId: collectionJobs.appointmentId, orderId: collectionJobs.orderId, patientId: collectionJobs.patientId, encryptionKeyId:patientContactSecrets.encryptionKeyId,nameCiphertext:patientContactSecrets.nameCiphertext,visitType: appointments.visitType, status: collectionJobs.status, assignedStaffId: collectionJobs.assignedStaffId, scheduledStart: collectionJobs.scheduledStart, scheduledEnd: collectionJobs.scheduledEnd, versionNumber: collectionJobs.versionNumber, createdAt: collectionJobs.createdAt }).from(collectionJobs).innerJoin(centres, and(eq(centres.id, collectionJobs.centreId), eq(centres.organizationId, collectionJobs.organizationId))).innerJoin(appointments, and(eq(appointments.id, collectionJobs.appointmentId), eq(appointments.organizationId, collectionJobs.organizationId), eq(appointments.centreId, collectionJobs.centreId))).innerJoin(patients, and(eq(patients.id, collectionJobs.patientId), eq(patients.organizationId, collectionJobs.organizationId), eq(patients.centreId, collectionJobs.centreId))).innerJoin(patientContactSecrets,and(eq(patientContactSecrets.patientId,patients.id),eq(patientContactSecrets.organizationId,patients.organizationId),eq(patientContactSecrets.centreId,patients.centreId))).where(and(...clauses)).orderBy(asc(collectionJobs.scheduledStart), asc(collectionJobs.id)).limit(pageSize + 1).offset((page - 1) * pageSize);
-  const hasMore = rows.length > pageSize;
-  const pageRows = rows.slice(0, pageSize);
-  const visitEventTypes = await getDb().select({ jobId: collectionJobEvents.jobId, eventType: collectionJobEvents.eventType }).from(collectionJobEvents)
-    .innerJoin(collectionJobs, and(eq(collectionJobs.id, collectionJobEvents.jobId), eq(collectionJobs.organizationId, collectionJobEvents.organizationId)))
+  const activeVisitJobs = await getDb().select({ id: collectionJobs.id }).from(collectionJobs)
     .innerJoin(centres, and(eq(centres.id, collectionJobs.centreId), eq(centres.organizationId, collectionJobs.organizationId)))
-    .where(and(...clauses, eq(collectionJobs.status, "IN_PROGRESS"), eq(collectionJobEvents.organizationId, staff.organizationId), inArray(collectionJobEvents.eventType, ["TRAVEL_STARTED", "VISIT_STARTED", "ARRIVED", "ATTEMPT_FAILED"])));
+    .where(and(...clauses, eq(collectionJobs.status, "IN_PROGRESS")));
+  const activeVisitIds = activeVisitJobs.map((row) => row.id);
+  const visitEventTypes = activeVisitIds.length ? await getDb().select({ jobId: collectionJobEvents.jobId, eventType: collectionJobEvents.eventType }).from(collectionJobEvents)
+    .where(and(eq(collectionJobEvents.organizationId, staff.organizationId), inArray(collectionJobEvents.jobId, activeVisitIds), inArray(collectionJobEvents.eventType, ["TRAVEL_STARTED", "VISIT_STARTED", "ARRIVED", "ATTEMPT_FAILED"]))) : [];
   const visitEventsByJob = new Map<string, string[]>();
   for (const event of visitEventTypes) visitEventsByJob.set(event.jobId, [...(visitEventsByJob.get(event.jobId) ?? []), event.eventType]);
+  const visitStages = collectionVisitStageCounts(activeVisitJobs.map(({ id }) => ({ status: "IN_PROGRESS", eventTypes: visitEventsByJob.get(id) ?? [] })));
+  const matchingVisitIds = visitStageFilter ? activeVisitJobs.filter(({ id }) => matchesCollectionVisitStage("IN_PROGRESS", visitEventsByJob.get(id) ?? [], visitStageFilter)).map(({ id }) => id) : null;
+  const queueClauses = matchingVisitIds === null ? clauses : matchingVisitIds.length ? [...clauses, inArray(collectionJobs.id, matchingVisitIds)] : [...clauses, eq(collectionJobs.id, "00000000-0000-0000-0000-000000000000")];
+  const summaryRows = await getDb().select({ status: collectionJobs.status, count: count() }).from(collectionJobs).innerJoin(centres, and(eq(centres.id, collectionJobs.centreId), eq(centres.organizationId, collectionJobs.organizationId))).innerJoin(appointments, and(eq(appointments.id, collectionJobs.appointmentId), eq(appointments.organizationId, collectionJobs.organizationId), eq(appointments.centreId, collectionJobs.centreId))).innerJoin(patients, and(eq(patients.id, collectionJobs.patientId), eq(patients.organizationId, collectionJobs.organizationId), eq(patients.centreId, collectionJobs.centreId))).innerJoin(patientContactSecrets, and(eq(patientContactSecrets.patientId, patients.id), eq(patientContactSecrets.organizationId, patients.organizationId), eq(patientContactSecrets.centreId, patients.centreId))).where(and(...queueClauses)).groupBy(collectionJobs.status);
+  const rows = await getDb().select({ id: collectionJobs.id, jobNumber: collectionJobs.jobNumber, centreId: collectionJobs.centreId, centreTimeZone: centres.timeZone, appointmentId: collectionJobs.appointmentId, orderId: collectionJobs.orderId, patientId: collectionJobs.patientId, encryptionKeyId:patientContactSecrets.encryptionKeyId,nameCiphertext:patientContactSecrets.nameCiphertext,visitType: appointments.visitType, status: collectionJobs.status, assignedStaffId: collectionJobs.assignedStaffId, scheduledStart: collectionJobs.scheduledStart, scheduledEnd: collectionJobs.scheduledEnd, versionNumber: collectionJobs.versionNumber, createdAt: collectionJobs.createdAt }).from(collectionJobs).innerJoin(centres, and(eq(centres.id, collectionJobs.centreId), eq(centres.organizationId, collectionJobs.organizationId))).innerJoin(appointments, and(eq(appointments.id, collectionJobs.appointmentId), eq(appointments.organizationId, collectionJobs.organizationId), eq(appointments.centreId, collectionJobs.centreId))).innerJoin(patients, and(eq(patients.id, collectionJobs.patientId), eq(patients.organizationId, collectionJobs.organizationId), eq(patients.centreId, collectionJobs.centreId))).innerJoin(patientContactSecrets,and(eq(patientContactSecrets.patientId,patients.id),eq(patientContactSecrets.organizationId,patients.organizationId),eq(patientContactSecrets.centreId,patients.centreId))).where(and(...queueClauses)).orderBy(asc(collectionJobs.scheduledStart), asc(collectionJobs.id)).limit(pageSize + 1).offset((page - 1) * pageSize);
+  const hasMore = rows.length > pageSize;
+  const pageRows = rows.slice(0, pageSize);
   const jobs=pageRows.map(({encryptionKeyId,nameCiphertext,patientId,centreId,...row})=>{const name=decryptPatientIdentity({encryptionKeyId,nameCiphertext},{organizationId:staff.organizationId,centreId,patientId});return {...row,patientId,centreId,patientName:name.firstName,patientLastName:name.lastName,visitStage:collectionVisitStage(row.status,visitEventsByJob.get(row.id) ?? [])};});
-  const visitStages = collectionVisitStageCounts([...visitEventsByJob.keys()].map((id) => ({ status: "IN_PROGRESS", eventTypes: visitEventsByJob.get(id) ?? [] })));
   const summary = Object.fromEntries(summaryRows.map((row) => [row.status, row.count]));
-  const inProgressCount = summary.IN_PROGRESS ?? 0;
-  visitStages.inProgressUnstaged += Math.max(0, inProgressCount - visitStages.travelling - visitStages.arrived - visitStages.inProgressUnstaged);
   return Response.json({ jobs, page, pageSize, hasMore, summary: { total: summaryRows.reduce((total, row) => total + row.count, 0), byStatus: summary, byVisitStage: visitStages } });
 }
 

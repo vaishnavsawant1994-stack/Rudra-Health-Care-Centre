@@ -76,6 +76,15 @@ export function collectionVisitStageCounts(rows: readonly { status: string; even
   return counts;
 }
 
+export type CollectionVisitStageFilter = "TRAVELLING" | "ARRIVED" | "STAGE_PENDING";
+
+export function matchesCollectionVisitStage(status: string, eventTypes: readonly string[], filter: CollectionVisitStageFilter | null) {
+  if (filter === null) return true;
+  if (status !== "IN_PROGRESS") return false;
+  const stage = collectionVisitStage(status, eventTypes);
+  return filter === "STAGE_PENDING" ? stage === null : stage === filter;
+}
+
 export function matchesSpecimenCollectionReplay(
   existing: { jobId: string; specimenType: string; requirementReference: string; collectedByStaffId: string; identityCheckConfirmed: boolean; procedureApprovalId: string; reason: string },
   request: z.infer<typeof sampleCollectSchema>,

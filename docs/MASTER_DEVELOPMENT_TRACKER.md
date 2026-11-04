@@ -1,3 +1,9 @@
+## 2026-11-04 checkpoint - Server-side collection visit-stage filters
+
+- Added validated `visitStage` filtering (`TRAVELLING`, `ARRIVED`, `STAGE_PENDING`) to the collection API and workbench. Candidate jobs and their stage events are first restricted by the caller's existing organization, centre, assignment and centre-local date scope; the filter is then applied to in-progress jobs before status summaries, pagination and patient-name decryption. Stage totals remain scoped to the full underlying queue while status totals reflect the selected filter.
+- Verification: focused policy/query and PostgreSQL appointment/collection route tests **51/51 across 4 files**; full default Vitest **835/835 across 201 files**; ESLint and production build passed (**247 static-generation entries**). A parallel TypeScript run raced Next.js build generation and reported missing `.next/types`; the standalone typecheck passed after the build completed. No migration or persistent data changed. Browser/mobile visual acceptance remains pending.
+- This adds a collection queue filter only. Centre & Staff Operations and the 178-screen backlog remain incomplete. Live role/MFA and browser acceptance, key recovery/rotation, malware scanner qualification, external provider approvals and production gates remain open. Synthetic data only.
+
 ## 2026-11-04 checkpoint - Collection visit-stage workload counts
 
 - Extended the authorized collection queue summary with counts for `TRAVELLING`, `ARRIVED`, and `IN_PROGRESS` jobs without a recorded travel/arrival stage. Counts derive from scoped active job events and the existing status summary, so jobs without a matching event remain represented as stage-pending. Collection Operations cards now display these counts. No migration or persistent data changed.
