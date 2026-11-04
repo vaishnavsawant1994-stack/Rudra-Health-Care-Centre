@@ -80,6 +80,9 @@ describe("sample collection API PostgreSQL integration", () => {
       "INSERT INTO collection_jobs(id,organization_id,centre_id,job_number,appointment_id,order_id,patient_id,status,assigned_staff_id,scheduled_start,scheduled_end,idempotency_key,created_by_staff_id) VALUES($1,$2,$3,$4,$5,$6,$7,'IN_PROGRESS',$8,$9,$10,$11,$8)",
       [jobId, organizationId, centreId, `SJ-${seed}`, appointmentId, orderId, patientId, collectorId, new Date("2026-11-10T08:00:00.000Z"), new Date("2026-11-10T08:30:00.000Z"), randomUUID()],
     );
+    const travelEventId = randomUUID();
+    const travelPrivateData = encryptOperationalData({ reason: "Synthetic collector started travel", evidenceReference: null }, operationalContext({ organizationId, centreId, recordId: travelEventId }, "collection-job-event"));
+    await pool.query("INSERT INTO collection_job_events(id,organization_id,centre_id,job_id,event_type,source,private_data_ciphertext,actor_staff_id) VALUES($1,$2,$3,$4,'TRAVEL_STARTED','STAFF',$5,$6)", [travelEventId, organizationId, centreId, jobId, travelPrivateData, collectorId]);
     await pool.query(
       "INSERT INTO sample_procedure_approvals(id,organization_id,centre_id,operation,reference,status,approved_by_staff_id) VALUES($1,$2,$3,'COLLECTION',$4,'ACTIVE',$5)",
       [procedureId, organizationId, centreId, `SYNTHETIC-${seed}`, collectorId],
@@ -126,6 +129,13 @@ describe("sample collection API PostgreSQL integration", () => {
       body: JSON.stringify(payload),
     }));
 
+    const beforeArrival = await send(body);
+    expect(beforeArrival.status).toBe(409);
+    expect(await beforeArrival.json()).toEqual({ error: "collection_arrival_required" });
+    expect((await pool!.query("SELECT count(*)::int AS count FROM specimens WHERE organization_id=$1 AND idempotency_key=$2", [organizationId, idempotencyKey])).rows[0].count).toBe(0);
+    const arrivalEventId = randomUUID();
+    const arrivalPrivateData = encryptOperationalData({ reason: "Synthetic collector arrived", evidenceReference: null }, operationalContext({ organizationId, centreId, recordId: arrivalEventId }, "collection-job-event"));
+    await pool!.query("INSERT INTO collection_job_events(id,organization_id,centre_id,job_id,event_type,source,private_data_ciphertext,actor_staff_id) VALUES($1,$2,$3,$4,'ARRIVED','STAFF',$5,$6)", [arrivalEventId, organizationId, centreId, jobId, arrivalPrivateData, collectorId]);
     const created = await send(body);
     expect(created.status).toBe(201);
     const createdPayload = await created.json() as { result: { id: string; status: string; versionNumber: number; replayed: boolean } };
@@ -153,7 +163,7 @@ describe("sample collection API PostgreSQL integration", () => {
     expect(custody.rowCount).toBe(1);
     expect(custody.rows[0].private_data_ciphertext).toMatch(/^v1\./);
     const jobEvents = await pool!.query("SELECT event_type FROM collection_job_events WHERE organization_id=$1 AND job_id=$2", [organizationId, jobId]);
-    expect(jobEvents.rows.map((row) => row.event_type)).toEqual(["COLLECTION_RECORDED"]);
+    expect(jobEvents.rows.map((row) => row.event_type)).toEqual(["TRAVEL_STARTED", "ARRIVED", "COLLECTION_RECORDED"]);
     const audit = await pool!.query(
       "SELECT action FROM audit_events WHERE organization_id=$1 AND entity_id=$2 AND action='specimen.collected'",
       [organizationId, createdPayload.result.id],

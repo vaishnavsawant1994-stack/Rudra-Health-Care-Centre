@@ -42,6 +42,21 @@ export function isAssignedCollector(actorId: string, assignedStaffId: string | n
   return assignedStaffId === actorId || grants.some((grant) => grant.key === "collections.assign" && (grant.centreId === null || grant.centreId === centreId));
 }
 
+/** Derives the current field-visit step from append-only events, including legacy visit-start events. */
+export function collectionAttemptProgress(eventTypes: readonly string[]) {
+  const travelStarts = eventTypes.filter((type) => type === "TRAVEL_STARTED" || type === "VISIT_STARTED").length;
+  const arrivals = eventTypes.filter((type) => type === "ARRIVED").length;
+  const failedAttempts = eventTypes.filter((type) => type === "ATTEMPT_FAILED").length;
+  const hasOpenTravel = travelStarts > arrivals;
+  const atDestination = arrivals > failedAttempts;
+  return {
+    canRecordArrival: hasOpenTravel,
+    canRecordDelay: hasOpenTravel,
+    atDestination,
+    canRecordAttemptOutcome: atDestination,
+  };
+}
+
 export function matchesSpecimenCollectionReplay(
   existing: { jobId: string; specimenType: string; requirementReference: string; collectedByStaffId: string; identityCheckConfirmed: boolean; procedureApprovalId: string; reason: string },
   request: z.infer<typeof sampleCollectSchema>,

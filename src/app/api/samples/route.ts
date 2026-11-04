@@ -6,7 +6,7 @@ import { getDb } from "@/db/client";
 import { collectionJobEvents, collectionJobs, patientContactSecrets, sampleCustodyEvents, sampleExceptions, sampleProcedureApprovals, specimens, patients } from "@/db/schema";
 import { appendAuditEvent } from "@/server/audit";
 import { csrfRejected, isSameOriginRequest } from "@/server/csrf";
-import { assignedHandoverCentreScope, isAssignedCollector, matchesSpecimenCollectionReplay, sampleCollectSchema, sampleDirectoryStatusFilter, sampleDirectoryViewSchema, sampleExceptionSchema, sampleHandoverSubmitSchema, sampleReceiveSchema } from "@/server/sample-policy";
+import { assignedHandoverCentreScope, collectionAttemptProgress, isAssignedCollector, matchesSpecimenCollectionReplay, sampleCollectSchema, sampleDirectoryStatusFilter, sampleDirectoryViewSchema, sampleExceptionSchema, sampleHandoverSubmitSchema, sampleReceiveSchema } from "@/server/sample-policy";
 import { decryptPatientIdentity } from "@/server/patient-contact-crypto";
 import { decryptOperationalData, encryptOperationalData, operationalContext } from "@/server/operational-crypto";
 import { assignmentVisibility } from "@/server/assignment-visibility";
@@ -123,6 +123,9 @@ export async function POST(request: Request) {
           if (!matchesSpecimenCollectionReplay({ jobId: duplicate.jobId, specimenType: existingPrivate.specimenType, requirementReference: existingPrivate.requirementReference, collectedByStaffId: duplicate.collectedByStaffId, identityCheckConfirmed: duplicate.identityCheckConfirmed, procedureApprovalId: duplicate.procedureApprovalId, reason: collectionEvidence.reason }, parsed.data, access.staff.staffUserId)) throw new Error("idempotency_conflict");
           return { id:duplicate.id,specimenNumber:duplicate.specimenNumber,status:duplicate.status,versionNumber:duplicate.versionNumber,replayed: true };
         }
+        const visitEvents = await tx.select({ eventType: collectionJobEvents.eventType }).from(collectionJobEvents)
+          .where(and(eq(collectionJobEvents.jobId, job.id), eq(collectionJobEvents.organizationId, job.organizationId), eq(collectionJobEvents.centreId, job.centreId), inArray(collectionJobEvents.eventType, ["TRAVEL_STARTED", "VISIT_STARTED", "ARRIVED", "ATTEMPT_FAILED"])));
+        if (!collectionAttemptProgress(visitEvents.map((event) => event.eventType)).canRecordAttemptOutcome) throw new Error("collection_arrival_required");
         const [procedure] = await tx.select({ id: sampleProcedureApprovals.id }).from(sampleProcedureApprovals).where(and(eq(sampleProcedureApprovals.id, parsed.data.procedureApprovalId), eq(sampleProcedureApprovals.organizationId, job.organizationId), eq(sampleProcedureApprovals.centreId, job.centreId), eq(sampleProcedureApprovals.operation, "COLLECTION"), eq(sampleProcedureApprovals.status, "ACTIVE"))).limit(1);
         if (!procedure) throw new Error("approved_collection_procedure_required");
         const id = randomUUID();
@@ -186,8 +189,8 @@ export async function POST(request: Request) {
     });
     return Response.json({ result }, { status: parsed.data.action === "collect" && !("replayed" in result && result.replayed) ? 201 : 200 });
   } catch (error) {
-    const code = error instanceof Error ? error.message : ""; const expected = ["collection_visit_not_started", "approved_collection_procedure_required", "idempotency_conflict", "version_conflict", "invalid_sample_transition", "approved_receiving_procedure_required", "sample_transition_locked", "receiving_submission_required", "not_found"];
-    if (expected.includes(code)) return Response.json({ error: code }, { status: code === "version_conflict" || code === "idempotency_conflict" || code === "receiving_submission_required" ? 409 : code === "not_found" ? 404 : 400 });
+    const code = error instanceof Error ? error.message : ""; const expected = ["collection_visit_not_started", "collection_arrival_required", "approved_collection_procedure_required", "idempotency_conflict", "version_conflict", "invalid_sample_transition", "approved_receiving_procedure_required", "sample_transition_locked", "receiving_submission_required", "not_found"];
+    if (expected.includes(code)) return Response.json({ error: code }, { status: code === "version_conflict" || code === "idempotency_conflict" || code === "receiving_submission_required" || code === "collection_arrival_required" ? 409 : code === "not_found" ? 404 : 400 });
     return Response.json({ error: "sample_operation_unavailable" }, { status: 409 });
   }
 }

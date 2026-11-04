@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { assignedHandoverCentreScope, collectionJobActionSchema, isAssignedCollector, matchesSpecimenCollectionReplay, sampleCollectSchema, sampleDirectoryStatusFilter, sampleDirectoryStatuses, sampleHandoverSubmitSchema } from "./sample-policy";
+import { assignedHandoverCentreScope, collectionAttemptProgress, collectionJobActionSchema, isAssignedCollector, matchesSpecimenCollectionReplay, sampleCollectSchema, sampleDirectoryStatusFilter, sampleDirectoryStatuses, sampleHandoverSubmitSchema } from "./sample-policy";
 
 describe("collection and sample policy", () => {
+  it("requires one arrival per travel attempt and a recorded arrival before visit outcomes", () => {
+    expect(collectionAttemptProgress([])).toMatchObject({ canRecordArrival: false, canRecordDelay: false, atDestination: false, canRecordAttemptOutcome: false });
+    expect(collectionAttemptProgress(["ASSIGNED", "ASSIGNMENT_ACCEPTED", "TRAVEL_STARTED"])).toMatchObject({ canRecordArrival: true, canRecordDelay: true, atDestination: false, canRecordAttemptOutcome: false });
+    expect(collectionAttemptProgress(["TRAVEL_STARTED", "VISIT_DELAYED", "ARRIVED"])).toMatchObject({ canRecordArrival: false, canRecordDelay: false, atDestination: true, canRecordAttemptOutcome: true });
+    expect(collectionAttemptProgress(["VISIT_STARTED", "ARRIVED", "ATTEMPT_FAILED"])).toMatchObject({ canRecordArrival: false, atDestination: false, canRecordAttemptOutcome: false });
+    expect(collectionAttemptProgress(["VISIT_STARTED", "ARRIVED", "ATTEMPT_FAILED", "TRAVEL_STARTED"])).toMatchObject({ canRecordArrival: true, atDestination: false, canRecordAttemptOutcome: false });
+  });
   it("limits field actions to the assigned collector or an authorized scheduler", () => {
     expect(isAssignedCollector("staff-a", "staff-a", [], "centre-a")).toBe(true);
     expect(isAssignedCollector("staff-b", "staff-a", [], "centre-a")).toBe(false);
