@@ -1492,7 +1492,7 @@ describe("appointment creation PostgreSQL integration", () => {
     const conflictingStartReplay = await collectionActionHandler(sendStart({ ...startAction, reason: "Different visit action" }), { params: Promise.resolve({ id: jobId }) });
     expect(conflictingStartReplay.status).toBe(409);
     expect(await conflictingStartReplay.json()).toEqual({ error: "idempotency_conflict" });
-    const startEvents = await pool.query("SELECT count(*)::int AS count FROM collection_job_events WHERE job_id=$1 AND event_type='VISIT_STARTED'", [jobId]);
+    const startEvents = await pool.query("SELECT count(*)::int AS count FROM collection_job_events WHERE job_id=$1 AND event_type='TRAVEL_STARTED'", [jobId]);
     expect(startEvents.rows[0].count).toBe(1);
     const runIdempotentAction = async (version: number, action: "arrive" | "unsuccessful" | "cancel", reason: string, eventType: string, expectedStatus: string, expectedVersion: number) => {
       const key = randomUUID();

@@ -93,7 +93,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         if (job.status !== "ASSIGNED" || job.assignedStaffId !== access.staff.staffUserId) throw new Error("invalid_transition");
         const [latestAssignmentEvent] = await tx.select({ eventType: collectionJobEvents.eventType, actorStaffId: collectionJobEvents.actorStaffId }).from(collectionJobEvents).where(and(eq(collectionJobEvents.jobId, id), eq(collectionJobEvents.organizationId, job.organizationId), inArray(collectionJobEvents.eventType, ["ASSIGNED", "REASSIGNED", "ASSIGNMENT_DECLINED", "ASSIGNMENT_ACCEPTED"]))).orderBy(sql`${collectionJobEvents.recordedAt} DESC, ${collectionJobEvents.id} DESC`).limit(1);
         if (latestAssignmentEvent?.eventType !== "ASSIGNMENT_ACCEPTED" || latestAssignmentEvent.actorStaffId !== access.staff.staffUserId) throw new Error("assignment_acceptance_required");
-        eventType = "VISIT_STARTED"; nextStatus = "IN_PROGRESS";
+        eventType = "TRAVEL_STARTED"; nextStatus = "IN_PROGRESS";
       }
       else if (parsed.data.action === "complete") { if (job.status !== "IN_PROGRESS") throw new Error("invalid_transition"); const [sample] = await tx.select({ id: specimensTable.id }).from(specimensTable).where(and(eq(specimensTable.jobId, id), eq(specimensTable.organizationId, job.organizationId), eq(specimensTable.centreId, job.centreId))).limit(1); if (!sample) throw new Error("specimen_record_required"); eventType = "COLLECTION_RECORDED"; nextStatus = "COLLECTED"; }
       else if (parsed.data.action === "arrive") { if (job.status !== "IN_PROGRESS") throw new Error("invalid_transition"); eventType = "ARRIVED"; }

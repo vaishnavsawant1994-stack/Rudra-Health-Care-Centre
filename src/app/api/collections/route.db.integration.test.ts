@@ -123,7 +123,7 @@ describe("personal collection route PostgreSQL integration", () => {
     expect(delayedJobResponse.status).toBe(200);
     expect(await delayedJobResponse.json()).toMatchObject({ job: { status: "IN_PROGRESS", versionNumber: 4 } });
     const delayEvent = await pool!.query("SELECT event_type FROM collection_job_events WHERE job_id=$1 ORDER BY recorded_at", [permittedJob.id]);
-    expect(delayEvent.rows.map((row) => row.event_type)).toEqual(["ASSIGNED", "ASSIGNMENT_ACCEPTED", "VISIT_STARTED", "VISIT_DELAYED"]);
+    expect(delayEvent.rows.map((row) => row.event_type)).toEqual(["ASSIGNED", "ASSIGNMENT_ACCEPTED", "TRAVEL_STARTED", "VISIT_DELAYED"]);
 
     const declinableJob = await insertJob(centreId, fieldStaffId, "DECLINE", "2099-01-05T07:00:00.000Z");
     const requestBody = { action: "decline", expectedVersion: 1, reason: "Synthetic schedule conflict" };
