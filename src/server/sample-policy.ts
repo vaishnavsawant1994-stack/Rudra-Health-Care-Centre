@@ -3,6 +3,7 @@ import { z } from "zod";
 export const collectionJobCreateSchema = z.object({ appointmentId: z.uuid(), orderId: z.uuid() });
 export const collectionJobActionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("assign"), expectedVersion: z.number().int().positive(), staffUserId: z.uuid(), reason: z.string().trim().min(3).max(240) }),
+  z.object({ action: z.literal("decline"), expectedVersion: z.number().int().positive(), reason: z.string().trim().min(3).max(240) }),
   z.object({ action: z.literal("start"), expectedVersion: z.number().int().positive(), reason: z.string().trim().min(3).max(240) }),
   z.object({ action: z.literal("arrive"), expectedVersion: z.number().int().positive(), reason: z.string().trim().min(3).max(240), evidenceReference: z.string().trim().max(200).optional() }),
   z.object({ action: z.literal("delay"), expectedVersion: z.number().int().positive(), reason: z.string().trim().min(3).max(240), estimatedArrivalAt: z.iso.datetime().optional() }),

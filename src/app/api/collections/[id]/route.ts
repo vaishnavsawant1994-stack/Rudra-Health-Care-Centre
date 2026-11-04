@@ -60,6 +60,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         if (prior.entityType !== "collection_job" || prior.entityId !== id || prior.actorStaffId !== access.staff.staffUserId || typeof details.mutationRequestHash !== "string" || !(verifyOperationalRequestFingerprint(parsed.data, details.mutationRequestHash, mutationFingerprintContext) || (legacyMutationRequestHash !== null && details.mutationRequestHash === legacyMutationRequestHash))) throw new Error("idempotency_conflict");
         return { id: job.id, status: job.status, versionNumber: job.versionNumber, replayed: true };
       }
+      if (parsed.data.action === "decline" && job.assignedStaffId !== access.staff.staffUserId) throw new Error("not_found");
       if (job.versionNumber !== parsed.data.expectedVersion) throw new Error("version_conflict");
       if (parsed.data.action === "assign") {
         if (!["PENDING_ASSIGNMENT", "ASSIGNED", "UNSUCCESSFUL"].includes(job.status)) throw new Error("job_closed");
@@ -72,6 +73,14 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         const was = job.assignedStaffId; const updated = await tx.update(collectionJobs).set({ assignedStaffId: collector.id, status: "ASSIGNED", versionNumber: job.versionNumber + 1, updatedAt: new Date() }).where(and(eq(collectionJobs.id, id), eq(collectionJobs.versionNumber, job.versionNumber))).returning({ id: collectionJobs.id, status: collectionJobs.status, versionNumber: collectionJobs.versionNumber });
         const eventId=randomUUID();await tx.insert(collectionJobEvents).values({ id:eventId,organizationId: job.organizationId, centreId: job.centreId, jobId: id, eventType: was ? "REASSIGNED" : "ASSIGNED", source: "STAFF",privateDataCiphertext:encryptOperationalData({reason:parsed.data.reason,evidenceReference:null},operationalContext({organizationId:job.organizationId,centreId:job.centreId,recordId:eventId},"collection-job-event")), staffId: collector.id, previousStaffId: was, actorStaffId: access.staff.staffUserId });
         await appendAuditEvent(tx, { organizationId: job.organizationId, centreId: job.centreId, actorStaffId: access.staff.staffUserId, action: "collection_job.assigned", entityType: "collection_job", entityId: id, details: { reassigned: Boolean(was), mutationIdempotencyKey, mutationRequestHash } }); return { ...updated[0], replayed: false };
+      }
+      if (parsed.data.action === "decline") {
+        if (job.status !== "ASSIGNED" || job.assignedStaffId !== access.staff.staffUserId) throw new Error("invalid_transition");
+        const [updated] = await tx.update(collectionJobs).set({ status: "PENDING_ASSIGNMENT", assignedStaffId: null, versionNumber: job.versionNumber + 1, updatedAt: new Date() }).where(and(eq(collectionJobs.id, id), eq(collectionJobs.versionNumber, job.versionNumber))).returning({ id: collectionJobs.id, status: collectionJobs.status, versionNumber: collectionJobs.versionNumber });
+        const eventId = randomUUID();
+        await tx.insert(collectionJobEvents).values({ id: eventId, organizationId: job.organizationId, centreId: job.centreId, jobId: id, eventType: "ASSIGNMENT_DECLINED", source: "STAFF", privateDataCiphertext: encryptOperationalData({ reason: parsed.data.reason, evidenceReference: null }, operationalContext({ organizationId: job.organizationId, centreId: job.centreId, recordId: eventId }, "collection-job-event")), previousStaffId: job.assignedStaffId, actorStaffId: access.staff.staffUserId });
+        await appendAuditEvent(tx, { organizationId: job.organizationId, centreId: job.centreId, actorStaffId: access.staff.staffUserId, action: "collection_job.assignment_declined", entityType: "collection_job", entityId: id, details: { status: updated.status, mutationIdempotencyKey, mutationRequestHash } });
+        return { ...updated, replayed: false };
       }
       let eventType: string; let nextStatus = job.status;
       if (parsed.data.action === "start") { if (job.status !== "ASSIGNED") throw new Error("invalid_transition"); eventType = "VISIT_STARTED"; nextStatus = "IN_PROGRESS"; }
@@ -86,8 +95,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     });
     return Response.json({ job: result, replayed: result.replayed });
   } catch (error) {
-    const code = error instanceof Error ? error.message : ""; const known = ["version_conflict", "job_closed", "invalid_transition", "collector_not_authorized", "staff_schedule_conflict", "specimen_record_required", "idempotency_conflict"];
-    if (known.includes(code)) return Response.json({ error: code }, { status: code === "version_conflict" || code === "staff_schedule_conflict" || code === "idempotency_conflict" ? 409 : 400 });
+    const code = error instanceof Error ? error.message : ""; const known = ["not_found", "version_conflict", "job_closed", "invalid_transition", "collector_not_authorized", "staff_schedule_conflict", "specimen_record_required", "idempotency_conflict"];
+    if (known.includes(code)) return Response.json({ error: code }, { status: code === "not_found" ? 404 : code === "version_conflict" || code === "staff_schedule_conflict" || code === "idempotency_conflict" ? 409 : 400 });
     return Response.json({ error: "collection_operation_unavailable" }, { status: 409 });
   }
 }

@@ -14,6 +14,7 @@ describe("personal collection route PostgreSQL integration", () => {
   let previousDatabaseUrl: string | undefined;
   let pool: InstanceType<typeof Pool> | undefined;
   let getHandler: typeof import("./route").GET;
+  let patchJobHandler: typeof import("./[id]/route").PATCH;
   let organizationId: string;
   let centreId: string;
   let otherCentreId: string;
@@ -56,6 +57,7 @@ describe("personal collection route PostgreSQL integration", () => {
       return { response: null, staff: { organizationId, staffUserId: fieldStaffId, grants: [{ key: "collections.read", centreId }, { key: "collections.assign", centreId }] } };
     });
     ({ GET: getHandler } = await import("./route"));
+    ({ PATCH: patchJobHandler } = await import("./[id]/route"));
   }, 120_000);
 
   afterAll(async () => {
@@ -86,13 +88,14 @@ describe("personal collection route PostgreSQL integration", () => {
       await pool!.query("INSERT INTO diagnostic_orders(id,organization_id,centre_id,order_number,patient_id,appointment_id,status,idempotency_key,request_hash,created_by_staff_id) VALUES($1,$2,$3,$4,$5,$6,'DRAFT',$7,$8,$9)", [orderId, organizationId, jobCentreId, `O-${orderId.slice(0, 8)}`, patientId, appointmentId, randomUUID(), "b".repeat(64), fieldStaffId]);
       const jobNumber = `J-${suffix}-${jobId.slice(0, 8)}`;
       await pool!.query("INSERT INTO collection_jobs(id,organization_id,centre_id,job_number,appointment_id,order_id,patient_id,status,assigned_staff_id,scheduled_start,scheduled_end,idempotency_key,created_by_staff_id) VALUES($1,$2,$3,$4,$5,$6,$7,CASE WHEN $8::uuid IS NULL THEN 'PENDING_ASSIGNMENT' ELSE 'ASSIGNED' END,$8,$9,$10,$11,$12)", [jobId, organizationId, jobCentreId, jobNumber, appointmentId, orderId, patientId, assignedStaffId, start, new Date(new Date(start).getTime() + 30 * 60_000).toISOString(), randomUUID(), fieldStaffId]);
-      return jobNumber;
+      return { id: jobId, jobNumber };
     };
 
-    permittedJobNumber = await insertJob(centreId, fieldStaffId, "SELF", "2099-01-05T05:00:00.000Z");
-    coworkerJobNumber = await insertJob(centreId, otherStaffId, "OTHER", "2099-01-05T05:30:00.000Z");
-    unassignedJobNumber = await insertJob(centreId, null, "NONE", "2099-01-05T06:00:00.000Z");
-    otherCentreJobNumber = await insertJob(otherCentreId, fieldStaffId, "CENTRE", "2099-01-05T06:30:00.000Z");
+    const permittedJob = await insertJob(centreId, fieldStaffId, "SELF", "2099-01-05T05:00:00.000Z");
+    permittedJobNumber = permittedJob.jobNumber;
+    coworkerJobNumber = (await insertJob(centreId, otherStaffId, "OTHER", "2099-01-05T05:30:00.000Z")).jobNumber;
+    unassignedJobNumber = (await insertJob(centreId, null, "NONE", "2099-01-05T06:00:00.000Z")).jobNumber;
+    otherCentreJobNumber = (await insertJob(otherCentreId, fieldStaffId, "CENTRE", "2099-01-05T06:30:00.000Z")).jobNumber;
 
     const response = await getHandler(new Request("http://localhost/api/collections?assignedToMe=1&date=2099-01-05&pageSize=100"));
     expect(response.status).toBe(200);
@@ -101,5 +104,50 @@ describe("personal collection route PostgreSQL integration", () => {
     expect(body.jobs[0]).toMatchObject({ patientName: "Synthetic", patientLastName: "Route SELF" });
     const serialized = JSON.stringify(body);
     for (const privateJobNumber of [coworkerJobNumber, unassignedJobNumber, otherCentreJobNumber]) expect(serialized).not.toContain(privateJobNumber);
+
+    const startedJobResponse = await patchJobHandler(new Request(`http://localhost/api/collections/${permittedJob.id}`, { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() }, body: JSON.stringify({ action: "start", expectedVersion: 1, reason: "Synthetic visit started" }) }), { params: Promise.resolve({ id: permittedJob.id }) });
+    expect(startedJobResponse.status).toBe(200);
+    expect(await startedJobResponse.json()).toMatchObject({ job: { status: "IN_PROGRESS", versionNumber: 2 } });
+    const delayedJobResponse = await patchJobHandler(new Request(`http://localhost/api/collections/${permittedJob.id}`, { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() }, body: JSON.stringify({ action: "delay", expectedVersion: 2, reason: "Synthetic traffic delay", estimatedArrivalAt: "2099-01-05T05:20:00.000Z" }) }), { params: Promise.resolve({ id: permittedJob.id }) });
+    expect(delayedJobResponse.status).toBe(200);
+    expect(await delayedJobResponse.json()).toMatchObject({ job: { status: "IN_PROGRESS", versionNumber: 3 } });
+    const delayEvent = await pool!.query("SELECT event_type FROM collection_job_events WHERE job_id=$1 ORDER BY recorded_at", [permittedJob.id]);
+    expect(delayEvent.rows.map((row) => row.event_type)).toEqual(["VISIT_STARTED", "VISIT_DELAYED"]);
+
+    const declinableJob = await insertJob(centreId, fieldStaffId, "DECLINE", "2099-01-05T07:00:00.000Z");
+    const requestBody = { action: "decline", expectedVersion: 1, reason: "Synthetic schedule conflict" };
+    const coworkerRequest = new Request(`http://localhost/api/collections/${declinableJob.id}`, { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() }, body: JSON.stringify({ action: "decline", expectedVersion: 1, reason: "Unauthorized synthetic decline" }) });
+    const coworkerAccess = async () => ({ response: null, staff: { organizationId, staffUserId: otherStaffId, grants: [{ key: "collections.assign", centreId }, { key: "collections.visit.record", centreId }] } });
+    mocks.getApiAccess.mockImplementationOnce(coworkerAccess).mockImplementationOnce(coworkerAccess);
+    const unauthorized = await patchJobHandler(coworkerRequest, { params: Promise.resolve({ id: declinableJob.id }) });
+    expect(unauthorized.status).toBe(404);
+    expect((await pool!.query("SELECT status,assigned_staff_id FROM collection_jobs WHERE id=$1", [declinableJob.id])).rows[0]).toEqual({ status: "ASSIGNED", assigned_staff_id: fieldStaffId });
+
+    const idempotencyKey = randomUUID();
+    const request = (reason = requestBody.reason) => new Request(`http://localhost/api/collections/${declinableJob.id}`, { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": idempotencyKey }, body: JSON.stringify({ ...requestBody, reason }) });
+    const firstRequest = request();
+    const declineResponse = await patchJobHandler(firstRequest, { params: Promise.resolve({ id: declinableJob.id }) });
+    expect(declineResponse.status).toBe(200);
+    expect(await declineResponse.json()).toMatchObject({ job: { id: declinableJob.id, status: "PENDING_ASSIGNMENT", versionNumber: 2 }, replayed: false });
+    const persisted = await pool!.query("SELECT status,assigned_staff_id FROM collection_jobs WHERE id=$1", [declinableJob.id]);
+    expect(persisted.rows[0]).toEqual({ status: "PENDING_ASSIGNMENT", assigned_staff_id: null });
+    const event = await pool!.query("SELECT id,event_type,previous_staff_id,private_data_ciphertext FROM collection_job_events WHERE job_id=$1", [declinableJob.id]);
+    expect(event.rows).toHaveLength(1);
+    expect(event.rows[0].event_type).toBe("ASSIGNMENT_DECLINED");
+    expect(event.rows[0].previous_staff_id).toBe(fieldStaffId);
+    expect(event.rows[0].private_data_ciphertext).not.toContain(requestBody.reason);
+    const { decryptOperationalData, operationalContext } = await import("@/server/operational-crypto");
+    expect(decryptOperationalData<{ reason: string }>(event.rows[0].private_data_ciphertext, operationalContext({ organizationId, centreId, recordId: event.rows[0].id }, "collection-job-event")).reason).toBe(requestBody.reason);
+    const replay = await patchJobHandler(request(), { params: Promise.resolve({ id: declinableJob.id }) });
+    expect(replay.status).toBe(200);
+    expect(await replay.json()).toMatchObject({ job: { status: "PENDING_ASSIGNMENT", versionNumber: 2 }, replayed: true });
+    const conflict = await patchJobHandler(request("Different synthetic reason"), { params: Promise.resolve({ id: declinableJob.id }) });
+    expect(conflict.status).toBe(409);
+    expect((await pool!.query("SELECT count(*)::int AS count FROM collection_job_events WHERE job_id=$1", [declinableJob.id])).rows[0].count).toBe(1);
+    const postDeclineCoworkerRequest = new Request(`http://localhost/api/collections/${declinableJob.id}`, { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() }, body: JSON.stringify({ action: "decline", expectedVersion: 2, reason: "Unauthorized synthetic replay" }) });
+    mocks.getApiAccess.mockImplementationOnce(coworkerAccess).mockImplementationOnce(coworkerAccess);
+    const postDeclineUnauthorized = await patchJobHandler(postDeclineCoworkerRequest, { params: Promise.resolve({ id: declinableJob.id }) });
+    expect(postDeclineUnauthorized.status).toBe(404);
+
   });
 });

@@ -15,6 +15,11 @@ describe("collection and sample policy", () => {
     expect(collectionJobActionSchema.safeParse({ ...delay, expectedVersion: 0 }).success).toBe(false);
     expect(collectionJobActionSchema.safeParse({ ...delay, reason: "x" }).success).toBe(false);
   });
+  it("requires a versioned reason when a collector declines an assignment", () => {
+    expect(collectionJobActionSchema.safeParse({ action: "decline", expectedVersion: 1, reason: "Synthetic schedule conflict" }).success).toBe(true);
+    expect(collectionJobActionSchema.safeParse({ action: "decline", expectedVersion: 0, reason: "Synthetic schedule conflict" }).success).toBe(false);
+    expect(collectionJobActionSchema.safeParse({ action: "decline", expectedVersion: 1, reason: "x" }).success).toBe(false);
+  });
   it("requires an explicit patient identity confirmation and local procedure reference", () => {
     const base = { jobId: "c1aeacbb-bf66-44f0-a27a-7bf06c60a6b5", specimenType: "Synthetic tube", requirementReference: "SYNTHETIC-SOP-1", procedureApprovalId: "a8bad75c-b226-46d8-b238-86501998dd41", reason: "Synthetic collection" };
     expect(sampleCollectSchema.safeParse({ ...base, identityCheckConfirmed: true }).success).toBe(true);
