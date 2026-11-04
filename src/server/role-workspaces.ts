@@ -16,6 +16,7 @@ export const roleWorkspaceDefinitions = {
     ["/field/today", "My collection assignments", "collections.visit.record", "Open assigned jobs and record authorized visit events."],
     ["/field/handover", "My sample handover", "collections.visit.record", "Review only collected specimens linked to your assigned jobs."],
     ["/field/exceptions", "My collection exceptions", "collections.visit.record", "Report an operational exception for an eligible specimen assigned to you."],
+    ["/field/support", "Request field support", "tasks.support.create", "Create an internal support request without exposing unrelated patient information."],
     ["/tasks", "My tasks", "tasks.assigned.read", "Review operational tasks assigned to you."],
   ] },
   manager: { title: "Centre manager workspace", description: "Centre queues, staff coverage, tasks and operational exceptions.", links: [
@@ -124,6 +125,7 @@ export function getRoleWorkspaceCapabilities(grants: readonly PermissionGrant[])
 
 export function getRoleWorkspaceLinks(key: RoleWorkspaceKey, grants: readonly PermissionGrant[]) {
   return roleWorkspaceDefinitions[key].links.filter(([href, , permission]) => {
+    if (href === "/field/support") return hasOverlappingPermissionScope(grants, ["tasks.create", "tasks.support.create"]);
     if (href === "/support/tickets") return grants.some((grant) => ["tasks.read", "tasks.assigned.read", "tasks.support.read"].includes(grant.key));
     // The endpoint itself requires workspace.read and then returns whichever
     // queues the caller can read. Requiring appointments.read here hid useful

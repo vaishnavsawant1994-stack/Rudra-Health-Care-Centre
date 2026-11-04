@@ -53,16 +53,16 @@ describe("178-screen inventory reconciliation", () => {
     const summary = await readFile(path.join(root, "docs", "SCREEN_IMPLEMENTATION_MATRIX.md"), "utf8");
 
     expect(rows).toHaveLength(178);
-    expect([exactRoutes, missingRoutes, explicitMappings, unresolvedMappings]).toEqual([38, 140, 21, 119]);
-    expect(statuses.filter((status) => status.includes("page, module APIs and related tests exist"))).toHaveLength(36);
+    expect([exactRoutes, missingRoutes, explicitMappings, unresolvedMappings]).toEqual([39, 139, 21, 118]);
+    expect(statuses.filter((status) => status.includes("page, module APIs and related tests exist"))).toHaveLength(37);
     expect(statuses.filter((status) => status.includes("explicit grouped-route mapping is source-validated"))).toHaveLength(21);
-    expect(statuses.filter((status) => status.includes("mapping unresolved"))).toHaveLength(95);
+    expect(statuses.filter((status) => status.includes("mapping unresolved"))).toHaveLength(94);
     expect(statuses.filter((status) => status.includes("Blocked by external decision or integration"))).toHaveLength(26);
-    expect(summary).toContain("**38** IDs have an exact page file");
-    expect(summary).toContain("**140** IDs have no exact page");
+    expect(summary).toContain("**39** IDs have an exact page file");
+    expect(summary).toContain("**139** IDs have no exact page");
     expect(summary).toContain("**21** have explicit source-validated mappings");
-    expect(summary).toContain("**36 partially implemented with page/API/test candidates**");
-    expect(summary).toContain("**95 partially implemented with source/action mapping unresolved**");
+    expect(summary).toContain("**37 partially implemented with page/API/test candidates**");
+    expect(summary).toContain("**94 partially implemented with source/action mapping unresolved**");
   });
 
   it("maps support queue and detail screens to the existing encrypted task lifecycle", async () => {

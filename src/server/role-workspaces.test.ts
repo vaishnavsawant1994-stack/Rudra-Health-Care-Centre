@@ -22,6 +22,10 @@ describe("role workspace permission filtering", () => {
     expect(getRoleWorkspaceCapabilities([{ key: "tasks.create", centreId: "c1" }, { key: "tasks.support.create", centreId: "c2" }]).createSupportTask).toBe(false);
     expect(getRoleWorkspaceCapabilities([{ key: "tasks.create", centreId: null }, { key: "tasks.support.create", centreId: "c2" }]).createSupportTask).toBe(true);
   });
+  it("shows field support request only when both create grants overlap in a centre", () => {
+    expect(getRoleWorkspaceLinks("phlebotomist", [{ key: "tasks.create", centreId: "c1" }, { key: "tasks.support.create", centreId: "c2" }]).some(([href]) => href === "/field/support")).toBe(false);
+    expect(getRoleWorkspaceLinks("phlebotomist", [{ key: "tasks.create", centreId: "c1" }, { key: "tasks.support.create", centreId: "c1" }]).some(([href]) => href === "/field/support")).toBe(true);
+  });
   it("does not surface follow-up, approval, or support creation workspaces for disjoint grants", () => {
     const disjoint = [{ key: "leads.read", centreId: "c1" }, { key: "leads.followups.manage", centreId: "c2" }, { key: "reports.read", centreId: "c1" }, { key: "reports.followups.manage", centreId: "c2" }, { key: "tasks.approve", centreId: "c1" }, { key: "tasks.read", centreId: "c2" }, { key: "tasks.create", centreId: "c1" }, { key: "tasks.support.create", centreId: "c2" }];
     expect(getRoleWorkspaceLinks("sales", disjoint).some(([href]) => href === "/leads/followups")).toBe(false);
