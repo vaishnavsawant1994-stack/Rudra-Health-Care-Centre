@@ -47,3 +47,5 @@ To rotate the operational payloads in the configured local development database,
 ## Additional synthetic compatibility qualification
 
 A disposable PostgreSQL integration test now stores an encrypted synthetic website-content row alongside a private encrypted synthetic PDF, removes key configuration to verify fail-closed behavior, then restores the key material from the encrypted backup and verifies both artifacts. This demonstrates format/key compatibility across the PostgreSQL and report storage readers; it does not create or restore an actual database/filesystem backup.
+
+The populated fixture additionally covers the patient contact/name blind-index values and decrypts their encrypted fields after recovery. Index generation fails closed while its key is absent and reproduces the exact stored lookup tokens after the encrypted key backup is restored. Full suite on the expanded test: 829/829. Blind-index key rotation remains unqualified.
