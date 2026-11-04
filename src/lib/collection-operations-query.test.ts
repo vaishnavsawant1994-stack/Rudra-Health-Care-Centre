@@ -14,4 +14,9 @@ describe("collection operations schedule filtering", () => {
     expect(cleared.has("date")).toBe(false);
     expect(disabled.get("centreId")).toBe("centre-1");
   });
+
+  it("requests only the signed-in staff member's route for the selected date", () => {
+    const query = collectionOperationsQuery({ page: 1, pageSize: 100, centreId: "", scheduleDate: "2026-11-04", includeScheduleDate: true, assignedToMe: true });
+    expect([...query.entries()]).toEqual([["page", "1"], ["pageSize", "100"], ["date", "2026-11-04"], ["assignedToMe", "1"]]);
+  });
 });

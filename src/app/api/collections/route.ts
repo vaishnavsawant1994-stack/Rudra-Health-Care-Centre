@@ -19,6 +19,7 @@ export async function GET(request: Request) {
   const pageSize = Number(params.get("pageSize") ?? 50);
   if (!Number.isInteger(page) || page < 1 || page > 10_000 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) return Response.json({ error: "invalid_pagination" }, { status: 400 });
   const scheduleDate = params.get("date");
+  const assignedToMe = params.get("assignedToMe") === "1";
   if (scheduleDate !== null && !isValidScheduleDate(scheduleDate)) return Response.json({ error: "invalid_schedule_date" }, { status: 400 });
   const access = await getCollectionReadAccess(requestedCentreId);
   if (access.response) return access.response;
@@ -26,6 +27,9 @@ export async function GET(request: Request) {
   const visibility = collectionAssignmentVisibility(staff.grants);
   const scope = visibility.readCentres;
   const clauses = [eq(collectionJobs.organizationId, staff.organizationId)];
+  // Personal field views stay self-scoped even for staff who also hold
+  // centre-wide collection permissions. Do not rely on UI role selection.
+  if (assignedToMe) clauses.push(eq(collectionJobs.assignedStaffId, staff.staffUserId));
   if (requestedCentreId) clauses.push(eq(collectionJobs.centreId, requestedCentreId));
   if (scope !== null) clauses.push(scope.length ? inArray(collectionJobs.centreId, scope) : eq(collectionJobs.centreId, "00000000-0000-0000-0000-000000000000"));
   if (visibility.restricted) {

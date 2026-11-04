@@ -14,6 +14,7 @@ export const roleWorkspaceDefinitions = {
   phlebotomist: { title: "Phlebotomist workspace", description: "Field assignments, collection progress and sample handover.", links: [
     ["/roster/handovers", "Shift handover", "roster.handover", "Record and acknowledge shift responsibility handovers."],
     ["/field/today", "My collection assignments", "collections.visit.record", "Open assigned jobs and record authorized visit events."],
+    ["/field/route", "My visit route", "collections.visit.record", "View only your assigned visits in appointment-time order; directions remain on authorized visit details."],
     ["/field/schedule", "My schedule and availability", "roster.read", "Review only your own planned shifts and recorded unavailability."],
     ["/field/handover", "My sample handover", "collections.visit.record", "Review only collected specimens linked to your assigned jobs."],
     ["/field/exceptions", "My collection exceptions", "collections.visit.record", "Report an operational exception for an eligible specimen assigned to you."],

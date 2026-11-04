@@ -30,6 +30,11 @@ describe("role workspace permission filtering", () => {
     expect(getRoleWorkspaceLinks("phlebotomist", [{ key: "collections.visit.record", centreId: "c1" }]).some(([href]) => href === "/field/schedule")).toBe(false);
     expect(getRoleWorkspaceLinks("phlebotomist", [{ key: "roster.read", centreId: "c1" }]).some(([href]) => href === "/field/schedule")).toBe(true);
   });
+  it("surfaces the time-ordered field route only with visit permission", () => {
+    expect(getRoleWorkspaceLinks("phlebotomist", []).some(([href]) => href === "/field/route")).toBe(false);
+    expect(getRoleWorkspaceLinks("phlebotomist", [{ key: "collections.visit.record", centreId: "c1" }]).some(([href]) => href === "/field/route")).toBe(true);
+    expect(getRoleWorkspaceLinks("sales", [{ key: "collections.visit.record", centreId: "c1" }]).some(([href]) => href === "/field/route")).toBe(false);
+  });
   it("does not surface follow-up, approval, or support creation workspaces for disjoint grants", () => {
     const disjoint = [{ key: "leads.read", centreId: "c1" }, { key: "leads.followups.manage", centreId: "c2" }, { key: "reports.read", centreId: "c1" }, { key: "reports.followups.manage", centreId: "c2" }, { key: "tasks.approve", centreId: "c1" }, { key: "tasks.read", centreId: "c2" }, { key: "tasks.create", centreId: "c1" }, { key: "tasks.support.create", centreId: "c2" }];
     expect(getRoleWorkspaceLinks("sales", disjoint).some(([href]) => href === "/leads/followups")).toBe(false);
@@ -72,7 +77,7 @@ describe("role workspace permission filtering", () => {
   });
   it("shows only granted operational destinations", () => {
     const links = getRoleWorkspaceLinks("phlebotomist", [{ key: "collections.visit.record", centreId: "c1" }]);
-    expect(links.map(([href]) => href)).toEqual(["/field/today", "/field/handover", "/field/exceptions"]);
+    expect(links.map(([href]) => href)).toEqual(["/field/today", "/field/route", "/field/handover", "/field/exceptions"]);
     expect(getRoleWorkspaceLinks("phlebotomist", []).some(([href]) => href === "/field/handover")).toBe(false);
     expect(getRoleWorkspaceLinks("phlebotomist", []).some(([href]) => href === "/field/exceptions")).toBe(false);
   });
