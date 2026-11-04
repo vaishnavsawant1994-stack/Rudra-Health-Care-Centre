@@ -16,6 +16,7 @@ describe("website content review PostgreSQL lifecycle", () => {
   let dropPool: InstanceType<typeof Pool> | undefined;
   let putHandler: typeof import("./route").PUT;
   let getHandler: typeof import("./route").GET;
+  let publicGetHandler: typeof import("../../public/content/[slug]/route").GET;
   let organizationId: string;
   let editorId: string;
   let reviewerId: string;
@@ -45,6 +46,7 @@ describe("website content review PostgreSQL lifecycle", () => {
       return { staff: { organizationId, staffUserId: activeStaffId, grants: [{ key: "website.content.manage", centreId: null }, ...(activeStaffId === ownerId ? [{ key: "website.content.publish", centreId: null }] : []), ...(activeStaffId !== editorId ? [{ key: "website.content.review", centreId: null }] : [])] }, response: null };
     });
     ({ PUT: putHandler, GET: getHandler } = await import("./route"));
+    ({ GET: publicGetHandler } = await import("../../public/content/[slug]/route"));
   }, 120_000);
 
   afterAll(async () => {
@@ -99,5 +101,27 @@ describe("website content review PostgreSQL lifecycle", () => {
     expect(audit.rows.map((row) => row.action)).toEqual(expect.arrayContaining(["website_content.review_submitted", "website_content.review_approved", "website_content.review_changes_requested", "website_content.published"]));
     expect(JSON.stringify(audit.rows.map((row) => row.details))).not.toContain(changesReason);
     await expect(pool.query("UPDATE website_content_events SET event_type='DRAFT_SAVED' WHERE organization_id=$1", [organizationId])).rejects.toThrow();
+  });
+
+  it("publishes an allowlisted corporate information page through the public content API", async () => {
+    const makeContent = (body: string) => ({ title: "Synthetic corporate services", summary: "Synthetic informational copy", sections: [{ heading: "Enquiries", body }] });
+    const request = (action: string, expectedVersion: number, actor: string, content?: ReturnType<typeof makeContent>, reason?: string) => {
+      activeStaffId = actor;
+      return putHandler(new Request("http://localhost/api/admin/website-content", { method: "PUT", headers: { origin: "http://localhost", "content-type": "application/json" }, body: JSON.stringify({ slug: "corporate", action, expectedVersion, ...(content ? { content } : {}), ...(reason ? { reason } : {}) }) }));
+    };
+    expect((await request("SAVE_DRAFT", 0, editorId, makeContent("Contact Rudra for synthetic corporate enquiry details."))).status).toBe(200);
+    expect((await request("SUBMIT_REVIEW", 1, editorId)).status).toBe(200);
+    expect((await request("APPROVE_REVIEW", 1, reviewerId, undefined, "Synthetic editorial review" )).status).toBe(200);
+    expect((await request("PUBLISH", 1, ownerId)).status).toBe(200);
+
+    const stored = await pool.query("SELECT id,draft_ciphertext,published_ciphertext FROM website_content_pages WHERE organization_id=$1 AND slug='corporate'", [organizationId]);
+    expect(stored.rows).toHaveLength(1);
+    expect(stored.rows[0].draft_ciphertext).not.toContain("Contact Rudra");
+    expect(openWebsiteContent(organizationId, stored.rows[0].id, stored.rows[0].published_ciphertext)).toEqual(makeContent("Contact Rudra for synthetic corporate enquiry details."));
+    const publicResponse = await publicGetHandler(new Request("http://localhost/api/public/content/corporate"), { params: Promise.resolve({ slug: "corporate" }) });
+    expect(publicResponse.status).toBe(200);
+    expect(await publicResponse.json()).toMatchObject({ slug: "corporate", content: makeContent("Contact Rudra for synthetic corporate enquiry details.") });
+
+    await expect(pool.query("INSERT INTO website_content_pages(organization_id,slug,draft_ciphertext,created_by_staff_id,updated_by_staff_id) VALUES($1,'privacy','ciphertext',$2,$2)", [organizationId, editorId])).rejects.toThrow();
   });
 });
