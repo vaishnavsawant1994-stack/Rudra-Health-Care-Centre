@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assignedHandoverCentreScope, isAssignedCollector, matchesSpecimenCollectionReplay, sampleCollectSchema, sampleDirectoryStatusFilter, sampleDirectoryStatuses, sampleHandoverSubmitSchema } from "./sample-policy";
+import { assignedHandoverCentreScope, collectionJobActionSchema, isAssignedCollector, matchesSpecimenCollectionReplay, sampleCollectSchema, sampleDirectoryStatusFilter, sampleDirectoryStatuses, sampleHandoverSubmitSchema } from "./sample-policy";
 
 describe("collection and sample policy", () => {
   it("limits field actions to the assigned collector or an authorized scheduler", () => {
@@ -7,6 +7,12 @@ describe("collection and sample policy", () => {
     expect(isAssignedCollector("staff-b", "staff-a", [], "centre-a")).toBe(false);
     expect(isAssignedCollector("staff-b", "staff-a", [{ key: "collections.assign", centreId: "centre-a" }], "centre-a")).toBe(true);
     expect(isAssignedCollector("staff-b", "staff-a", [{ key: "collections.assign", centreId: "centre-b" }], "centre-a")).toBe(false);
+  });
+  it("accepts a reasoned delay event only with an expected job version", () => {
+    const delay = { action: "delay", expectedVersion: 2, reason: "Synthetic traffic delay" };
+    expect(collectionJobActionSchema.safeParse(delay).success).toBe(true);
+    expect(collectionJobActionSchema.safeParse({ ...delay, expectedVersion: 0 }).success).toBe(false);
+    expect(collectionJobActionSchema.safeParse({ ...delay, reason: "x" }).success).toBe(false);
   });
   it("requires an explicit patient identity confirmation and local procedure reference", () => {
     const base = { jobId: "c1aeacbb-bf66-44f0-a27a-7bf06c60a6b5", specimenType: "Synthetic tube", requirementReference: "SYNTHETIC-SOP-1", procedureApprovalId: "a8bad75c-b226-46d8-b238-86501998dd41", reason: "Synthetic collection" };
