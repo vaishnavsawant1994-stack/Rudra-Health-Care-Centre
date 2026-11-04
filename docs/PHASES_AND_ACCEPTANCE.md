@@ -1,3 +1,9 @@
+## 2026-11-04 development checkpoint - Phlebotomist route stage filter
+
+The Phlebotomist Route page now filters the signed-in collector's selected-date assignments by travelling, arrived, or stage-pending status through the existing server-authorized collection endpoint. Clearing the date clears route rows and prompts for a date.
+
+Verification: focused policy/query/PostgreSQL collection-route checks **18/18 across 3 files**; TypeScript, ESLint and production build passed (**247 static-generation entries**). The full suite for the preceding API/filter change passed **835/835 across 201 files**. No browser visual review was performed. This completes the route filter control only; Centre & Staff Operations remains in progress. Synthetic data only.
+
 ## 2026-11-04 development checkpoint - Server-side collection visit-stage filters
 
 Collection Operations and the daily collection workbench can now filter to travelling, arrived, or in-progress jobs whose visit stage is pending. The API validates the filter and applies it after the authenticated caller's organization, centre, assignment and local-date scope. Patient details are still fetched/decrypted only for the filtered page. Stage summary totals remain scoped to the full permitted queue; status totals and pagination reflect the active filter.

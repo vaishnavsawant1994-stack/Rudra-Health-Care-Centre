@@ -28,11 +28,13 @@ function jobTime(job: RouteJob) {
 
 export function FieldRouteBoard() {
   const [date, setDate] = useState(() => localCalendarDate(new Date()));
+  const [visitStage, setVisitStage] = useState<"" | "TRAVELLING" | "ARRIVED" | "STAGE_PENDING">("");
   const [jobs, setJobs] = useState<RouteJob[]>([]);
   const [message, setMessage] = useState("Loading your assigned visits…");
 
   useEffect(() => {
     let active = true;
+    if (!date) return () => { active = false; };
     const params = collectionOperationsQuery({
       page: 1,
       pageSize: 100,
@@ -40,6 +42,7 @@ export function FieldRouteBoard() {
       scheduleDate: date,
       includeScheduleDate: true,
       assignedToMe: true,
+      visitStage,
     });
     void fetch(`/api/collections?${params}`, { cache: "no-store" })
       .then(async (response) => ({ response, body: await response.json() as { jobs?: RouteJob[]; error?: string; hasMore?: boolean } }))
@@ -56,13 +59,20 @@ export function FieldRouteBoard() {
       })
       .catch(() => { if (active) setMessage("Your route could not be loaded. Check the connection and try again."); });
     return () => { active = false; };
-  }, [date]);
+  }, [date, visitStage]);
 
   return <>
     <section className="notice"><span className="notice-icon" aria-hidden="true">i</span><div><h2>Time-ordered assignments</h2><p>This list is sorted by appointment time. It does not provide GPS directions, travel-time estimates or an optimized route. Open a visit to see its authorized address and instructions.</p></div></section>
     <section className="admin-card">
       <label htmlFor="field-route-date">Schedule date</label>
-      <input id="field-route-date" type="date" value={date} onChange={(event) => { setJobs([]); setMessage("Loading your assigned visits…"); setDate(event.target.value); }} />
+      <input id="field-route-date" type="date" value={date} onChange={(event) => { const value = event.target.value; setJobs([]); setMessage(value ? "Loading your assigned visits…" : "Choose a schedule date to view your assigned visits."); setDate(value); }} />
+      <label htmlFor="field-route-stage">Visit stage</label>
+      <select id="field-route-stage" value={visitStage} onChange={(event) => { setJobs([]); setMessage("Loading your assigned visits…"); setVisitStage(event.target.value as typeof visitStage); }}>
+        <option value="">All assigned visits</option>
+        <option value="TRAVELLING">Travelling</option>
+        <option value="ARRIVED">Arrived</option>
+        <option value="STAGE_PENDING">In progress, stage pending</option>
+      </select>
       {message ? <p role="status" aria-live="polite">{message}</p> : <ol className="field-route-list">{jobs.map((job) => <li className="admin-card" key={job.id}>
         <p><strong>{jobTime(job)}</strong> · {job.visitType.replaceAll("_", " ")}</p>
         <h3>{job.patientName} {job.patientLastName}</h3>
