@@ -9,8 +9,9 @@ describe("collection and sample policy", () => {
     expect(isAssignedCollector("staff-b", "staff-a", [{ key: "collections.assign", centreId: "centre-b" }], "centre-a")).toBe(false);
   });
   it("accepts a reasoned delay event only with an expected job version", () => {
-    const delay = { action: "delay", expectedVersion: 2, reason: "Synthetic traffic delay" };
+    const delay = { action: "delay", expectedVersion: 2, reason: "Synthetic traffic delay", estimatedArrivalAt: "2099-01-01T10:00:00.000Z" };
     expect(collectionJobActionSchema.safeParse(delay).success).toBe(true);
+    expect(collectionJobActionSchema.safeParse({ ...delay, estimatedArrivalAt: "not-a-date" }).success).toBe(false);
     expect(collectionJobActionSchema.safeParse({ ...delay, expectedVersion: 0 }).success).toBe(false);
     expect(collectionJobActionSchema.safeParse({ ...delay, reason: "x" }).success).toBe(false);
   });

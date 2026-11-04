@@ -27,4 +27,12 @@ describe("collection job API boundary", () => {
     getApiAccess.mockResolvedValueOnce({ staff: null, response: Response.json({ error: "mfa_setup_required" }, { status: 428 }) });
     expect((await PATCH(patchReq(), { params: Promise.resolve({ id: "14a5f9b4-8218-4930-8115-788e270b6df8" }) })).status).toBe(428);
   });
+  it("rejects a past staff-estimated arrival before database access", async () => {
+    const id = "14a5f9b4-8218-4930-8115-788e270b6df8";
+    const request = new Request(`http://localhost/api/collections/${id}`, { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": "972b2aed-30f9-4c01-9473-8bdb9a6db88c" }, body: JSON.stringify({ action: "delay", expectedVersion: 1, reason: "Synthetic traffic delay", estimatedArrivalAt: "2000-01-01T10:00:00.000Z" }) });
+    const response = await PATCH(request, { params: Promise.resolve({ id }) });
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "estimated_arrival_must_be_future" });
+    expect(getApiAccess).not.toHaveBeenCalled();
+  });
 });
