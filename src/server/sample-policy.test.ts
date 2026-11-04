@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assignedHandoverCentreScope, collectionAttemptProgress, collectionJobActionSchema, collectionVisitStage, isAssignedCollector, matchesSpecimenCollectionReplay, sampleCollectSchema, sampleDirectoryStatusFilter, sampleDirectoryStatuses, sampleHandoverSubmitSchema } from "./sample-policy";
+import { assignedHandoverCentreScope, collectionAttemptProgress, collectionJobActionSchema, collectionVisitStage, collectionVisitStageCounts, isAssignedCollector, matchesSpecimenCollectionReplay, sampleCollectSchema, sampleDirectoryStatusFilter, sampleDirectoryStatuses, sampleHandoverSubmitSchema } from "./sample-policy";
 
 describe("collection and sample policy", () => {
   it("requires one arrival per travel attempt and a recorded arrival before visit outcomes", () => {
@@ -15,6 +15,14 @@ describe("collection and sample policy", () => {
     expect(collectionVisitStage("IN_PROGRESS", ["VISIT_STARTED", "ARRIVED"])).toBe("ARRIVED");
     expect(collectionVisitStage("IN_PROGRESS", [])).toBeNull();
     expect(collectionVisitStage("COLLECTED", ["TRAVEL_STARTED", "ARRIVED"])).toBeNull();
+  });
+  it("counts in-progress visit stages and excludes terminal jobs", () => {
+    expect(collectionVisitStageCounts([
+      { status: "IN_PROGRESS", eventTypes: ["TRAVEL_STARTED"] },
+      { status: "IN_PROGRESS", eventTypes: ["TRAVEL_STARTED", "ARRIVED"] },
+      { status: "IN_PROGRESS", eventTypes: [] },
+      { status: "COLLECTED", eventTypes: ["TRAVEL_STARTED", "ARRIVED"] },
+    ])).toEqual({ travelling: 1, arrived: 1, inProgressUnstaged: 1 });
   });
   it("limits field actions to the assigned collector or an authorized scheduler", () => {
     expect(isAssignedCollector("staff-a", "staff-a", [], "centre-a")).toBe(true);

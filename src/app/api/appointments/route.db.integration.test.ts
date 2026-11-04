@@ -893,7 +893,7 @@ describe("appointment creation PostgreSQL integration", () => {
     const mixedQueueBody = await mixedQueue.json() as { jobs: Array<{ id: string }>; summary: { total: number; byStatus: Record<string, number> } };
     expect(mixedQueueBody.jobs.map((job) => job.id)).toEqual(expect.arrayContaining([assignedJobId, unrelatedJobId, assignedOutsideManagementCentre]));
     expect(mixedQueueBody.jobs.map((job) => job.id)).not.toContain(crossCentreJobId);
-    expect(mixedQueueBody.summary).toEqual({ total: 3, byStatus: { ASSIGNED: 3 } });
+    expect(mixedQueueBody.summary).toEqual({ total: 3, byStatus: { ASSIGNED: 3 }, byVisitStage: { travelling: 0, arrived: 0, inProgressUnstaged: 0 } });
     const selectedCentreQueueResponse = await collectionListHandler(new Request(`http://localhost/api/collections?centreId=${otherCentreId}`));
     expect(selectedCentreQueueResponse.status).toBe(200);
     const selectedCentreQueue = await selectedCentreQueueResponse.json() as { jobs: Array<{ id: string }>; summary: { total: number } };

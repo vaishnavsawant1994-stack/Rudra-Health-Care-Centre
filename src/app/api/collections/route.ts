@@ -6,7 +6,7 @@ import { getDb } from "@/db/client";
 import { appointments, centres, collectionJobEvents, collectionJobs, diagnosticOrders, patientContactSecrets, patients } from "@/db/schema";
 import { appendAuditEvent } from "@/server/audit";
 import { csrfRejected, isSameOriginRequest } from "@/server/csrf";
-import { collectionJobCreateSchema, collectionVisitStage } from "@/server/sample-policy";
+import { collectionJobCreateSchema, collectionVisitStage, collectionVisitStageCounts } from "@/server/sample-policy";
 import { decryptPatientIdentity } from "@/server/patient-contact-crypto";
 import { encryptOperationalData, operationalContext } from "@/server/operational-crypto";
 import { isValidScheduleDate } from "@/server/collection-schedule-policy";
@@ -44,13 +44,18 @@ export async function GET(request: Request) {
   const rows = await getDb().select({ id: collectionJobs.id, jobNumber: collectionJobs.jobNumber, centreId: collectionJobs.centreId, centreTimeZone: centres.timeZone, appointmentId: collectionJobs.appointmentId, orderId: collectionJobs.orderId, patientId: collectionJobs.patientId, encryptionKeyId:patientContactSecrets.encryptionKeyId,nameCiphertext:patientContactSecrets.nameCiphertext,visitType: appointments.visitType, status: collectionJobs.status, assignedStaffId: collectionJobs.assignedStaffId, scheduledStart: collectionJobs.scheduledStart, scheduledEnd: collectionJobs.scheduledEnd, versionNumber: collectionJobs.versionNumber, createdAt: collectionJobs.createdAt }).from(collectionJobs).innerJoin(centres, and(eq(centres.id, collectionJobs.centreId), eq(centres.organizationId, collectionJobs.organizationId))).innerJoin(appointments, and(eq(appointments.id, collectionJobs.appointmentId), eq(appointments.organizationId, collectionJobs.organizationId), eq(appointments.centreId, collectionJobs.centreId))).innerJoin(patients, and(eq(patients.id, collectionJobs.patientId), eq(patients.organizationId, collectionJobs.organizationId), eq(patients.centreId, collectionJobs.centreId))).innerJoin(patientContactSecrets,and(eq(patientContactSecrets.patientId,patients.id),eq(patientContactSecrets.organizationId,patients.organizationId),eq(patientContactSecrets.centreId,patients.centreId))).where(and(...clauses)).orderBy(asc(collectionJobs.scheduledStart), asc(collectionJobs.id)).limit(pageSize + 1).offset((page - 1) * pageSize);
   const hasMore = rows.length > pageSize;
   const pageRows = rows.slice(0, pageSize);
-  const visitEventTypes = pageRows.length ? await getDb().select({ jobId: collectionJobEvents.jobId, eventType: collectionJobEvents.eventType }).from(collectionJobEvents)
-    .where(and(eq(collectionJobEvents.organizationId, staff.organizationId), inArray(collectionJobEvents.jobId, pageRows.map((row) => row.id)), inArray(collectionJobEvents.eventType, ["TRAVEL_STARTED", "VISIT_STARTED", "ARRIVED", "ATTEMPT_FAILED"]))) : [];
+  const visitEventTypes = await getDb().select({ jobId: collectionJobEvents.jobId, eventType: collectionJobEvents.eventType }).from(collectionJobEvents)
+    .innerJoin(collectionJobs, and(eq(collectionJobs.id, collectionJobEvents.jobId), eq(collectionJobs.organizationId, collectionJobEvents.organizationId)))
+    .innerJoin(centres, and(eq(centres.id, collectionJobs.centreId), eq(centres.organizationId, collectionJobs.organizationId)))
+    .where(and(...clauses, eq(collectionJobs.status, "IN_PROGRESS"), eq(collectionJobEvents.organizationId, staff.organizationId), inArray(collectionJobEvents.eventType, ["TRAVEL_STARTED", "VISIT_STARTED", "ARRIVED", "ATTEMPT_FAILED"])));
   const visitEventsByJob = new Map<string, string[]>();
   for (const event of visitEventTypes) visitEventsByJob.set(event.jobId, [...(visitEventsByJob.get(event.jobId) ?? []), event.eventType]);
   const jobs=pageRows.map(({encryptionKeyId,nameCiphertext,patientId,centreId,...row})=>{const name=decryptPatientIdentity({encryptionKeyId,nameCiphertext},{organizationId:staff.organizationId,centreId,patientId});return {...row,patientId,centreId,patientName:name.firstName,patientLastName:name.lastName,visitStage:collectionVisitStage(row.status,visitEventsByJob.get(row.id) ?? [])};});
+  const visitStages = collectionVisitStageCounts([...visitEventsByJob.keys()].map((id) => ({ status: "IN_PROGRESS", eventTypes: visitEventsByJob.get(id) ?? [] })));
   const summary = Object.fromEntries(summaryRows.map((row) => [row.status, row.count]));
-  return Response.json({ jobs, page, pageSize, hasMore, summary: { total: summaryRows.reduce((total, row) => total + row.count, 0), byStatus: summary } });
+  const inProgressCount = summary.IN_PROGRESS ?? 0;
+  visitStages.inProgressUnstaged += Math.max(0, inProgressCount - visitStages.travelling - visitStages.arrived - visitStages.inProgressUnstaged);
+  return Response.json({ jobs, page, pageSize, hasMore, summary: { total: summaryRows.reduce((total, row) => total + row.count, 0), byStatus: summary, byVisitStage: visitStages } });
 }
 
 export async function POST(request: Request) {

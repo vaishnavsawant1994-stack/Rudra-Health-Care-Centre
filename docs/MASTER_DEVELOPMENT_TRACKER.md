@@ -1,3 +1,9 @@
+## 2026-11-04 checkpoint - Collection visit-stage workload counts
+
+- Extended the authorized collection queue summary with counts for `TRAVELLING`, `ARRIVED`, and `IN_PROGRESS` jobs without a recorded travel/arrival stage. Counts derive from scoped active job events and the existing status summary, so jobs without a matching event remain represented as stage-pending. Collection Operations cards now display these counts. No migration or persistent data changed.
+- Verification: focused policy and PostgreSQL appointment/collection route checks **46/46 across 3 files**; full default Vitest **833/833 across 201 files**; TypeScript, ESLint and production build passed (**247 static-generation entries**). The first full run caught one outdated exact-object assertion for the expanded summary; the API integration contract was updated, then all tests passed. Browser visual acceptance remains pending.
+- This adds visit-stage workload visibility only. Centre & Staff Operations and the 178-screen backlog remain incomplete. Live role/MFA and browser acceptance, key recovery/rotation, malware scanner qualification, external provider approvals and production gates remain open. Synthetic data only.
+
 ## 2026-11-04 checkpoint - Collection visit stage visibility
 
 - Collection queue API now derives the visit stage from authoritative job events and returns it only for jobs in the caller's authorized collection queue. The Centre Operations and Phlebotomist route-board views show `TRAVELLING` or `ARRIVED` while the collection job remains `IN_PROGRESS`; terminal and unstarted jobs have no visit stage. No migration or persistent data changed.

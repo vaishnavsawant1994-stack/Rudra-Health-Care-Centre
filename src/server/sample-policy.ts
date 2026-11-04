@@ -64,6 +64,18 @@ export function collectionVisitStage(status: string, eventTypes: readonly string
   return progress.canRecordArrival ? "TRAVELLING" : null;
 }
 
+export function collectionVisitStageCounts(rows: readonly { status: string; eventTypes: readonly string[] }[]) {
+  const counts = { travelling: 0, arrived: 0, inProgressUnstaged: 0 };
+  for (const row of rows) {
+    if (row.status !== "IN_PROGRESS") continue;
+    const stage = collectionVisitStage(row.status, row.eventTypes);
+    if (stage === "TRAVELLING") counts.travelling += 1;
+    else if (stage === "ARRIVED") counts.arrived += 1;
+    else counts.inProgressUnstaged += 1;
+  }
+  return counts;
+}
+
 export function matchesSpecimenCollectionReplay(
   existing: { jobId: string; specimenType: string; requirementReference: string; collectedByStaffId: string; identityCheckConfirmed: boolean; procedureApprovalId: string; reason: string },
   request: z.infer<typeof sampleCollectSchema>,
