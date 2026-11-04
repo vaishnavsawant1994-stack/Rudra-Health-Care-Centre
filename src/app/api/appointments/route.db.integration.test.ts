@@ -38,6 +38,7 @@ describe("appointment creation PostgreSQL integration", () => {
   let escalationActionHandler: typeof import("../escalations/[id]/route").PATCH;
   let collectionListHandler: typeof import("../collections/route").GET;
   let specimenListHandler: typeof import("../samples/route").GET;
+  let specimenActionHandler: typeof import("../samples/route").POST;
   let dispatchListHandler: typeof import("../samples/dispatch/route").GET;
   let collectionActionHandler: typeof import("../collections/[id]/route").PATCH;
   let workloadHandler: typeof import("../roster/workload/route").GET;
@@ -48,6 +49,7 @@ describe("appointment creation PostgreSQL integration", () => {
   let rosterConflictsHandler: typeof import("../roster/conflicts/route").GET;
   let approvalPolicyHandler: typeof import("../tasks/policy/route").PUT;
   let approvalPolicyReadHandler: typeof import("../tasks/policy/route").GET;
+  let taskApproverPickerHandler: typeof import("../tasks/approvers/route").GET;
   let operationsHandler: typeof import("../branch/operations/route").GET;
   let doctorDirectoryHandler: typeof import("../doctors/route").GET;
   let doctorCreateHandler: typeof import("../doctors/route").POST;
@@ -125,7 +127,7 @@ describe("appointment creation PostgreSQL integration", () => {
     ({ GET: escalationListHandler } = await import("../escalations/route"));
     ({ GET: escalationReadHandler, PATCH: escalationActionHandler } = await import("../escalations/[id]/route"));
     ({ GET: collectionListHandler } = await import("../collections/route"));
-    ({ GET: specimenListHandler } = await import("../samples/route"));
+    ({ GET: specimenListHandler, POST: specimenActionHandler } = await import("../samples/route"));
     ({ GET: dispatchListHandler } = await import("../samples/dispatch/route"));
     ({ PATCH: collectionActionHandler } = await import("../collections/[id]/route"));
     ({ GET: workloadHandler } = await import("../roster/workload/route"));
@@ -135,6 +137,7 @@ describe("appointment creation PostgreSQL integration", () => {
     ({ PATCH: rosterActionHandler } = await import("../roster/[id]/route"));
     ({ GET: rosterConflictsHandler } = await import("../roster/conflicts/route"));
     ({ PUT: approvalPolicyHandler, GET: approvalPolicyReadHandler } = await import("../tasks/policy/route"));
+    ({ GET: taskApproverPickerHandler } = await import("../tasks/approvers/route"));
     ({ GET: operationsHandler } = await import("../branch/operations/route"));
     ({ GET: doctorDirectoryHandler, POST: doctorCreateHandler } = await import("../doctors/route"));
     ({ GET: doctorReadHandler, PATCH: doctorUpdateHandler } = await import("../doctors/[id]/route"));
@@ -731,9 +734,14 @@ describe("appointment creation PostgreSQL integration", () => {
     await pool.query('INSERT INTO "user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)', [nextOwnerAuthId, "Synthetic Escalation Manager", `${nextOwnerAuthId}@invalid.test`]);
     await pool.query("INSERT INTO staff_users(id,auth_user_id,organization_id,staff_code,display_name,status,is_owner) VALUES($1,$2,$3,$4,$5,'ACTIVE',false)", [nextOwnerId, nextOwnerAuthId, organizationId, `ST-${nextOwnerId.slice(0, 8)}`, "Synthetic Escalation Manager"]);
     await pool.query("INSERT INTO staff_role_assignments(organization_id,staff_user_id,role_id,centre_id) VALUES($1,$2,$3,$4)", [organizationId, nextOwnerId, workloadRole.rows[0].id, centreId]);
-    const reopened = await escalationActionHandler(action({ action: "REOPEN", expectedVersion: 4, reason: "Synthetic follow-up evidence received" }), { params: Promise.resolve({ id: created.escalation.id }) });
+    const invalidReopenDue = await escalationActionHandler(action({ action: "REOPEN", expectedVersion: 4, dueAt: "2000-01-01T00:00:00.000Z", reason: "Synthetic follow-up evidence received" }), { params: Promise.resolve({ id: created.escalation.id }) });
+    expect(invalidReopenDue.status).toBe(400);
+    expect(await invalidReopenDue.json()).toEqual({ error: "due_date_must_be_future" });
+    const reopenedDueAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+    const reopened = await escalationActionHandler(action({ action: "REOPEN", expectedVersion: 4, dueAt: reopenedDueAt, reason: "Synthetic follow-up evidence received" }), { params: Promise.resolve({ id: created.escalation.id }) });
     expect(reopened.status).toBe(200);
     expect(await reopened.json()).toMatchObject({ escalation: { status: "OPEN", versionNumber: 5 } });
+    expect((await pool.query("SELECT due_at FROM staff_escalations WHERE id=$1", [created.escalation.id])).rows[0].due_at.toISOString()).toBe(reopenedDueAt);
     const reassigned = await escalationActionHandler(action({ action: "REASSIGN", expectedVersion: 5, assignedOwnerStaffId: nextOwnerId, reason: "Synthetic workload reassignment" }), { params: Promise.resolve({ id: created.escalation.id }) });
     expect(reassigned.status).toBe(200);
     expect(await reassigned.json()).toMatchObject({ escalation: { status: "OPEN", versionNumber: 6 } });
@@ -909,16 +917,17 @@ describe("appointment creation PostgreSQL integration", () => {
     expect(collectionPageTwo).toMatchObject({ page: 2, hasMore: true });
     expect(collectionPageTwo.jobs[0].id).not.toBe(collectionPageOne.jobs[0].id);
 
-    const insertSpecimen = async (jobId: string, centre: string, patient: string, order: string) => {
+    const insertSpecimen = async (jobId: string, centre: string, patient: string, order: string, receivingSubmissionRequired = false) => {
       const procedureId = randomUUID();
       const specimenId = randomUUID();
       await pool.query("INSERT INTO sample_procedure_approvals(id,organization_id,centre_id,operation,reference,status,approved_by_staff_id) VALUES($1,$2,$3,'COLLECTION',$4,'ACTIVE',$5)", [procedureId, organizationId, centre, `SYNTH-COLLECTION-${specimenId.slice(0, 8)}`, staffUserId]);
       const { encryptOperationalData, operationalContext } = await import("@/server/operational-crypto");
       const privateData = encryptOperationalData({ specimenType: "Synthetic specimen", requirementReference: "SYNTHETIC-REQUIREMENT" }, operationalContext({ organizationId, centreId: centre, recordId: specimenId }, "specimen"));
-      await pool.query("INSERT INTO specimens(id,organization_id,centre_id,job_id,order_id,patient_id,specimen_number,idempotency_key,private_data_ciphertext,status,identity_check_confirmed,collection_procedure_approval_id,collected_by_staff_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'COLLECTED',true,$10,$11)", [specimenId, organizationId, centre, jobId, order, patient, `SP-${specimenId.slice(0, 8)}`, randomUUID(), privateData, procedureId, staffUserId]);
+      await pool.query("INSERT INTO specimens(id,organization_id,centre_id,job_id,order_id,patient_id,specimen_number,idempotency_key,private_data_ciphertext,status,identity_check_confirmed,collection_procedure_approval_id,collected_by_staff_id,receiving_submission_required) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'COLLECTED',true,$10,$11,$12)", [specimenId, organizationId, centre, jobId, order, patient, `SP-${specimenId.slice(0, 8)}`, randomUUID(), privateData, procedureId, staffUserId, receivingSubmissionRequired]);
       return specimenId;
     };
-    const mainAssignedSpecimen = await insertSpecimen(assignedJobId, centreId, patientId, mainOrderId);
+    const mainAssignedSpecimen = await insertSpecimen(assignedJobId, centreId, patientId, mainOrderId, true);
+    const handoverSubmissionSpecimen = mainAssignedSpecimen;
     const mainManagedSpecimen = await insertSpecimen(unrelatedJobId, centreId, patientId, secondMainOrderId);
     const otherAssignedSpecimen = await insertSpecimen(assignedOutsideManagementCentre, otherCentreId, otherPatientId, mixedScopeOrderId);
     const otherStaffSpecimen = await insertSpecimen(crossCentreJobId, otherCentreId, otherPatientId, otherOrderId);
@@ -966,10 +975,10 @@ describe("appointment creation PostgreSQL integration", () => {
     mocks.getApiAccess.mockResolvedValue({ staff: { organizationId, staffUserId, grants: specimenGrants }, response: null });
     const specimensResponse = await specimenListHandler(new Request("http://localhost/api/samples"));
     expect(specimensResponse.status).toBe(200);
-    const specimensBody = await specimensResponse.json() as { specimens: Array<{ id: string; patientId?: string; patientName?: string }> };
+    const specimensBody = await specimensResponse.json() as { specimens: Array<{ id: string; centreId: string; specimenType: string; requirementReference: string; patientId?: string; patientName?: string }> };
     expect(specimensBody.specimens.map((specimen) => specimen.id)).toEqual(expect.arrayContaining([mainAssignedSpecimen, mainManagedSpecimen, otherAssignedSpecimen]));
     expect(specimensBody.specimens.map((specimen) => specimen.id)).not.toContain(otherStaffSpecimen);
-    expect(specimensBody.specimens.find((specimen) => specimen.id === mainAssignedSpecimen)).toMatchObject({ patientId, patientName: "Synthetic" });
+    expect(specimensBody.specimens.find((specimen) => specimen.id === mainAssignedSpecimen)).toMatchObject({ centreId, specimenType: "Synthetic specimen", requirementReference: "SYNTHETIC-REQUIREMENT", patientId, patientName: "Synthetic" });
     expect(specimensBody.specimens.find((specimen) => specimen.id === otherAssignedSpecimen)).not.toHaveProperty("patientId");
     expect(specimensBody.specimens.find((specimen) => specimen.id === otherAssignedSpecimen)).not.toHaveProperty("patientName");
     const pendingHandoverResponse = await specimenListHandler(new Request("http://localhost/api/samples?view=handover"));
@@ -985,11 +994,50 @@ describe("appointment creation PostgreSQL integration", () => {
     expect(fieldStaffHandoverBody.specimens.map((specimen) => specimen.id)).not.toContain(mainManagedSpecimen);
     expect(fieldStaffHandoverBody.specimens.map((specimen) => specimen.id)).not.toContain(otherStaffSpecimen);
     expect(fieldStaffHandoverBody.specimens.every((specimen) => !("patientId" in specimen) && !("patientName" in specimen))).toBe(true);
+    mocks.getApiAccess.mockResolvedValue({ staff: { organizationId, staffUserId: otherStaffId, grants: [{ key: "samples.read", centreId }, { key: "samples.receive", centreId }] }, response: null });
+    const receivingBeforeSubmission = await specimenListHandler(new Request("http://localhost/api/samples?view=receiving"));
+    expect(((await receivingBeforeSubmission.json()) as { specimens: Array<{ id: string }> }).specimens.map((specimen) => specimen.id)).not.toContain(handoverSubmissionSpecimen);
+    const receivingProcedureId = randomUUID();
+    await pool.query("INSERT INTO sample_procedure_approvals(id,organization_id,centre_id,operation,reference,status,approved_by_staff_id) VALUES($1,$2,$3,'RECEIVING',$4,'ACTIVE',$5)", [receivingProcedureId, organizationId, centreId, `SYNTH-RECEIVING-${receivingProcedureId.slice(0, 8)}`, staffUserId]);
+    const blockedReceive = await specimenActionHandler(new Request("http://localhost/api/samples", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() }, body: JSON.stringify({ action: "receive", specimenId: handoverSubmissionSpecimen, expectedVersion: 1, procedureApprovalId: receivingProcedureId, reason: "Synthetic receiving reconciliation" }) }));
+    expect(blockedReceive.status).toBe(409);
+    expect(await blockedReceive.json()).toEqual({ error: "receiving_submission_required" });
+    expect((await pool.query("SELECT status,version_number FROM specimens WHERE organization_id=$1 AND id=$2", [organizationId, handoverSubmissionSpecimen])).rows[0]).toMatchObject({ status: "COLLECTED", version_number: 1 });
+    const submissionGrants = [{ key: "collections.visit.record", centreId }];
+    const submissionStaff = { organizationId, staffUserId, grants: submissionGrants };
+    mocks.getApiAccess.mockImplementation(async (permission: string, requestedCentre?: string) => submissionGrants.some((grant) => grant.key === permission && (!requestedCentre || grant.centreId === null || grant.centreId === requestedCentre))
+      ? { staff: submissionStaff, response: null }
+      : { staff: null, response: Response.json({ error: "forbidden" }, { status: 403 }) });
+    const submissionKey = randomUUID();
+    const submissionRequest = () => new Request("http://localhost/api/samples", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": submissionKey }, body: JSON.stringify({ action: "submit_for_receiving", specimenId: handoverSubmissionSpecimen, expectedVersion: 1, reason: "Synthetic handover submitted" }) });
+    const submissionResponse = await specimenActionHandler(submissionRequest());
+    expect(submissionResponse.status).toBe(200);
+    expect(await submissionResponse.json()).toMatchObject({ result: { status: "COLLECTED", versionNumber: 2, handoverSubmitted: true, replayed: false } });
+    expect((await specimenActionHandler(submissionRequest()).then((response) => response.json()))).toMatchObject({ result: { handoverSubmitted: true, replayed: true } });
+    expect(await pool.query("SELECT event_type,source,idempotency_key FROM sample_custody_events WHERE organization_id=$1 AND specimen_id=$2", [organizationId, handoverSubmissionSpecimen]).then((result) => result.rows)).toEqual([expect.objectContaining({ event_type: "SUBMITTED_FOR_RECEIVING", source: "STAFF_RECORDED", idempotency_key: submissionKey })]);
+    const noCentreGrant = [{ key: "collections.visit.record", centreId }];
+    mocks.getApiAccess.mockImplementation(async (permission: string, requestedCentre?: string) => noCentreGrant.some((grant) => grant.key === permission && (!requestedCentre || grant.centreId === null || grant.centreId === requestedCentre))
+      ? { staff: submissionStaff, response: null }
+      : { staff: null, response: Response.json({ error: "forbidden" }, { status: 403 }) });
+    const unauthorizedSubmission = await specimenActionHandler(new Request("http://localhost/api/samples", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() }, body: JSON.stringify({ action: "submit_for_receiving", specimenId: otherStaffSpecimen, expectedVersion: 1, reason: "Synthetic unauthorized attempt" }) }));
+    expect(unauthorizedSubmission.status).toBe(404);
+    expect((await pool.query("SELECT count(*)::int AS count FROM sample_custody_events WHERE organization_id=$1 AND specimen_id=$2 AND event_type='SUBMITTED_FOR_RECEIVING'", [organizationId, otherStaffSpecimen])).rows[0].count).toBe(0);
+    mocks.getApiAccess.mockResolvedValue({ staff: { organizationId, staffUserId: otherStaffId, grants: [{ key: "samples.read", centreId }, { key: "samples.receive", centreId }] }, response: null });
+    const receiptKey = randomUUID();
+    const receiveRequest = () => new Request("http://localhost/api/samples", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": receiptKey }, body: JSON.stringify({ action: "receive", specimenId: handoverSubmissionSpecimen, expectedVersion: 2, procedureApprovalId: receivingProcedureId, reason: "Synthetic receiving reconciliation" }) });
+    const receiptResponse = await specimenActionHandler(receiveRequest());
+    expect(receiptResponse.status).toBe(200);
+    expect(await receiptResponse.json()).toMatchObject({ result: { status: "RECEIVED_AT_RUDRA", versionNumber: 3, replayed: false } });
+    expect(await (await specimenActionHandler(receiveRequest())).json()).toMatchObject({ result: { status: "RECEIVED_AT_RUDRA", versionNumber: 3, replayed: true } });
+    expect((await pool.query("SELECT count(*)::int AS count FROM sample_custody_events WHERE organization_id=$1 AND specimen_id=$2 AND event_type='RECEIVED_AT_RUDRA'", [organizationId, handoverSubmissionSpecimen])).rows[0].count).toBe(1);
+    mocks.getApiAccess.mockResolvedValue({ staff: { organizationId, staffUserId, grants: specimenGrants }, response: null });
     const samplePageOne = await (await specimenListHandler(new Request("http://localhost/api/samples?page=1&pageSize=1"))).json() as { specimens: Array<{ id: string }>; page: number; hasMore: boolean };
     const samplePageTwo = await (await specimenListHandler(new Request("http://localhost/api/samples?page=2&pageSize=1"))).json() as { specimens: Array<{ id: string }>; page: number; hasMore: boolean };
     expect(samplePageOne).toMatchObject({ page: 1, hasMore: true });
-    expect(samplePageTwo).toMatchObject({ page: 2, hasMore: false });
+    expect(samplePageTwo).toMatchObject({ page: 2, hasMore: true });
     expect(samplePageTwo.specimens[0].id).not.toBe(samplePageOne.specimens[0].id);
+    const samplePageThree = await (await specimenListHandler(new Request("http://localhost/api/samples?page=3&pageSize=1"))).json() as { specimens: Array<{ id: string }>; page: number; hasMore: boolean };
+    expect(samplePageThree).toMatchObject({ page: 3, hasMore: false });
     const { encryptOperationalData, operationalContext } = await import("@/server/operational-crypto");
     const dispatchIds: string[] = [];
     for (const [index, centre] of [centreId, centreId, otherCentreId].entries()) {
@@ -1042,7 +1090,7 @@ describe("appointment creation PostgreSQL integration", () => {
     const operationsResponse = await operationsHandler();
     expect(operationsResponse.status).toBe(200);
     const operationsBody = await operationsResponse.json() as { centres: Array<{ id: string; queue: Array<{ id: string; kind: string; href: string }> }> };
-    expect(operationsBody.centres.find((item) => item.id === centreId)?.queue).toContainEqual(expect.objectContaining({ id: created.escalation.id, kind: "ESCALATION", href: `/escalations?escalationId=${created.escalation.id}` }));
+    expect(operationsBody.centres.find((item) => item.id === centreId)?.queue).toContainEqual(expect.objectContaining({ id: created.escalation.id, kind: "ESCALATION", href: `/escalations?escalationId=${created.escalation.id}&centreId=${centreId}` }));
 
     const otherAuthUserId = randomUUID(); const otherStaffId = randomUUID();
     await pool!.query('INSERT INTO "user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)', [otherAuthUserId, "Synthetic Other Collector", `${otherAuthUserId}@invalid.test`]);
@@ -1231,19 +1279,37 @@ describe("appointment creation PostgreSQL integration", () => {
     await pool.query("INSERT INTO centres(id,organization_id,code,name,time_zone) VALUES($1,$2,$3,$4,'Asia/Kolkata')", [policyCentreId, organizationId, `PC-${policyCentreId.slice(0, 8)}`, "Synthetic Policy Centre"]);
     const approvePermission = await pool.query("SELECT id FROM permissions WHERE key='tasks.approve' LIMIT 1");
     expect(approvePermission.rows).toHaveLength(1);
+    const taskReadPermission = await pool.query("SELECT id FROM permissions WHERE key='tasks.read' LIMIT 1");
+    expect(taskReadPermission.rows).toHaveLength(1);
     const approverRoleId = randomUUID();
     await pool.query("INSERT INTO roles(id,organization_id,key,name,scope) VALUES($1,$2,$3,$4,'CENTRE')", [approverRoleId, organizationId, `synthetic_policy_approver_${approverRoleId.slice(0, 8)}`, "Synthetic policy approver"]);
     await pool.query("INSERT INTO role_permissions(role_id,permission_id) VALUES($1,$2)", [approverRoleId, approvePermission.rows[0].id]);
+    await pool.query("INSERT INTO role_permissions(role_id,permission_id) VALUES($1,$2)", [approverRoleId, taskReadPermission.rows[0].id]);
     await pool.query("INSERT INTO staff_role_assignments(organization_id,staff_user_id,role_id,centre_id) VALUES($1,$2,$3,$4)", [organizationId, staffUserId, approverRoleId, policyCentreId]);
+    const approveOnlyStaffId = randomUUID();
+    const approveOnlyAuthUserId = randomUUID();
+    await pool.query('INSERT INTO "user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)', [approveOnlyAuthUserId, "Synthetic Approve-Only Staff", `${approveOnlyStaffId}@invalid.test`]);
+    await pool.query("INSERT INTO staff_users(id,auth_user_id,organization_id,staff_code,display_name,status,is_owner) VALUES($1,$2,$3,$4,$5,'ACTIVE',false)", [approveOnlyStaffId, approveOnlyAuthUserId, organizationId, `APO-${approveOnlyStaffId.slice(0, 8)}`, "Synthetic Approve-Only Staff"]);
+    const approveOnlyRoleId = randomUUID();
+    await pool.query("INSERT INTO roles(id,organization_id,key,name,scope) VALUES($1,$2,$3,$4,'CENTRE')", [approveOnlyRoleId, organizationId, `synthetic_approve_only_${approveOnlyRoleId.slice(0, 8)}`, "Synthetic approve-only"]);
+    await pool.query("INSERT INTO role_permissions(role_id,permission_id) VALUES($1,$2)", [approveOnlyRoleId, approvePermission.rows[0].id]);
+    await pool.query("INSERT INTO staff_role_assignments(organization_id,staff_user_id,role_id,centre_id) VALUES($1,$2,$3,$4)", [organizationId, approveOnlyStaffId, approveOnlyRoleId, policyCentreId]);
+    mocks.getApiAccess.mockResolvedValue({ staff: { organizationId, staffUserId, grants: [{ key: "tasks.approve", centreId: policyCentreId }] }, response: null });
+    const pickerResponse = await taskApproverPickerHandler(new Request(`http://localhost/api/tasks/approvers?centreId=${policyCentreId}`));
+    expect(pickerResponse.status).toBe(200);
+    expect(await pickerResponse.json()).toEqual({ approvers: [expect.objectContaining({ id: staffUserId })] });
     const policyManager = { organizationId, staffUserId, grants: [{ key: "tasks.policy.manage", centreId: policyCentreId }] };
     mocks.getApiAccess.mockResolvedValue({ staff: policyManager, response: null });
     const policyIdempotencyKey = randomUUID();
     const send = (body: unknown, key = randomUUID()) => new Request("http://localhost/api/tasks/policy", { method: "PUT", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": key }, body: JSON.stringify(body) });
     const firstPayload = { centreId: policyCentreId, actionType: "TASK_COMPLETION", enabled: true, approverStaffIds: [staffUserId], escalationAfterMinutes: null, escalationOwnerStaffId: null, expireAfterMinutes: 120, expectedVersion: 0 };
     const first = await approvalPolicyHandler(send(firstPayload, policyIdempotencyKey));
-    expect(first.status).toBe(200);
+    expect(first.status, JSON.stringify(await first.clone().json())).toBe(200);
     const created = await first.json() as { policy: { id: string; versionNumber: number; approverStaffIds: string[]; expireAfterMinutes: number | null } };
     expect(created.policy).toMatchObject({ centreId: policyCentreId, actionType: "TASK_COMPLETION", enabled: true, versionNumber: 1, approverStaffIds: [staffUserId], expireAfterMinutes: 120 });
+    const approveOnlyAttempt = await approvalPolicyHandler(send({ ...firstPayload, approverStaffIds: [approveOnlyStaffId] }));
+    expect(approveOnlyAttempt.status).toBe(400);
+    expect(await approveOnlyAttempt.json()).toEqual({ error: "approver_not_eligible" });
     const second = await approvalPolicyHandler(send({ centreId: policyCentreId, actionType: "TASK_COMPLETION", enabled: true, approverStaffIds: [staffUserId], escalationAfterMinutes: 60, escalationOwnerStaffId: staffUserId, expireAfterMinutes: 120, expectedVersion: 1 }));
     expect(second.status).toBe(200);
     expect(await second.json()).toMatchObject({ policy: { id: created.policy.id, versionNumber: 2, escalationAfterMinutes: 60, escalationOwnerStaffId: staffUserId } });
@@ -1267,7 +1333,9 @@ describe("appointment creation PostgreSQL integration", () => {
       { action: "staff_approval_policy.updated", version: 1, enabled: true, approverDisplayNames: ["Synthetic Owner (ST-" + staffUserId.slice(0, 8) + ")"], escalationAfterMinutes: null, escalationOwnerDisplayName: null, expireAfterMinutes: 120, actorDisplayName: "Synthetic Owner (ST-" + staffUserId.slice(0, 8) + ")", snapshotComplete: true },
     ], hasMore: false });
     const approversRead = await approvalPolicyReadHandler(new Request(`http://localhost/api/tasks/policy?centreId=${policyCentreId}`));
-    expect(await approversRead.json()).toMatchObject({ policy: { id: created.policy.id, versionNumber: 2, approverStaffIds: [staffUserId] }, eligibleApprovers: expect.arrayContaining([expect.objectContaining({ id: staffUserId })]) });
+    const approverPayload = await approversRead.json();
+    expect(approverPayload).toMatchObject({ policy: { id: created.policy.id, versionNumber: 2, approverStaffIds: [staffUserId] }, eligibleApprovers: expect.arrayContaining([expect.objectContaining({ id: staffUserId })]) });
+    expect(approverPayload.eligibleApprovers).not.toEqual(expect.arrayContaining([expect.objectContaining({ id: approveOnlyStaffId })]));
     const concurrent = await Promise.all([
       approvalPolicyHandler(send({ centreId: policyCentreId, actionType: "TASK_COMPLETION", enabled: false, approverStaffIds: [], escalationAfterMinutes: null, escalationOwnerStaffId: null, expireAfterMinutes: null, expectedVersion: 2 })),
       approvalPolicyHandler(send({ centreId: policyCentreId, actionType: "TASK_COMPLETION", enabled: true, approverStaffIds: [staffUserId], escalationAfterMinutes: null, escalationOwnerStaffId: null, expireAfterMinutes: 90, expectedVersion: 2 })),
@@ -1380,10 +1448,13 @@ describe("appointment creation PostgreSQL integration", () => {
     await pool.query("INSERT INTO permissions(id,key,description,scope) VALUES($1,'collections.visit.record','Synthetic collection visit permission','CENTRE') ON CONFLICT(key) DO NOTHING", [permissionId]);
     const permission = await pool.query("SELECT id FROM permissions WHERE key='collections.visit.record'");
     await pool.query("INSERT INTO role_permissions(role_id,permission_id) VALUES($1,$2) ON CONFLICT DO NOTHING", [role.rows[0].id, permission.rows[0].id]);
-    const grants = ["collections.assign"];
+    const grants = ["collections.assign", "collections.visit.record", "appointments.create", "patients.read", "samples.collect"];
     mocks.getApiAccess.mockImplementation(async (permissionKey: string) => grants.includes(permissionKey)
       ? { staff: { organizationId, staffUserId, grants: grants.map((key) => ({ key, centreId })) }, response: null }
       : { staff: null, response: Response.json({ error: "forbidden" }, { status: 403 }) });
+    const missingMutationKey = await collectionActionHandler(new Request(`http://localhost/api/collections/${jobId}`, { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json" }, body: JSON.stringify({ expectedVersion: 1, action: "start", reason: "Synthetic missing idempotency key" }) }), { params: Promise.resolve({ id: jobId }) });
+    expect(missingMutationKey.status).toBe(400);
+    expect(await missingMutationKey.json()).toEqual({ error: "idempotency_key_required" });
     const idempotencyKey = randomUUID();
     const assignment = { expectedVersion: 1, action: "assign", staffUserId, reason: "Synthetic retry-safe collection assignment" };
     const send = (payload: typeof assignment) => new Request(`http://localhost/api/collections/${jobId}`, { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": idempotencyKey }, body: JSON.stringify(payload) });
@@ -1401,6 +1472,66 @@ describe("appointment creation PostgreSQL integration", () => {
     const auditFingerprint = await pool.query("SELECT details->>'mutationRequestHash' AS fingerprint FROM audit_events WHERE organization_id=$1 AND entity_type='collection_job' AND entity_id=$2 AND details->>'mutationIdempotencyKey' LIKE $3", [organizationId, jobId, `%${idempotencyKey}`]);
     expect(auditFingerprint.rowCount).toBe(1);
     expect(auditFingerprint.rows[0].fingerprint).not.toBe(createHash("sha256").update(JSON.stringify(assignment)).digest("hex"));
+    const visitKey = randomUUID();
+    const startAction = { expectedVersion: 2, action: "start", reason: "Synthetic assigned collector started visit" };
+    const sendStart = (payload: typeof startAction) => new Request(`http://localhost/api/collections/${jobId}`, { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": visitKey }, body: JSON.stringify(payload) });
+    const started = await collectionActionHandler(sendStart(startAction), { params: Promise.resolve({ id: jobId }) });
+    expect(started.status).toBe(200);
+    expect(await started.json()).toMatchObject({ replayed: false, job: { status: "IN_PROGRESS", versionNumber: 3 } });
+    const startReplay = await collectionActionHandler(sendStart(startAction), { params: Promise.resolve({ id: jobId }) });
+    expect(startReplay.status).toBe(200);
+    expect(await startReplay.json()).toMatchObject({ replayed: true, job: { status: "IN_PROGRESS", versionNumber: 3 } });
+    const conflictingStartReplay = await collectionActionHandler(sendStart({ ...startAction, reason: "Different visit action" }), { params: Promise.resolve({ id: jobId }) });
+    expect(conflictingStartReplay.status).toBe(409);
+    expect(await conflictingStartReplay.json()).toEqual({ error: "idempotency_conflict" });
+    const startEvents = await pool.query("SELECT count(*)::int AS count FROM collection_job_events WHERE job_id=$1 AND event_type='VISIT_STARTED'", [jobId]);
+    expect(startEvents.rows[0].count).toBe(1);
+    const runIdempotentAction = async (version: number, action: "arrive" | "unsuccessful" | "cancel", reason: string, eventType: string, expectedStatus: string, expectedVersion: number) => {
+      const key = randomUUID();
+      const payload = { expectedVersion: version, action, reason };
+      const sendAction = () => new Request(`http://localhost/api/collections/${jobId}`, { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": key }, body: JSON.stringify(payload) });
+      const firstAction = await collectionActionHandler(sendAction(), { params: Promise.resolve({ id: jobId }) });
+      expect(firstAction.status).toBe(200);
+      expect(await firstAction.json()).toMatchObject({ replayed: false, job: { status: expectedStatus, versionNumber: expectedVersion } });
+      const replayAction = await collectionActionHandler(sendAction(), { params: Promise.resolve({ id: jobId }) });
+      expect(replayAction.status).toBe(200);
+      expect(await replayAction.json()).toMatchObject({ replayed: true, job: { status: expectedStatus, versionNumber: expectedVersion } });
+      const eventCount = await pool.query("SELECT count(*)::int AS count FROM collection_job_events WHERE job_id=$1 AND event_type=$2", [jobId, eventType]);
+      expect(eventCount.rows[0].count).toBe(1);
+    };
+    await runIdempotentAction(3, "arrive", "Synthetic assigned staff arrival recorded", "ARRIVED", "IN_PROGRESS", 4);
+    await runIdempotentAction(4, "unsuccessful", "Synthetic patient unavailable", "ATTEMPT_FAILED", "UNSUCCESSFUL", 5);
+    await runIdempotentAction(5, "cancel", "Synthetic manager cancelled the unsuccessful job", "CANCELLED", "CANCELLED", 6);
+
+    const completionAppointmentResponse = await handler(new Request("http://localhost/api/appointments", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() }, body: JSON.stringify({ centreId, patientId, source: "STAFF", visitType: "CENTRE", scheduledLocal: "2099-02-11T09:00", durationMinutes: 30, services: [{ type: "OTHER", name: "Synthetic collection completion retry" }] }) }));
+    expect(completionAppointmentResponse.status).toBe(201);
+    const completionAppointment = await completionAppointmentResponse.json() as { appointment: { id: string } };
+    const completionOrderId = randomUUID();
+    const completionJobId = randomUUID();
+    await pool.query("INSERT INTO diagnostic_orders(id,organization_id,centre_id,order_number,patient_id,appointment_id,status,idempotency_key,request_hash,created_by_staff_id) VALUES($1,$2,$3,$4,$5,$6,'DRAFT',$7,$8,$9)", [completionOrderId, organizationId, centreId, `O-${completionOrderId.slice(0, 8)}`, patientId, completionAppointment.appointment.id, randomUUID(), "f".repeat(64), staffUserId]);
+    await pool.query("INSERT INTO collection_jobs(id,organization_id,centre_id,job_number,appointment_id,order_id,patient_id,status,scheduled_start,scheduled_end,idempotency_key,created_by_staff_id) VALUES($1,$2,$3,$4,$5,$6,$7,'PENDING_ASSIGNMENT',$8,$9,$10,$11)", [completionJobId, organizationId, centreId, `J-${completionJobId.slice(0, 8)}`, completionAppointment.appointment.id, completionOrderId, patientId, "2099-02-11T03:30:00.000Z", "2099-02-11T04:00:00.000Z", randomUUID(), staffUserId]);
+    const assignCompletion = (expectedVersion: number, action: "assign" | "start", key: string, body: Record<string, unknown>) => collectionActionHandler(new Request(`http://localhost/api/collections/${completionJobId}`, { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": key }, body: JSON.stringify({ expectedVersion, action, ...body }) }), { params: Promise.resolve({ id: completionJobId }) });
+    const completionAssignment = await assignCompletion(1, "assign", randomUUID(), { staffUserId, reason: "Synthetic collector assignment for completion retry" });
+    expect(completionAssignment.status).toBe(200);
+    const completionStart = await assignCompletion(2, "start", randomUUID(), { reason: "Synthetic collection visit started" });
+    expect(completionStart.status).toBe(200);
+    const procedureId = randomUUID();
+    const specimenId = randomUUID();
+    await pool.query("INSERT INTO sample_procedure_approvals(id,organization_id,centre_id,operation,reference,status,approved_by_staff_id) VALUES($1,$2,$3,'COLLECTION',$4,'ACTIVE',$5)", [procedureId, organizationId, centreId, `SYNTH-COLLECTION-${specimenId.slice(0, 8)}`, staffUserId]);
+    const { encryptOperationalData, operationalContext } = await import("@/server/operational-crypto");
+    const specimenCiphertext = encryptOperationalData({ specimenType: "Synthetic specimen", requirementReference: "SYNTHETIC-REQUIREMENT" }, operationalContext({ organizationId, centreId, recordId: specimenId }, "specimen"));
+    await pool.query("INSERT INTO specimens(id,organization_id,centre_id,job_id,order_id,patient_id,specimen_number,idempotency_key,private_data_ciphertext,status,identity_check_confirmed,collection_procedure_approval_id,collected_by_staff_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'COLLECTED',true,$10,$11)", [specimenId, organizationId, centreId, completionJobId, completionOrderId, patientId, `SP-${specimenId.slice(0, 8)}`, randomUUID(), specimenCiphertext, procedureId, staffUserId]);
+    const completionKey = randomUUID();
+    const completionBody = { expectedVersion: 3, action: "complete", reason: "Synthetic specimen collection recorded" };
+    const completeRequest = () => new Request(`http://localhost/api/collections/${completionJobId}`, { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": completionKey }, body: JSON.stringify(completionBody) });
+    const collectionCompleted = await collectionActionHandler(completeRequest(), { params: Promise.resolve({ id: completionJobId }) });
+    expect(collectionCompleted.status).toBe(200);
+    expect(await collectionCompleted.json()).toMatchObject({ replayed: false, job: { status: "COLLECTED", versionNumber: 4 } });
+    const collectionCompletionReplay = await collectionActionHandler(completeRequest(), { params: Promise.resolve({ id: completionJobId }) });
+    expect(collectionCompletionReplay.status).toBe(200);
+    expect(await collectionCompletionReplay.json()).toMatchObject({ replayed: true, job: { status: "COLLECTED", versionNumber: 4 } });
+    const completionEvents = await pool.query("SELECT count(*)::int AS count FROM collection_job_events WHERE job_id=$1 AND event_type='COLLECTION_RECORDED'", [completionJobId]);
+    expect(completionEvents.rows[0].count).toBe(1);
   });
 
   it("persists task approval expiry and due escalation actions with immutable history", async () => {
@@ -1410,14 +1541,20 @@ describe("appointment creation PostgreSQL integration", () => {
       await pool.query("INSERT INTO staff_users(id,auth_user_id,organization_id,staff_code,display_name,status,is_owner) VALUES($1,$2,$3,$4,$5,'ACTIVE',false)", [staffId, authId, organizationId, `ST-${staffId.slice(0, 8)}`, name]);
     }
     const workloadRole = await pool.query("SELECT id FROM roles WHERE organization_id=$1 AND key='synthetic_workload'", [organizationId]);
-    const approvePermissionId = randomUUID();
-    await pool.query("INSERT INTO permissions(id,key,description,scope) VALUES($1,'tasks.approve','Synthetic task approval permission','CENTRE') ON CONFLICT(key) DO NOTHING", [approvePermissionId]);
-    const approvePermission = await pool.query("SELECT id FROM permissions WHERE key='tasks.approve'");
-    await pool.query("INSERT INTO role_permissions(role_id,permission_id) VALUES($1,$2) ON CONFLICT DO NOTHING", [workloadRole.rows[0].id, approvePermission.rows[0].id]);
-    for (const staffId of [actorId, escalationOwnerId]) await pool.query("INSERT INTO staff_role_assignments(organization_id,staff_user_id,role_id,centre_id) VALUES($1,$2,$3,$4)", [organizationId, staffId, workloadRole.rows[0].id, centreId]);
+    for (const [key, description] of [["tasks.approve", "Synthetic task approval permission"], ["tasks.read", "Synthetic task read permission"]]) {
+      await pool.query("INSERT INTO permissions(id,key,description,scope) VALUES($1,$2,$3,'CENTRE') ON CONFLICT(key) DO NOTHING", [randomUUID(), key, description]);
+    }
+    await pool.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='tasks.approve' ON CONFLICT DO NOTHING", [workloadRole.rows[0].id]);
+    const taskReadRoleId = randomUUID();
+    await pool.query("INSERT INTO roles(id,organization_id,key,name,scope,is_system) VALUES($1,$2,$3,$4,'CENTRE',false)", [taskReadRoleId, organizationId, `task_reader_${taskReadRoleId.slice(0, 8)}`, "Synthetic task reader role"]);
+    await pool.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='tasks.read' ON CONFLICT DO NOTHING", [taskReadRoleId]);
+    for (const staffId of [actorId, escalationOwnerId]) {
+      await pool.query("INSERT INTO staff_role_assignments(organization_id,staff_user_id,role_id,centre_id) VALUES($1,$2,$3,$4)", [organizationId, staffId, workloadRole.rows[0].id, centreId]);
+      await pool.query("INSERT INTO staff_role_assignments(organization_id,staff_user_id,role_id,centre_id) VALUES($1,$2,$3,$4)", [organizationId, staffId, taskReadRoleId, centreId]);
+    }
 
     const policyId = randomUUID();
-    await pool.query("INSERT INTO staff_approval_policies(id,organization_id,centre_id,action_type,enabled,approver_permission,escalation_after_minutes,escalation_owner_staff_id,expire_after_minutes,version_number,created_by_staff_id,updated_by_staff_id) VALUES($1,$2,$3,'TASK_COMPLETION',true,'tasks.approve',15,$4,15,1,$5,$5)", [policyId, organizationId, centreId, escalationOwnerId, staffUserId]);
+    await pool.query("INSERT INTO staff_approval_policies(id,organization_id,centre_id,action_type,enabled,approver_permission,escalation_after_minutes,escalation_owner_staff_id,expire_after_minutes,version_number,created_by_staff_id,updated_by_staff_id) VALUES($1,$2,$3,'TASK_COMPLETION',true,'tasks.approve',15,$4,30,1,$5,$5)", [policyId, organizationId, centreId, escalationOwnerId, staffUserId]);
     await pool.query("INSERT INTO staff_approval_policy_approvers(organization_id,policy_id,staff_id,created_by_staff_id) VALUES($1,$2,$3,$4)", [organizationId, policyId, actorId, staffUserId]);
 
     const makeTask = async (taskNumber: string, withEscalation: boolean) => {
@@ -1490,6 +1627,31 @@ describe("appointment creation PostgreSQL integration", () => {
     expect(approveRecovered.status, JSON.stringify(await approveRecovered.clone().json())).toBe(200);
     expect(await approveRecovered.json()).toMatchObject({ task: { id: reassignedTaskId, status: "COMPLETED", approvalStatus: "APPROVED", versionNumber: 3 } });
 
+    const changesTaskId = await makeTask(`T-${randomUUID().slice(0, 8)}`, true);
+    const changesTaskParams = { params: Promise.resolve({ id: changesTaskId }) };
+    const changesReason = "Synthetic request: attach the required completion evidence";
+    const changesKey = randomUUID();
+    const changeRequest = () => taskActionHandler(actionRequest(changesTaskId, { expectedVersion: 1, action: "REQUEST_CHANGES", reason: changesReason }, changesKey), changesTaskParams);
+    const changesResponse = await changeRequest();
+    expect(changesResponse.status, JSON.stringify(await changesResponse.clone().json())).toBe(200);
+    expect(await changesResponse.json()).toMatchObject({ task: { id: changesTaskId, status: "IN_PROGRESS", approvalStatus: "CHANGES_REQUESTED", versionNumber: 2 }, replayed: false });
+    const changesReplay = await changeRequest();
+    expect(changesReplay.status).toBe(200);
+    expect(await changesReplay.json()).toMatchObject({ task: { status: "IN_PROGRESS", approvalStatus: "CHANGES_REQUESTED", versionNumber: 2 }, replayed: true });
+    const changesEvents = await pool.query("SELECT id,event_type,private_data_ciphertext FROM staff_task_events WHERE task_id=$1 ORDER BY recorded_at,id", [changesTaskId]);
+    expect(changesEvents.rows.map((row) => row.event_type)).toEqual(["SUBMITTED_FOR_APPROVAL", "CHANGES_REQUESTED"]);
+    expect(operationalCrypto.decryptOperationalData(changesEvents.rows[1].private_data_ciphertext, operationalCrypto.operationalContext({ organizationId, centreId, recordId: changesEvents.rows[1].id }, "staff-task-event"))).toMatchObject({ reason: changesReason, privateRequest: { reason: changesReason } });
+    expect((await pool.query("SELECT status,approval_status,approval_expires_at,escalation_owner_staff_id,escalation_due_at,version_number FROM staff_tasks WHERE id=$1", [changesTaskId])).rows[0]).toMatchObject({ status: "IN_PROGRESS", approval_status: "CHANGES_REQUESTED", approval_expires_at: null, escalation_owner_staff_id: null, escalation_due_at: null, version_number: 2 });
+
+    mocks.getApiAccess.mockResolvedValue({ staff: { organizationId, staffUserId, grants: [{ key: "workspace.read", centreId }, { key: "tasks.read", centreId }, { key: "tasks.assigned.read", centreId }, { key: "tasks.update", centreId }] }, response: null });
+    const resubmitted = await taskActionHandler(actionRequest(changesTaskId, { expectedVersion: 2, action: "SUBMIT_APPROVAL" }), changesTaskParams);
+    expect(resubmitted.status, JSON.stringify(await resubmitted.clone().json())).toBe(200);
+    expect(await resubmitted.json()).toMatchObject({ task: { id: changesTaskId, status: "AWAITING_APPROVAL", approvalStatus: "PENDING", versionNumber: 3 }, replayed: false });
+    const resubmissionEvents = await pool.query("SELECT id,event_type,private_data_ciphertext FROM staff_task_events WHERE task_id=$1 ORDER BY recorded_at,id", [changesTaskId]);
+    expect(resubmissionEvents.rows.map((row) => row.event_type)).toEqual(["SUBMITTED_FOR_APPROVAL", "CHANGES_REQUESTED", "SUBMITTED_FOR_APPROVAL"]);
+    expect(operationalCrypto.decryptOperationalData(resubmissionEvents.rows[2].private_data_ciphertext, operationalCrypto.operationalContext({ organizationId, centreId, recordId: resubmissionEvents.rows[2].id }, "staff-task-event"))).toMatchObject({ approvalSnapshotVersion: 1, approvalPolicyId: policyId, approvalPolicyVersion: 1, approvalApproverStaffIds: [actorId] });
+
+    mocks.getApiAccess.mockResolvedValue({ staff: { organizationId, staffUserId: actorId, grants: [{ key: "workspace.read", centreId }, { key: "tasks.read", centreId }, { key: "tasks.assign", centreId }, { key: "tasks.approve", centreId }] }, response: null });
     const roleBasedTaskId = randomUUID(); const roleBasedSubmissionId = randomUUID();
     const roleBasedPrivate = operationalCrypto.encryptOperationalData({ title: "Synthetic role-based approval", description: "Empty snapshot means any scoped approver" }, operationalCrypto.operationalContext({ organizationId, centreId, recordId: roleBasedTaskId }, "staff-task"));
     await pool.query("INSERT INTO staff_tasks(id,organization_id,centre_id,task_number,private_data_ciphertext,task_type,priority,status,requires_approval,approval_status,approval_policy_id,assigned_staff_id,created_by_staff_id,idempotency_key,request_hash) VALUES($1,$2,$3,$4,$5,'GENERAL','NORMAL','AWAITING_APPROVAL',true,'PENDING',$6,$7,$7,$8,$9)", [roleBasedTaskId, organizationId, centreId, `T-${roleBasedTaskId.slice(0, 8)}`, roleBasedPrivate, policyId, staffUserId, randomUUID(), "c".repeat(64)]);
@@ -1569,9 +1731,17 @@ describe("appointment creation PostgreSQL integration", () => {
       return `($${offset + 1},$${offset + 2},$${offset + 3},$${offset + 4},$${offset + 5},'GENERAL','NORMAL','AWAITING_APPROVAL',true,'PENDING',$${offset + 6},$${offset + 7},'1999-12-31T00:00:00Z',$${offset + 8},$${offset + 9},$${offset + 10},$${offset + 11})`;
     });
     await pool.query(`INSERT INTO staff_tasks(id,organization_id,centre_id,task_number,private_data_ciphertext,task_type,priority,status,requires_approval,approval_status,approval_policy_id,escalation_owner_staff_id,escalation_due_at,assigned_staff_id,created_by_staff_id,idempotency_key,request_hash) VALUES ${invalidOwnerRows.join(",")}`, invalidOwnerValues);
+    const unreadableOwnerAuthId = randomUUID(); const unreadableOwnerId = randomUUID(); const unreadableOwnerRoleId = randomUUID();
+    await pool.query('INSERT INTO "user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)', [unreadableOwnerAuthId, "Synthetic Approval-Only Owner", `${unreadableOwnerAuthId}@invalid.test`]);
+    await pool.query("INSERT INTO staff_users(id,auth_user_id,organization_id,staff_code,display_name,status,is_owner) VALUES($1,$2,$3,$4,$5,'ACTIVE',false)", [unreadableOwnerId, unreadableOwnerAuthId, organizationId, `ST-${unreadableOwnerId.slice(0, 8)}`, "Synthetic Approval-Only Owner"]);
+    await pool.query("INSERT INTO roles(id,organization_id,key,name,scope,is_system) VALUES($1,$2,$3,$4,'CENTRE',false)", [unreadableOwnerRoleId, organizationId, `approval_only_${unreadableOwnerRoleId.slice(0, 8)}`, "Synthetic approval-only role"]);
+    await pool.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='tasks.approve' ON CONFLICT DO NOTHING", [unreadableOwnerRoleId]);
+    await pool.query("INSERT INTO staff_role_assignments(organization_id,staff_user_id,role_id,centre_id) VALUES($1,$2,$3,$4)", [organizationId, unreadableOwnerId, unreadableOwnerRoleId, centreId]);
+    const unreadableOwnerTaskId = randomUUID();
+    await pool.query("INSERT INTO staff_tasks(id,organization_id,centre_id,task_number,private_data_ciphertext,task_type,priority,status,requires_approval,approval_status,approval_policy_id,escalation_owner_staff_id,escalation_due_at,assigned_staff_id,created_by_staff_id,idempotency_key,request_hash) VALUES($1,$2,$3,$4,$5,'GENERAL','NORMAL','AWAITING_APPROVAL',true,'PENDING',$6,$7,'1999-12-31T00:00:00Z',$8,$8,$9,$10)", [unreadableOwnerTaskId, organizationId, centreId, `T-${unreadableOwnerTaskId.slice(0, 8)}`, encryptOperationalData({ title: "Synthetic unreadable escalation owner", description: "Must remain pending until access is restored" }, operationalContext({ organizationId, centreId, recordId: unreadableOwnerTaskId }, "staff-task")), policyId, unreadableOwnerId, staffUserId, randomUUID(), "e".repeat(64)]);
     const workerNow = new Date("2000-01-02T00:00:00Z");
     const processed = await processDueTaskApprovalDeadlines(50, workerNow);
-    expect(processed).toMatchObject({ expired: 1, escalated: 1, skippedInvalidOwner: 55, processed: 2 });
+    expect(processed).toMatchObject({ expired: 1, escalated: 1, skippedInvalidOwner: 56, processed: 2 });
     const systemEvents = await pool.query("SELECT task_id,event_type,actor_type,actor_staff_id FROM staff_task_events WHERE task_id=ANY($1::uuid[]) AND actor_type='SYSTEM' ORDER BY event_type", [[systemExpiryId, systemEscalationId]]);
     expect(systemEvents.rows).toEqual([
       { task_id: systemExpiryId, event_type: "APPROVAL_EXPIRED", actor_type: "SYSTEM", actor_staff_id: null },
@@ -1582,7 +1752,15 @@ describe("appointment creation PostgreSQL integration", () => {
     const invalidOwnerState = await pool.query("SELECT count(*)::int AS untouched FROM staff_tasks WHERE id=ANY($1::uuid[]) AND escalation_processed_at IS NULL AND status='AWAITING_APPROVAL'", [invalidOwnerEscalationIds]);
     expect(invalidOwnerState.rows[0].untouched).toBe(55);
     expect((await pool.query("SELECT count(*)::int AS count FROM staff_task_events WHERE task_id=ANY($1::uuid[])", [invalidOwnerEscalationIds])).rows[0].count).toBe(0);
+    expect((await pool.query("SELECT escalation_processed_at,status FROM staff_tasks WHERE id=$1", [unreadableOwnerTaskId])).rows[0]).toMatchObject({ escalation_processed_at: null, status: "AWAITING_APPROVAL" });
+    expect((await pool.query("SELECT count(*)::int AS count FROM staff_task_events WHERE task_id=$1", [unreadableOwnerTaskId])).rows[0].count).toBe(0);
+    mocks.getApiAccess.mockResolvedValue({ staff: { organizationId, staffUserId: actorId, grants: [{ key: "workspace.read", centreId }, { key: "tasks.read", centreId }, { key: "tasks.assign", centreId }, { key: "tasks.approve", centreId }] }, response: null });
+    const unreadableOwnerManualEscalation = await taskActionHandler(actionRequest(unreadableOwnerTaskId, { expectedVersion: 1, action: "TRIGGER_ESCALATION" }), { params: Promise.resolve({ id: unreadableOwnerTaskId }) });
+    expect(unreadableOwnerManualEscalation.status).toBe(403);
+    expect(await unreadableOwnerManualEscalation.json()).toEqual({ error: "approver_not_eligible" });
+    expect((await pool.query("SELECT escalation_processed_at,version_number FROM staff_tasks WHERE id=$1", [unreadableOwnerTaskId])).rows[0]).toMatchObject({ escalation_processed_at: null, version_number: 1 });
     await pool.query("UPDATE staff_tasks SET status='CANCELLED', approval_status='NOT_REQUIRED' WHERE id=ANY($1::uuid[])", [invalidOwnerEscalationIds]);
+    await pool.query("UPDATE staff_tasks SET status='CANCELLED', approval_status='NOT_REQUIRED' WHERE id=$1", [unreadableOwnerTaskId]);
     expect((await processDueTaskApprovalDeadlines(50, workerNow))).toMatchObject({ processed: 0, expired: 0, escalated: 0 });
     // Competing deadline workers must emit only one system transition per row.
     const concurrentExpiryId = randomUUID();
@@ -1635,8 +1813,8 @@ describe("appointment creation PostgreSQL integration", () => {
     const managerPayload = await managerResponse.json() as { centres: Array<{ id: string; metrics: Record<string, number>; queue: Array<{ id: string; kind: string; reference: string; title: string; href: string }> }> };
     const managerCentre = managerPayload.centres.find((item) => item.id === centreId)!;
     expect(managerCentre.metrics).toMatchObject({ taskApprovalExpiryDue: 1, taskApprovalEscalationDue: 1 });
-    expect(managerCentre.queue).toContainEqual(expect.objectContaining({ id: taskId, kind: "TASK_APPROVAL_EXPIRY", reference: `T-${taskId.slice(0, 8)}`, href: `/tasks/approvals?queue=expiry-due&taskId=${taskId}` }));
-    expect(managerCentre.queue).toContainEqual(expect.objectContaining({ id: escalationTaskId, kind: "TASK_APPROVAL_ESCALATION", reference: `T-${escalationTaskId.slice(0, 8)}`, href: `/tasks/approvals?queue=escalation-due&taskId=${escalationTaskId}` }));
+    expect(managerCentre.queue).toContainEqual(expect.objectContaining({ id: taskId, kind: "TASK_APPROVAL_EXPIRY", reference: `T-${taskId.slice(0, 8)}`, href: `/tasks/approvals?queue=expiry-due&taskId=${taskId}&centreId=${centreId}` }));
+    expect(managerCentre.queue).toContainEqual(expect.objectContaining({ id: escalationTaskId, kind: "TASK_APPROVAL_ESCALATION", reference: `T-${escalationTaskId.slice(0, 8)}`, href: `/tasks/approvals?queue=escalation-due&taskId=${escalationTaskId}&centreId=${centreId}` }));
     expect(JSON.stringify(managerCentre.queue)).not.toContain("Synthetic private approval detail");
     expect(JSON.stringify(managerCentre.queue)).not.toContain("Sensitive operational note");
     expect(JSON.stringify(managerCentre.queue)).not.toContain("Synthetic escalation private detail");
@@ -1656,13 +1834,15 @@ describe("appointment creation PostgreSQL integration", () => {
     const taskId = randomUUID();
     const { encryptOperationalData, operationalContext } = await import("@/server/operational-crypto");
     const privateDataCiphertext = encryptOperationalData({ title: "Synthetic assigned task", description: "Assigned-only detail link" }, operationalContext({ organizationId, centreId, recordId: taskId }, "staff-task"));
-    await pool.query("INSERT INTO staff_tasks(id,organization_id,centre_id,task_number,private_data_ciphertext,task_type,priority,status,requires_approval,approval_status,assigned_staff_id,created_by_staff_id,idempotency_key,request_hash) VALUES($1,$2,$3,$4,$5,'GENERAL','NORMAL','OPEN',false,'NOT_REQUIRED',$6,$6,$7,$8)", [taskId, organizationId, centreId, `T-${taskId.slice(0, 8)}`, privateDataCiphertext, staffUserId, randomUUID(), "f".repeat(64)]);
+    // Keep this fixture inside the oldest-due portion of the intentionally
+    // capped queue preview even after earlier integration cases seed tasks.
+    await pool.query("INSERT INTO staff_tasks(id,organization_id,centre_id,task_number,private_data_ciphertext,task_type,priority,status,requires_approval,approval_status,assigned_staff_id,created_by_staff_id,idempotency_key,request_hash,due_at) VALUES($1,$2,$3,$4,$5,'GENERAL','NORMAL','OPEN',false,'NOT_REQUIRED',$6,$6,$7,$8,now()-interval '100 years')", [taskId, organizationId, centreId, `T-${taskId.slice(0, 8)}`, privateDataCiphertext, staffUserId, randomUUID(), "f".repeat(64)]);
     mocks.getApiAccess.mockResolvedValue({ staff: { organizationId, staffUserId, grants: [{ key: "tasks.assigned.read", centreId }] }, response: null });
 
     const response = await operationsHandler();
     const body = await response.json() as { centres: Array<{ queue: Array<{ id: string; kind: string; href: string }> }> };
     expect(response.status).toBe(200);
-    expect(body.centres[0]?.queue).toContainEqual(expect.objectContaining({ id: taskId, kind: "TASK", href: `/tasks?taskId=${taskId}` }));
+    expect(body.centres[0]?.queue).toContainEqual(expect.objectContaining({ id: taskId, kind: "TASK", href: `/tasks?taskId=${taskId}&centreId=${centreId}` }));
   });
 
   it("filters approval escalations to due, unprocessed work", async () => {
@@ -1742,7 +1922,7 @@ describe("appointment creation PostgreSQL integration", () => {
     const payload = await response.json() as { centres: Array<{ id: string; metrics: Record<string, number>; queue: Array<{ id: string; kind: string; reference: string; href: string }> }> };
     const centreSummary = payload.centres.find((item) => item.id === centreId)!;
     expect(centreSummary.metrics.pendingWebsiteEnquiries).toBe(1);
-    expect(centreSummary.queue).toEqual(expect.arrayContaining([expect.objectContaining({ id: visibleId, kind: "WEBSITE_ENQUIRY", href: "/leads/public-enquiries" })]));
+    expect(centreSummary.queue).toEqual(expect.arrayContaining([expect.objectContaining({ id: visibleId, kind: "WEBSITE_ENQUIRY", href: `/leads/public-enquiries?enquiryId=${visibleId}&centreId=${centreId}` })]));
     const serialized = JSON.stringify(centreSummary.queue);
     expect(serialized).not.toContain("Visible");
     expect(serialized).not.toContain("Private message");
@@ -1786,6 +1966,45 @@ describe("appointment creation PostgreSQL integration", () => {
     expect(summary.metrics.overdueReportFollowups).toBe(1);
     expect(summary.queue).toContainEqual(expect.objectContaining({ id: overdueId, kind: "REPORT_FOLLOWUP" }));
     expect(summary.queue.some((item) => item.id === futureId)).toBe(false);
+  });
+
+  it("shows only open support tasks from a support reader's centre in Centre Operations", async () => {
+    const supportCentreId = randomUUID();
+    await pool.query("INSERT INTO centres(id,organization_id,code,name,time_zone) VALUES($1,$2,$3,$4,'Asia/Kolkata')", [supportCentreId, organizationId, `SC-${supportCentreId.slice(0, 8)}`, "Synthetic Support Work Centre"]);
+    const otherCentreId = randomUUID();
+    await pool.query("INSERT INTO centres(id,organization_id,code,name,time_zone) VALUES($1,$2,$3,$4,'Asia/Kolkata')", [otherCentreId, organizationId, `S-${otherCentreId.slice(0, 8)}`, "Synthetic Other Support Centre"]);
+    const { encryptOperationalData, operationalContext } = await import("@/server/operational-crypto");
+    const records = [
+      { centre: supportCentreId, type: "SUPPORT_REQUEST", status: "OPEN" },
+      { centre: supportCentreId, type: "SUPPORT_REQUEST", status: "IN_PROGRESS" },
+      { centre: supportCentreId, type: "SUPPORT_REQUEST", status: "COMPLETED" },
+      { centre: supportCentreId, type: "GENERAL", status: "OPEN" },
+      { centre: otherCentreId, type: "SUPPORT_REQUEST", status: "OPEN" },
+    ];
+    const ids: string[] = [];
+    for (const item of records) {
+      const id = randomUUID(); ids.push(id);
+      const privateData = encryptOperationalData({ title: `Synthetic ${item.type} ${item.status}`, description: "synthetic-private-description-not-for-summary" }, operationalContext({ organizationId, centreId: item.centre, recordId: id }, "staff-task"));
+      await pool.query("INSERT INTO staff_tasks(id,organization_id,centre_id,task_number,private_data_ciphertext,task_type,priority,status,approval_status,assigned_staff_id,created_by_staff_id,idempotency_key,request_hash) VALUES($1,$2,$3,$4,$5,$6,'NORMAL',$7,'NOT_REQUIRED',$8,$8,$9,$10)", [id, organizationId, item.centre, `SUP-${id.slice(0, 8)}`, privateData, item.type, item.status, staffUserId, randomUUID(), "s".repeat(64)]);
+    }
+    mocks.getApiAccess.mockResolvedValue({ staff: { organizationId, staffUserId, grants: [
+      { key: "workspace.read", centreId: supportCentreId }, { key: "tasks.support.read", centreId: supportCentreId },
+    ] }, response: null });
+
+    const response = await operationsHandler();
+    expect(response.status).toBe(200);
+    const payload = await response.json() as { centres: Array<{ id: string; metrics: Record<string, number>; queue: Array<{ id: string; kind: string; status: string; href: string }> }> };
+    expect(payload.centres).toHaveLength(1);
+    const summary = payload.centres[0];
+    expect(summary.id).toBe(supportCentreId);
+    expect(summary.metrics.openSupportRequests).toBe(2);
+    expect(summary.metrics).not.toHaveProperty("openTasks");
+    expect(summary.queue).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: ids[0], kind: "SUPPORT_REQUEST", status: "OPEN", href: `/support/tickets/${ids[0]}` }),
+      expect.objectContaining({ id: ids[1], kind: "SUPPORT_REQUEST", status: "IN_PROGRESS", href: `/support/tickets/${ids[1]}` }),
+    ]));
+    expect(summary.queue.some((item) => ids.slice(2).includes(item.id))).toBe(false);
+    expect(JSON.stringify(summary)).not.toContain("synthetic-private-description-not-for-summary");
   });
 
   it("links a website enquiry to a staff task without copying enquiry contact data", async () => {

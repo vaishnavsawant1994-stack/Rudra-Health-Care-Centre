@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canViewAnyOperationsSummary, canViewOperationsMetric, canViewTaskApprovalExpiryQueue, canViewTeamRosterMetrics, collectionSummaryIsAssignedOnly, sampleExceptionSummaryScope, visibleOperationsCentres } from "./centre-operations-policy";
+import { canViewAnyOperationsSummary, canViewOperationsMetric, canViewTaskApprovalExpiryQueue, canViewTeamRosterMetrics, collectionQueueTitle, collectionSummaryIsAssignedOnly, openCollectionJobStatuses, sampleExceptionSummaryScope, visibleOperationsCentres } from "./centre-operations-policy";
 
 describe("centre operations aggregate scope", () => {
   it("does not expose a centre list without operational grants", () => {
@@ -20,6 +20,12 @@ describe("centre operations aggregate scope", () => {
     expect(collectionSummaryIsAssignedOnly([{ key: "collections.visit.record", centreId: "c1" }, { key: "collections.assign", centreId: "c1" }], "c1")).toBe(false);
     expect(collectionSummaryIsAssignedOnly([{ key: "collections.visit.record", centreId: "c1" }, { key: "collections.read", centreId: "c1" }], "c1")).toBe(true);
     expect(collectionSummaryIsAssignedOnly([{ key: "collections.visit.record", centreId: "c1" }, { key: "collections.assign", centreId: null }], "c1")).toBe(false);
+  });
+
+  it("keeps unsuccessful collection visits in open work and labels their follow-up", () => {
+    expect(openCollectionJobStatuses).toContain("UNSUCCESSFUL");
+    expect(collectionQueueTitle("UNSUCCESSFUL")).toBe("Unsuccessful collection needs follow-up");
+    expect(collectionQueueTitle("PENDING_ASSIGNMENT")).toBe("Collection awaiting assignment");
   });
 
   it("includes authorized sample operations in the centre list scope", () => {
@@ -43,6 +49,14 @@ describe("centre operations aggregate scope", () => {
     expect(visibleOperationsCentres([{ key: "tasks.read", centreId: "c4" }, { key: "roster.read", centreId: "c5" }])).toEqual(["c4", "c5"]);
     expect(canViewOperationsMetric([{ key: "tasks.assigned.read", centreId: "c4" }], "tasks.assigned.read", "c4")).toBe(true);
     expect(canViewOperationsMetric([{ key: "roster.read", centreId: "c4" }], "roster.read", "c5")).toBe(false);
+  });
+
+  it("allows support readers to see only their permitted centre summaries", () => {
+    const grants = [{ key: "tasks.support.read", centreId: "support-centre" }];
+    expect(canViewAnyOperationsSummary(grants)).toBe(true);
+    expect(visibleOperationsCentres(grants)).toEqual(["support-centre"]);
+    expect(canViewOperationsMetric(grants, "tasks.support.read", "support-centre")).toBe(true);
+    expect(canViewOperationsMetric(grants, "tasks.support.read", "other-centre")).toBe(false);
   });
 
   it("does not expose centre-wide roster totals to self-scoped roster readers", () => {

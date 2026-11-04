@@ -1,3 +1,73 @@
+## 2026-11-04 development checkpoint - Escalation source navigation
+
+Escalations linked to a staff task or another operational escalation now deep-link to that exact record and preserve the originating centre filter. Both destination pages continue to recheck access.
+
+Verification: focused escalation-source/task-reference tests **13/13**; full default Vitest **803/803 across 196 files**; TypeScript, targeted ESLint, production build (**242 static-generation entries**), and `git diff --check` passed (line-ending notices only). No migration or persistent data changed. This closes these two source-link cases only. Centre & Staff Operations and the full product backlog remain open; browser/MFA acceptance and security/production gates remain pending. Synthetic data only.
+
+## 2026-11-04 development checkpoint - PostgreSQL approval deadline worker
+
+Added a disposable PostgreSQL integration test for the actual task approval deadline worker. Synthetic cases verify expiry precedence, persisted approval state/version, append-only SYSTEM event and audit records, one-time expiry/escalation processing, concurrent worker serialization, invalid owner skipping, and centre scoping.
+
+Verification: worker PostgreSQL integration **3/3**; default Vitest **802/802 across 196 files**; TypeScript, targeted ESLint, and production build passed (**242 static-generation entries**); `git diff --check` reported no whitespace errors. No persistent development database or migration was changed. This covers only the existing `TASK_COMPLETION` policy; financial and clinical approvals remain disabled until authorized policies exist. Browser and live session/MFA acceptance remain pending. Synthetic data only.
+
+## 2026-11-04 development checkpoint - Centre Manager collection schedule filter
+
+Added an optional date filter to the Centre Manager's collection workbench. The selected date is sent to the existing collection queue API, where each row is filtered using that centre's configured timezone. Clearing the date restores the authorized queue. Refresh clears prior queue rows while loading so results from the previously selected centre/date are not left visible. The phlebotomist's date-specific schedule remains required and assigned-only. The existing PostgreSQL collection queue integration verifies centre-local date filtering, assigned-only visibility, an empty next-day result, and invalid-date rejection.
+
+Verification: focused query/role-workspace tests **29/29**; default Vitest **799/799 across 195 files**; TypeScript, targeted ESLint, and production build passed (**242 static-generation entries**); `git diff --check` reported no whitespace errors. No migration or persistent development data changed. Browser/mobile review remains pending. This is one manager queue improvement, not completion of Centre & Staff Operations. Synthetic data only.
+
+## 2026-11-04 development checkpoint - PostgreSQL specimen collection retry qualification
+
+Added a disposable PostgreSQL integration test for specimen collection through the actual `/api/samples` handler. The synthetic scenario creates an encrypted specimen and custody event, retries the identical request with the same idempotency key, then retries with changed evidence. The identical retry returns the original specimen without inserting duplicate rows; changed evidence is rejected with `409`. Database assertions confirm one specimen, one `COLLECTED` custody event, one collection job event, and one `specimen.collected` audit event.
+
+Verification: focused database integration **1/1**; default Vitest **797/797 across 194 files**; TypeScript, full ESLint, and production build passed (**242 static-generation entries**). The test uses mocked session grants and is not live MFA/session authorization evidence. No migration or persistent development data changed. The workspace is a Git repository with many uncommitted changes; no staging, commit, reset, or deletion was performed. The 178-screen matrix has all 178 IDs, with 34 partial page/API/test candidates, 21 explicit grouped mappings still partial, 97 partially implemented with screen/action mapping unresolved, and 26 blocked by policy/external decisions; all manual acceptance remains pending.
+
+This qualifies database-backed collection retry semantics only. Full screen implementation, role/MFA and cross-centre live authorization, browser/mobile review, key recovery/rotation/restore, configured malware scanning, policy approvals, external integrations, and production readiness remain incomplete. Synthetic data only.
+
+## 2026-11-04 development checkpoint - Historical sample exception escalation deep link
+
+The sample exception escalation link selects its exact linked exception within the requested authorized centre. The API constrains the sample through the matching exception ID, organization and centre, while rechecking `samples.read`. A direct link can still reach the specimen's history after its status advances; the ordinary exception directory retains its existing open-exception status filter. Only opaque record IDs appear in the URL; no private reason or patient data is added.
+
+Verification: focused sample-policy, sample API and escalation-link tests **21/21**; default Vitest **765/765 across 188 files**; TypeScript, full ESLint and production build passed (**240 static-generation entries**). No migration or persistent data changed. The suite's route tests do not establish live browser/session authorization. Browser acceptance remains pending; Centre & Staff Operations, the 178-screen implementation, and security/production gates remain open. Synthetic data only.
+
+## 2026-11-04 development checkpoint - Roster workload request states
+
+The roster workbench now presents workload loading, a genuine empty result, or a retryable error distinctly. It clears stale results when the centre/week changes and validates the workload response before treating it as current. The default suite exposed a test fixture that could fall outside the Centre Operations queue's 10-item preview after preceding integration cases; the synthetic task was made deterministically oldest-due, leaving product ordering and limits unchanged.
+
+Verification: focused workload client tests **3/3**; PostgreSQL assigned-only queue scenario **1/1**; full default suite **761/761 across 188 files**; TypeScript, full ESLint and production build passed (**240 static-generation entries**). No migration or persistent development data changed. No manual browser acceptance was performed. Centre & Staff Operations, the 178-screen implementation, live role/MFA acceptance and production security gates remain open. Synthetic-data development only.
+
+## 2026-11-04 development checkpoint - Resolve a collection roster availability advisory
+
+Added a synthetic PostgreSQL integration scenario for collection-job conflict resolution. It verifies that a job assigned to staff during a recorded unavailability period is reassigned through the existing version-checked collection API to a collector with a covering shift, that the append-only `REASSIGNED` custody/work event preserves the previous assignee, and that the roster advisory is cleared afterward. The database test uses a disposable schema and drops it on cleanup; no migration or persistent record changed.
+
+Verification: targeted PostgreSQL integration **1/1**; default suite **758/758 across 187 files**; TypeScript, full ESLint, and production build passed (**240 static-generation entries**). Session access is mocked in the route integration, so live MFA and role authorization remain unverified. Centre & Staff Operations, the 178-screen development backlog, browser/mobile review and production qualification remain open. Synthetic data only.
+
+## 2026-11-04 development checkpoint - Resolve a roster availability advisory
+
+The roster PostgreSQL integration now exercises the reassignment workflow, not only conflict detection. A synthetic appointment flagged during unavailability is reassigned through the existing version-checked appointment API to a staff member whose scheduled shift covers it. The assignment and prior assignee are persisted in history, and the conflict query no longer returns that appointment. No new migration was needed; the database test used a disposable schema.
+
+Verification: roster conflict PostgreSQL integration **2/2**; default suite **757/757 across 186 files**; TypeScript passed; ESLint passed for the changed test file. The route test mocks session access and does not constitute live MFA or role acceptance. Browser/mobile review remains pending; Centre & Staff Operations and the full development backlog remain open. Synthetic data only.
+
+## 2026-11-04 development checkpoint - Roster workload and screen inventory
+
+Added PostgreSQL integration coverage for `/api/roster/workload`, verifying team-reader counts, self-only visibility, roster coverage/unavailability advisories, centre denial, and response minimization in a disposable schema. Regenerated the 178-row matrix from the current source. It records 36 exact proposed-route matches, 20 explicit grouped mappings, and 122 unresolved route/action mappings. Evidence labels are 34 partial page/API/test candidates, 20 partial grouped mappings, 98 partial with mapping unresolved, and 26 policy/external blocked; none is verified complete and all 178 remain pending screen-specific manual desktop/mobile acceptance.
+
+Current source counts are 94 migrations, 124 page files, 136 API route files and 186 test files. Default suite passed **756/756 across 186 files**; TypeScript, full ESLint and production build passed (**240 static-generation entries**). The database integration test replayed migrations in and removed its disposable schema. It did not alter persistent development records or migrations. These checks do not constitute live authenticated role acceptance, visual review or production qualification. Centre & Staff Operations and the full development backlog remain open; synthetic-data development only.
+
+## 2026-11-04 checkpoint - Escalation reopen deadline integrity
+
+- Reopening a resolved operational escalation now requires a newly selected future due time. The server validates it, updates the authoritative due timestamp, and records it in the encrypted append-only `REOPENED` event. The manager UI requires the deadline and still relies on server validation; ordinary staff cannot reopen.
+- Updated the existing PostgreSQL lifecycle fixture to reject a past reopen deadline and verify that the future deadline persists. Focused escalation/appointment PostgreSQL tests passed **44/44**; default suite passed **748/748 across 184 files**; lint, TypeScript and production build passed (**240 generated page entries**). No migration or persistent development data changed. Build route counts do not imply completed screens.
+- This closes one escalation lifecycle gap only. Centre & Staff Operations and the full development programme remain incomplete. Live role/MFA authorization, browser/mobile acceptance, patient identity proofing, key recovery/rotation/restore, configured malware scanning, external provider and clinical/business-policy qualification, and production readiness remain open. Synthetic-data development only.
+
+## 2026-11-03 development checkpoint - Doctor 360 deep link
+
+The Doctors directory now links to `/relationships/doctors/[id]`, which loads the existing encrypted Doctor 360 profile and its already-authorized referral, CRM-lead and appointment activity. Profile resolution tries only the caller's centre IDs from the `doctors.read` centres endpoint; the existing profile API performs the final centre-scoped authorization. No new permission or API was introduced. Automated checks: 711/711 tests across 176 files, TypeScript, lint and production build passed (236 generated page entries). Browser acceptance remains pending. This is one screen-navigation improvement; the Doctors wave, Centre & Staff Operations, full 178-screen backlog and production/security acceptance remain incomplete. Synthetic data only.
+
+## 2026-11-03 checkpoint - Collection action retry verification
+
+Collection job actions now require idempotency keys and reject changed-payload replays. PostgreSQL integration passed **32/32**, including an encrypted synthetic specimen and successful collection-completion retry with exactly one custody event; default suite **708/708 across 175 files**; typecheck, lint and production build passed (**235 generated page entries**). The 178-screen matrix was regenerated from current source: 32 candidate-partial, 2 grouped-partial, 118 mapping-unresolved partial and 26 externally/policy blocked; no screen is verified complete. Migration 0093 was not applied to persistent development data. No live session or browser acceptance was performed. Synthetic data only.
+
 ## 2026-11-03 checkpoint - Approval policy and escalation regression audit
 
 - Revalidated the existing task-completion approval policy and operational escalation lifecycle against the current clean checkout. Focused Vitest run passed **53/53 tests across 7 files**, including policy inheritance PostgreSQL integration, escalation action-replay PostgreSQL integration, task approval actions, same-origin staff job processing and token-protected internal job route checks. No implementation defect was found and no application/schema change was needed.
@@ -2074,3 +2144,195 @@ Verification: focused sample, dispatch, public-enquiry PostgreSQL, and finance P
 The public booking enquiry conversion now preserves the submitted published catalogue item/version in encrypted CRM activity history. Lead 360 shows the requested service and requested schedule as unconfirmed, with a reminder to verify current catalogue publication, price and availability before making an appointment. Collection addresses are omitted from lead activity responses unless the reader also has appointment-read or collection-read permission for that centre. The address is not copied into the lead core profile.
 
 Verification: focused projection/API/PostgreSQL integration **15/15**; full default suite **699/699 across 174 files**; TypeScript, lint, and production build passed (**234 generated page entries**); screen matrix regenerated with all **178** proposed IDs. No migration or dependency change. W008 and the wider Public Website/Portal remain partial. This request does not confirm an appointment, reserve a slot, authorize contact, open a patient account, or lock a price. Patient accounts remain disabled pending approved identity proofing. Live authenticated role checks, browser/mobile review, key lifecycle and restore, configured scanner, policy approvals, external provider qualification and production qualification remain outstanding. Synthetic data only.
+
+### 2026-11-03 checkpoint - Assigned-only phlebotomist sample handover
+
+Visit-only field staff can open `/field/handover`; the API restricts this view to collected specimens linked to their assigned jobs and granted centres, returning a minimal specimen/status projection. Other sample views still require `samples.read`. The workspace and daily collection page link to the assigned handover queue.
+
+Verification: focused route/scope/role tests **35/35**; full default suite **704/704 across 175 files**; TypeScript and full lint passed; production build passed (**235 generated page entries**). This route fallback test uses a mocked database query, not live authenticated authorization or a sample-specific populated PostgreSQL integration test. No migration or dependency change. Centre & Staff Operations and the broader development waves remain incomplete; browser/mobile and live role acceptance, patient identity proofing, key recovery/rotation/restore, scanner qualification, unresolved policies, external providers and production qualification remain open. Synthetic data only.
+# 2026-11-03 engineering checkpoint — Sample directory projection
+
+Authorized sample directory reads now decrypt specimen type and requirement reference using the existing record-bound encryption context. Field handover remains a separate minimum-data projection; patient identity is returned only with the existing patient-read grant. Added route and PostgreSQL integration coverage. Default suite: **705/705 across 175 files**; typecheck, lint and production build passed (**235 page entries**). This is a local synthetic-data engineering result, not live role acceptance or production qualification. Broader 178-screen reconciliation and outstanding security/browser gates remain open.
+
+### 2026-11-03 checkpoint - Collector-to-receiving submission
+
+Added a distinct assigned-collector submission action and append-only custody event before a new specimen can enter Rudra receiving. Submission leaves the specimen `COLLECTED`; receiving staff must separately record physical receipt. Legacy specimens preserve the existing path. Migration 0093 passed disposable-schema replay and populated workflow integration; it has not been applied to persistent development data. Focused tests **45/45**, full suite **707/707 across 175 files**, typecheck, lint and production build passed (**235 generated page entries**). Centre & Staff Operations remains incomplete. No live browser acceptance. Synthetic data only; identity proofing, key lifecycle, scanner, live authorization and production gates remain open.
+
+### 2026-11-03 checkpoint - Idempotent Rudra sample receiving
+
+Physical receiving now requires an idempotency key. A same-request retry safely returns the current saved specimen state without creating another custody/audit event; key conflicts are rejected. The receiving UI keeps the key across uncertain network errors and instructs staff to retry unchanged details. Populated disposable PostgreSQL integration verifies pre-submission denial, successful receipt, replay, and a single receipt event. Focused checks **41/41**, default suite **708/708 across 175 files**, typecheck, lint and build passed (**235 generated page entries**). Migration 0093 was used only in a disposable test schema; persistent development data is unchanged. No live role/browser acceptance. Synthetic data only.
+
+### 2026-11-03 checkpoint - Idempotent collection-job actions
+
+All collection-job lifecycle mutations now require action-scoped idempotency keys. Same-request retries are verified against the audit event's actor, entity and opaque request fingerprint before stale-version checks, avoiding duplicate status events when a response is lost. The browser workbench retains the attempt key until the result is known. PostgreSQL integration covers missing-key denial, assignment replay, start replay and conflicting request rejection. Focused collection integration **32/32**; full suite **708/708 across 175 files**; typecheck, lint, and production build (**235 generated entries**) passed. No migration or dependency change. Centre & Staff Operations remains in development; live role/browser acceptance is still deferred. Synthetic data only.
+## 2026-11-03 checkpoint - Collector handover submission gate
+
+New collection records now require a separate append-only collector submission before they enter Rudra's receiving queue. `/field/handover` displays a minimal assigned-specimen projection and records `SUBMITTED_FOR_RECEIVING`; this action does not mark physical receipt or change the specimen from `COLLECTED`. The receiving API still requires its own authorized actor, current version, approved procedure and evidence-backed action. Legacy specimen compatibility is explicit. Verification: dedicated PostgreSQL integration replayed **93 migrations** and checked submission gating/idempotency constraints; default Vitest suite **708/708 across 175 files**; typecheck, lint and build passed (**235 generated page entries**). Migration 0093 has since been applied additively to local development, with no application records reset or rewritten. `db:verify-audit` passed for 2 events. Browser acceptance remains pending; synthetic data only.
+
+## 2026-11-03 checkpoint - Collection action retry verification
+
+## 2026-11-03 checkpoint - Doctor 360 direct-profile rendering
+
+- The direct Doctor 360 route now renders profile-only content: it suppresses the directory and new-relationship form, while retaining the authorized existing profile, editable relationship data, referral activity and permission-checked linked work. The loading/error state remains scoped to the requested profile; resolution continues to use only centres returned by the caller-authorized API.
+- Verification on this tree: focused doctor navigation and inventory tests **5/5**; default Vitest **711/711 across 176 files**; TypeScript, full ESLint and production build passed (**236 page entries**). No migration, dependency, account, key, persistent business data or external integration changed. No browser acceptance was performed.
+- This is not completion of the Doctors module or any development wave. The 178-screen matrix remains conservative; manual acceptance and the remaining P2-09 and production gates remain open. Synthetic-data development only.
+
+## 2026-11-03 checkpoint - Corporate and partner profile deep links
+
+- Corporate and partner relationship directories now expose direct profile routes (`/relationships/corporate/[id]` and `/relationships/partners/[id]`). Each route is protected by its existing role-specific read permission. Profile resolution checks only centres returned by the existing authorized-centres API, then uses the existing centre-scoped detail and activity endpoints; missing and out-of-scope profiles share the unavailable state. The shared workbench suppresses directory and create forms in profile-only mode while retaining existing permitted edit, CRM and appointment actions. No new permissions, API handlers, migration or schema changes were introduced.
+- Verification on this tree: deep-link resolver, Doctor resolver and screen-matrix tests **8/8**; default Vitest **714/714 across 177 files**; TypeScript, full ESLint and production build passed (**238 page entries**). No browser acceptance was performed.
+- This is a navigation/profile workflow improvement, not completion of Corporate or Partner modules. The proposal's `/corporates/[id]` target remains distinct from the implemented canonical relationship route, so route reconciliation does not count it as an exact target match. The 178-screen matrix still records zero fully verified screens. Synthetic-data development only; browser/mobile, security and production gates remain open.
+
+## 2026-11-03 checkpoint - Corporate screens mapped to canonical routes
+
+- The 178-screen reconciliation now source-validates C006 (corporate directory) against `/relationships/corporate` and C008 (corporate profile) against `/relationships/corporate/[id]`. Both retain partial status and explicit limitations; the mapping does not claim quotations, contracts, employee booking/camps or full screen acceptance. The generator now reports four validated mappings total (W008, M017, C006, C008), 139 unresolved proposed route/action mappings, and zero verified complete screens.
+- Added a regression assertion for both corporate mappings and their limitations. Inventory suite passed **3/3**. The existing full suite remains **714/714 across 177 files**; this inventory-only change did not alter application source. Browser/mobile acceptance and the remaining security/production gates remain open. Synthetic-data development only.
+
+## 2026-11-03 verification refresh - Corporate screen reconciliation
+
+- After adding the C006/C008 source-validated mappings, inventory tests passed **3/3** and the full default suite passed **715/715 across 177 files**. TypeScript, full ESLint and `git diff --check` passed. The last production build after application-route changes passed with **238 page entries**; this inventory-only follow-up did not modify application source.
+
+## 2026-11-03 checkpoint - Approval eligibility and task visibility aligned
+
+- Approval-policy eligible approvers and the task approver picker now require both centre-scoped `tasks.approve` and `tasks.read`. The policy transaction rechecks the paired permissions under its existing lock, so an approver who cannot view pending approval tasks cannot be configured or reassigned by the policy. The query returns only the approver permission label to the client; staff identity remains scoped to the existing centre-authorized picker.
+- Regression found during verification: the full suite initially failed because a synthetic PostgreSQL approval-policy fixture granted `tasks.approve` without `tasks.read`. Updated the fixture to model the valid permission pair and added an approve-only synthetic staff identity, asserting it is rejected by policy mutation and omitted from eligible approvers. A `SELECT DISTINCT ... FOR SHARE` incompatibility was caught in the targeted database run; the transaction-time permission recheck now uses a lock-compatible query and de-duplicates identities in application code.
+- Verification on this tree: focused PostgreSQL policy case passed; default suite **716/716 across 177 files**; standalone TypeScript and full ESLint passed; production build passed and generated **238 page entries**. An earlier typecheck overlapped the build's `.next/types` regeneration and transiently failed; the sequential rerun passed. No migration, account, key, persistent business data or external service changed. Synthetic records only.
+- This closes an approval-picker/queue permission mismatch, not the Centre & Staff Operations wave. The 178-screen matrix remains evidence-conservative; browser/mobile and live authorized-session acceptance remain pending. Identity proofing, encryption key recovery/rotation/restore, configured malware scanning, external provider/business/clinical policies and production qualification remain open.
+
+## 2026-11-03 checkpoint - Escalation profile links and parallel inventory-test stability
+
+- Escalation source links for Doctor, Corporate and Partner records now open their direct profile routes rather than dropping users at the directory. Those pages continue to require their existing role-specific read grants and perform their existing authorized-centre profile resolution; the URL carries only the opaque record ID.
+- The default test run exposed three timeouts because three screen-matrix tests each synchronously launched the same inventory generator. Consolidated generation into one shared suite setup, retained the output assertions for W008, M017, C006 and C008, and gave the measured ~2-second generator a scoped 15-second process limit. The prior failures were test-run contention, not inventory assertions or product defects.
+- Verification on this tree: focused inventory/link tests **6/6**; full default suite **717/717 across 177 files**; TypeScript, full ESLint, production build (**238 generated route/page entries**) and `git diff --check` passed. No migration, dependency, persistent account/data, key or external service changed. No manual browser acceptance was performed.
+- This improves escalation navigation and default test reliability; it does not complete the escalation, Centre & Staff Operations, or full application waves. The 178-screen inventory and remaining security, browser, identity-proofing, clinical/business-policy, provider and production gates remain open. Synthetic-data development only.
+
+## 2026-11-03 checkpoint - Reception queue and handover inventory reconciliation
+
+Proposed screens R002–R012 and R018 now have source-validated mappings to the existing patient, family, appointment, order, queue, check-in and handover workflows. The matrix retains limitations for fuzzy search/merge, legal identity or consent verification, slot guarantees, downstream order lifecycles, QR check-in, queue no-show/redirect, and automatic handover transfer. Inventory tests passed **7/7**; default suite passed **721/721 across 177 files**. Centre & Staff Operations remains incomplete; manual role/browser acceptance and security/production gates remain separate. Synthetic data only.
+
+## 2026-11-03 checkpoint - Reception CRM, communication and catalogue mapping
+
+Screens R013-R016 now map to source-validated lead, lead-detail, unsent communication-draft and diagnostic test-catalogue workflows. R017 is left unmapped: no verified price/offer quotation workflow is implemented. Inventory tests passed **8/8**; full default suite passed **722/722 across 177 files**. Communications providers remain unconnected and live contact is disabled. Centre & Staff Operations remains incomplete; manual acceptance and security/production gates remain open. Synthetic data only.
+
+## 2026-11-03 checkpoint - Internal CRM quote drafts
+
+R017 now has a partial implementation: authorized staff can persist and review an immutable internal quote draft based on currently effective, verified centre catalogue prices, with separate home-visit charges and idempotent saves. Encrypted snapshots retain service versions and price details; promotion, customer delivery, order creation, payment and invoicing remain disabled. Migration 0094 was replayed in a disposable PostgreSQL integration schema only. Focused tests passed 7/7; full default suite passed 729/729 across 179 files; typecheck, lint, production build (239 page entries), and diff whitespace check passed. Dependency audit was not rerun. This does not complete Centre & Staff Operations; live browser/role acceptance, identity proofing, key recovery, scanner qualification, business/clinical policies, provider approvals and production readiness remain separate open gates. Synthetic data only.
+
+## 2026-11-03 checkpoint - Approval-policy mutation PostgreSQL qualification
+
+Added populated disposable-PostgreSQL coverage for centre task-approval policy updates: verified writes and named approver, idempotent replay, stale concurrent version conflict, and fail-closed rejection of an approver lacking `tasks.read`. Policy integration passed 2/2; the complete default suite passed 730/730 across 179 files; typecheck and lint passed. No migration or persistent-data change. The existing build remains the preceding checkpoint’s successful 239-page build; no application source changed in this test-only checkpoint. This does not finish Centre & Staff Operations or qualify live/browser acceptance. Sensitive approval types remain disabled pending policy authorization; a deployment scheduler is not configured. Synthetic data only.
+
+## 2026-11-03 checkpoint - Lead quote runtime database privileges
+
+The quote PostgreSQL integration now verifies the real `rudra_dev_app` role has SELECT/INSERT but no UPDATE/DELETE privilege on `lead_quotes` in the disposable migration schema. Focused PostgreSQL tests passed 2/2; typecheck, lint and `git diff --check` passed. This was an assertion-only test change; the last complete suite remains 730/730 across 179 files, and the last successful build generated 239 page entries. No persistent development database migration or data change. Broader development and acceptance remain in progress. Synthetic data only.
+
+## 2026-11-03 checkpoint - Public booking request receipt
+
+- The public appointment-request form now replaces the submitted form with an explicit received state after the API accepts the request. It shows the opaque reference only in the page body, explains that staff review is pending, and states that no appointment, slot, availability or diagnostic/home-visit price was confirmed. Visitors can start another request or navigate to centres/home without resubmitting the prior request. General enquiries use separate receipt copy that does not imply an outbound message or call occurred.
+- Added receipt-copy regression tests. Focused public enquiry and PostgreSQL integration passed **25/25**; full default suite passed **732/732 across 180 files** before a follow-up lint correction replaced ordinary anchors with Next.js links. After that correction, focused tests **25/25**, TypeScript and lint passed; production build passed and generated **239 page entries**. No migration, dependency, database, Owner account, key or external provider changed. No browser acceptance was performed.
+- This implements a public request receipt state, not a confirmed-booking success screen or patient portal. Identity proofing remains unapproved, so patient accounts stay disabled; payment and outbound communications remain unconnected. The 178-screen inventory still has 152 partial and 26 externally/policy-blocked classifications, zero evidenced fully implemented. Synthetic-data development only.
+
+## 2026-11-03 checkpoint - PostgreSQL roster conflict qualification
+
+- Added a disposable PostgreSQL integration test for the roster conflict endpoint. It replays the current migration set in an isolated `p2_09a_*` test schema, creates synthetic appointments in two centres and a synthetic staff schedule, then calls the real route handler against PostgreSQL.
+- Verified overlapping appointments produce `OVERLAPPING_ASSIGNMENT`, an appointment extending beyond the scheduled shift produces the advisory `OUTSIDE_SCHEDULED_SHIFT`, recorded unavailability produces `DURING_UNAVAILABILITY`, and the same staff member's appointment in a different centre is excluded. The response contains no synthetic patient number. These findings remain advisory and do not impose unapproved employment rules.
+- The migration harness rejected the first test schema name because encrypted backfills are restricted to approved disposable-schema prefixes; the test was updated to use that existing safety boundary. One initial expectation was also corrected to match the seeded shift interval. No product defect was found.
+- Verification: focused roster conflict tests **2/2**; full default suite **733/733 across 181 files**; TypeScript and full ESLint passed. No application migration, persistent database, account, key, dependency or external integration changed. Production build was not rerun because this change only adds test coverage. No live browser acceptance was performed.
+- This qualifies appointment/roster conflict calculations against PostgreSQL; it does not complete Centre & Staff Operations or the full Rudra development backlog. Patient accounts remain disabled pending approved identity proofing. Key lifecycle/restore, configured malware scanning, live authorization, browser/mobile acceptance, approved business/clinical policies, provider qualifications and production readiness remain open. Synthetic records only.
+
+### Roster conflict coverage extension
+
+The same PostgreSQL conflict integration now also creates a synthetic diagnostic order and assigned collection job overlapping two synthetic appointments for the same staff member. It verifies the real route returns the collection as `COLLECTION` with `OVERLAPPING_ASSIGNMENT`, alongside appointment conflicts, while continuing to enforce centre scoping and patient-identifier minimization. Focused test passed **1/1**; full default suite passed **733/733 across 181 files**; TypeScript and lint passed. No product schema or persistent database change. The result strengthens roster integration evidence; manual/browser and broader security acceptance remain pending.
+
+## 2026-11-04 checkpoint - Permission-scoped shift handover workload snapshot
+
+Shift handover preparation captures encrypted centre-wide counts for open appointments, collection jobs (including unsuccessful attempts), and tasks when the preparing staff member has the relevant centre-wide read permission. The API filters each snapshot category again using the current viewer's grants. Handover management and assigned-only permissions do not reveal aggregate queue counts. The interface labels the counts as historical and links to current queues; it makes clear that handover does not transfer or reassign records. No patient or task details are included in the snapshot, and no migration was required.
+
+Verification: focused unit and PostgreSQL handover checks **11/11**; full default suite **753/753 across 185 files**; TypeScript and targeted ESLint passed; production build completed **240/240** static-generation steps. The database integration used a disposable schema with synthetic records. No manual browser acceptance was performed. This is one Centre & Staff Operations workflow improvement; the operations wave and full 178-screen backlog remain incomplete. Identity proofing, key recovery/restore qualification, configured malware scanning, live authorization, desktop/mobile acceptance, unresolved business/clinical policies, external-provider qualification and production readiness remain open. Synthetic data only.
+## 2026-11-04 checkpoint - Include unsuccessful collections in Centre Operations
+
+- Centre Operations counts unsuccessful collection jobs as open work and surfaces them with a follow-up label, using the existing centre-scoped and assignment-scoped access rules. The dashboard metric now says “Open collection jobs.”
+- Verification: focused tests **17/17**; default suite **755/755 across 185 files**, including PostgreSQL integration tests; TypeScript, ESLint, and production build passed (**240/240 static-generation steps**). No migration, persistent data, external service, or browser state changed.
+- This closes one Centre Operations queue gap only. Centre & Staff Operations, the 178-screen plan, P2-09 key lifecycle/restore, malware scanner configuration, patient identity proofing, live authorization, browser/mobile acceptance, business/clinical approvals, and production qualification remain open. Synthetic data only.
+## 2026-11-04 checkpoint - Scope roster conflict flags to visible schedules
+
+- Schedule and unavailability conflict flags are now derived from coworkers' roster rows only for team-roster-authorized viewers. Self-scoped roster readers see these warnings only for their own work; permitted overlap checks remain. This protects coworker availability from inference through the conflict endpoint.
+- Populated synthetic PostgreSQL integration and roster visibility checks passed **4/4**; default suite passed **755/755 across 185 files**; TypeScript, ESLint, and production build passed (**240/240 static-generation steps**). Integration authorization grants are mocked; live authenticated authorization is still pending. No migration or persistent data changed.
+- This is one security correction, not closure of Centre & Staff Operations or the full development plan. The 178-screen inventory, live authorization, browser/mobile, key recovery, malware scanning, identity-proofing, policy, and production gates remain open. Synthetic data only.
+## 2026-11-04 development checkpoint - Approval request-changes and resubmission
+
+Extended the task-approval PostgreSQL integration scenario through independent approval review, `REQUEST_CHANGES`, idempotent replay, assigned-requester resubmission and a new approval snapshot. The test verifies that replay does not duplicate immutable history and that the workflow's encrypted event details remain bound to the correct record and field. Approval authority remains restricted to the already authorized operational task-completion scope.
+
+Verification: targeted PostgreSQL integration passed; full default test suite **758/758 across 187 files**; TypeScript, full ESLint and production build passed (**240 static-generation entries**). Database fixtures are synthetic and route identity is mocked, so live session/MFA/role acceptance remains pending. No migration or persistent development data changed. The existing local Git repository was confirmed; it has no configured remote and the working tree has extensive pre-existing changes, so no stash/reset/commit/push was performed.
+
+The proposed 178-screen inventory remains incomplete: the current matrix marks 0 screens verified fully implemented and still has policy/external blockers and unresolved screen-to-source/action mappings. Centre & Staff Operations and subsequent development waves remain open. Patient portal access stays disabled pending approved identity proofing; key lifecycle/restore qualification, configured malware scanning, live authorization, browser/mobile review, business/clinical policies, external integrations and production qualification remain open. Synthetic-data development only.
+
+## 2026-11-04 development checkpoint - Historical public-enquiry escalation deep link
+
+Public-enquiry escalation links now select the exact enquiry under its authorized centre. The API rechecks `leads.read`, scopes by organization/centre/ID, and only then decrypts private fields. Historical enquiries are readable even when the ordinary list defaults to pending review; the workbench hides review actions for non-pending records. Absent IDs do not disclose record existence, and centre changes clear the selected record.
+
+Verification: focused public-enquiry API, synthetic PostgreSQL integration and escalation-link tests **28/28**; full default suite **766/766 across 188 files**; TypeScript, changed-file ESLint and production build passed (**240 static-generation entries**). No migrations or persistent data changed. Live browser and authenticated session acceptance remain pending. Centre & Staff Operations, the 178-screen development inventory, identity proofing, key lifecycle/recovery, malware scanner qualification, policy/provider approvals and production readiness remain open. Synthetic data only.
+
+## 2026-11-04 development checkpoint - Centre Operations exact-record queue links
+
+Website-enquiry and sample-exception entries in the combined Centre Operations queue now link to their exact record and preserve centre scope. The API continues returning only minimized references/statuses; target pages remain responsible for authorization and sensitive-detail access.
+
+Verification: Centre Operations and shared deep-link tests **10/10**; TypeScript, targeted ESLint and production build passed (**240 static-generation entries**). No migration or persistent data changed. Browser/session acceptance remains pending; this navigation work does not complete the Centre & Staff Operations wave or the broader backlog. Synthetic data only.
+
+## 2026-11-04 development checkpoint - Centre queue and task-reference navigation
+
+Centre Operations queue entries and linked task references now preserve exact source records and centre scope for website enquiries, sample exceptions, CRM/report follow-ups, relationships and escalations. The role-workspace link to Centre Operations matches the endpoint requirements: `workspace.read` plus at least one supported operational queue grant. A PostgreSQL assertion that expected the old generic public-enquiry URL was updated to require the exact enquiry and centre.
+
+Verification: focused role-workspace, Centre Operations and task-reference tests **37/37**; full default suite **774/774 across 189 files**; TypeScript, targeted ESLint and production build passed (**240 static-generation entries**). PostgreSQL integration uses disposable schemas and synthetic records. No migration or persistent data changed. Live browser/session acceptance remains pending. The Centre & Staff Operations wave, 178-screen inventory, patient identity proofing, key recovery/rotation/restore, malware scanner qualification and production readiness remain open.
+
+## 2026-11-04 development checkpoint - Centre Operations task and approval deep links
+
+Centre Operations links to staff tasks, approval-expiry items, approval escalations and operational escalations now include the opaque target ID and source centre, so the receiving workbench opens in the correct scope. Destinations continue enforcing their existing permissions.
+
+Verification: focused centre task/escalation link and PostgreSQL route tests **43/43**; full default suite **778/778 across 190 files**; TypeScript, targeted ESLint and production build passed (**240 static-generation entries**). The PostgreSQL test used a disposable schema and synthetic records. No migration or persistent data changed. Approval policy authority remains limited to task completion; no external deadline scheduler is configured. Live browser/session acceptance and remaining security/production gates remain pending.
+
+### Centre Operations linked-task follow-through
+
+Task reference links now preserve the task's centre and target ID, including links to another task. Focused URL tests passed **13/13**; TypeScript, targeted ESLint and production build passed (**240 static-generation entries**). The full **778/778** default suite preceded this final helper/test-only change and was not rerun afterward. No database migration or persistent data change.
+
+## 2026-11-04 development checkpoint - Assigned phlebotomist exception queue
+
+Added a read-only `/field/exceptions` queue and `GET /api/field/exceptions`. Server access requires the existing collection-visit permission; results are restricted to open exceptions whose collection jobs are assigned to the signed-in staff member and within that permission's centre scope. The response contains operational identifiers/status only and omits patient/order IDs, specimen/exception UUIDs, encrypted payloads, private notes and evidence. The route uses a disposable PostgreSQL integration fixture to verify assigned-only visibility, centre isolation, open-state filtering and response minimization.
+
+Verification: focused unit and PostgreSQL integration **6/6**; full default Vitest **785/785 across 192 files**; TypeScript, full ESLint, and production build passed (**242 static-generation entries**). No persistent migration or development data changed. This does not complete exception resolution workflow, the Centre & Staff Operations wave, the 178-screen backlog, or live/browser acceptance. Synthetic-data development only; security and production gates remain open.
+
+## 2026-11-04 checkpoint - F012 source mapping
+
+Regenerated the 178-screen CSV and mapped F012 to the existing assigned field collection and sample-exception/recollection actions, plus the assigned-only `/field/exceptions` view. The mapping remains partial and documents the missing reason taxonomy and rescheduling requirements. The matrix now reports 36 exact proposed-route matches, 21 explicit grouped mappings, 121 mappings still unresolved, 34 candidate-partial, 21 grouped-partial, 97 mapping-unresolved partial, 26 policy/external blocked, and zero verified complete. All screen-specific manual desktop/mobile acceptance remains pending.
+
+Verification: reconciliation generator wrote 178 rows; inventory regression **10/10**; `git diff --check` passed. No application runtime or database changed. The source mapping is evidence tracking only and does not qualify F012 or complete Centre & Staff Operations.
+
+## 2026-11-04 checkpoint - Current full regression verification
+
+On the current worktree, `npm.cmd test -- --reporter=dot` passed **803/803 tests across 196 files**, including synthetic PostgreSQL integration tests in disposable schemas. `npm.cmd run typecheck`, `npm.cmd run lint`, and `npm.cmd run build` also passed; the build generated **242/242** static-generation entries. No application code, migration, persistent database, credential, key, or audit history was changed for this verification. The route/build manifest is not evidence of screen-level completion. Centre & Staff Operations and the 178-screen implementation inventory remain open; zero screens are verified fully implemented by the conservative matrix, 26 are policy/external blocked, and the remaining 152 are partial or mapping unresolved. Patient portal accounts remain disabled pending approved identity proofing. Key recovery/rotation/restore, configured malware scanning, live authorization, browser/mobile review and production qualification remain outstanding. Synthetic data only.
+
+## 2026-11-04 checkpoint - Retry-safe collection job creation
+
+The collection-job creation form now keeps one per-order idempotency attempt across an uncertain network result and 5xx responses, clears it after success or a definite client rejection, and restores its busy state on every outcome. Staff receive an explicit retry message when the server result could not be confirmed. The existing API remains the authorization and duplicate-creation authority; no database schema or persistent records changed.
+
+Verification after implementation: the full default suite passed **806/806 across 197 files**, including synthetic PostgreSQL integration tests; TypeScript and ESLint passed; production build generated **242/242** static-generation entries. The focused retry tests passed **3/3** again after strengthening the key-reset assertion. This does not qualify live browser behavior, all Centre & Staff Operations screens, the 178-screen inventory, identity proofing, encryption-key recovery, malware scanning, live authorization or production readiness. Synthetic data only.
+
+## 2026-11-04 - Support ticket route slice
+
+Added dedicated `/support/tickets` queue and `/support/tickets/[id]` details using the existing centre-scoped, encrypted support-task APIs and lifecycle. The detail view verifies the target is a support request. No new persistence or outbound communications were added. The feature remains partially implemented pending screen-specific interaction and browser review; no live communication or SLA policy is available.
+
+Verification: support-access and inventory tests **12/12**; full default test suite **808/808 across 198 files**; TypeScript, ESLint and production build passed (**244/244** static-generation entries). The current 178-screen matrix reports **38** exact route matches, **21** grouped mappings, **119** route/action mappings unresolved, **36** page/API/test candidates, **95** mapping-unresolved partial, **26** policy/external blocked and **0** verified fully complete. Centre & Staff Operations and the full development programme remain open. Patient accounts remain disabled pending identity-proofing approval; encryption key recovery/rotation/restore, qualified malware scanning, live authorization, desktop/mobile acceptance, policy approvals, external provider qualification and production readiness remain outstanding. Synthetic data only.
+
+## 2026-11-04 checkpoint - Support queue role navigation
+
+Added `/support/tickets` to relevant role workspaces and shared navigation, gated by `tasks.support.read`. The Support Requests route retains its server-side access check. Focused role/support tests passed **29/29**; default suite passed **809/809 across 198 files**; TypeScript, ESLint and production build passed (**244/244** static-generation entries). No schema or persistent data change. The support workflow remains partial; the full Centre Operations wave, screen inventory and live/browser/security acceptance gates remain open. Synthetic data only.
+
+## 2026-11-04 checkpoint - Support workload in Centre Operations
+
+Centre Operations now shows open support-request counts and a minimized queue preview to sessions with `tasks.support.read`, constrained by authorized organization and centre. No task description, patient/contact detail, or general task content enters the summary. A populated disposable-PostgreSQL integration verifies open-status/type filtering, centre isolation and minimized output. The test was corrected to use an isolated synthetic centre after the first full-suite run exposed fixture contamination. Final default suite: **812/812 across 198 files**; focused operations/support tests **48/48**; TypeScript, ESLint and production build passed (**244/244** static-generation entries). No migration or persistent data change. Centre & Staff Operations, full screen implementation, and manual/live security acceptance remain open; synthetic data only.
+
+## 2026-11-04 engineering checkpoint - Support queue access fallback
+
+Fixed the support-only page-shell access mismatch. After `tasks.read` and `tasks.assigned.read` deny, the Support Tickets pages now check `tasks.support.read`; non-denied MFA/session states do not fall through. Regression coverage verifies fallback order and existing appointment/collection fallback behavior. The backing task API remains the authorization boundary and limits records by organization, centre and support-request type.
+
+Verification: `npm.cmd test` **818/818 tests across 199 files**; `npm.cmd run typecheck` passed; targeted ESLint passed; `npm.cmd run build` passed with **244/244** generated entries. No migration or persistent data was changed. Live authenticated browser acceptance was not run. Centre & Staff Operations, the complete 178-screen implementation, P2-09 key lifecycle and scanner qualification, live authorization, desktop/mobile review and production qualification remain open. Patient portal accounts remain disabled until identity proofing is approved. Synthetic data only.

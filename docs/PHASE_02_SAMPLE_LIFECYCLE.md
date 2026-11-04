@@ -6,6 +6,8 @@ Implemented for synthetic-data local development. This is not clinical procedure
 
 ## Delivered
 
+- New specimens created by the collection API require the assigned collector to submit a handover request before they appear in the Rudra receiving queue. This creates a separate `SUBMITTED_FOR_RECEIVING` custody event; it is not a receiving acknowledgment. The field handover queue has a minimal projection, and the submission action is idempotent. Migration `0093_sample_receiving_submission.sql` adds the compatibility flag and custody-event key. Dedicated PostgreSQL integration replay verified this schema path; migration 0093 has since been applied additively to the persistent local development database without resetting or rewriting application records.
+
 - Collection operations, eligible appointment/order selection, collection job detail, and phlebotomist daily assignment routes.
 - Centre-scoped collection job creation, assignment/reassignment, schedule conflict checks, visit start/arrival/failed attempt/cancellation, and explicit visit completion after at least one specimen is recorded.
 - Sample directory and detail with operational history; specimen capture requires an active, centre-scoped approved procedure reference and a staff identity-check attestation.

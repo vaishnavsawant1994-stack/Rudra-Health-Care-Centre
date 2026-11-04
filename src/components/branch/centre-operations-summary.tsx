@@ -1,34 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { formatCentreQueueTime } from "@/lib/centre-queue-time";
+import { loadCentreOperationsSummary, type CentreOperationsSummary as CentreSummary } from "./centre-operations-client";
 
-type QueueItem = { id: string; kind: string; title: string; reference: string; status: string; at: string; href: string };
-type CentreSummary = { id: string; code: string; name: string; timeZone: string; metrics: { appointmentsNext24Hours?: number; appointmentsWithoutArrivalToday?: number; pendingConfirmations?: number; pendingWebsiteEnquiries?: number; openOrders?: number; activeCollections?: number; pendingReceiving?: number; pendingDispatch?: number; openExceptions?: number; overdueLeadFollowups?: number; overdueReportFollowups?: number; openTasks?: number; pendingTaskApprovals?: number; taskApprovalExpiryDue?: number; taskApprovalEscalationDue?: number; overdueTasks?: number; scheduledStaff?: number; staffUnavailable?: number; openEscalations?: number; overdueEscalations?: number; financePendingPayments?: number; financeDisputes?: number; financeRefundRequests?: number }; queue: QueueItem[]; omittedByKind?: Record<string, number> };
 const centreHref = (path: string, centreId: string, filters: Record<string, string> = {}) => `${path}?${new URLSearchParams({ centreId, ...filters })}`;
 
 export function CentreOperationsSummary() {
   const [centres, setCentres] = useState<CentreSummary[] | null>(null);
   const [error, setError] = useState(false);
-  useEffect(() => {
+  const [loading, setLoading] = useState(true);
+  const [refreshedAt, setRefreshedAt] = useState<Date | null>(null);
+  const request = useRef<AbortController | null>(null);
+  const refresh = useCallback(async () => {
+    request.current?.abort();
     const controller = new AbortController();
-    fetch("/api/branch/operations", { cache: "no-store", signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("summary_unavailable");
-        return response.json() as Promise<{ centres: CentreSummary[] }>;
-      })
-      .then((data) => setCentres(data.centres))
-      .catch((reason: unknown) => { if (!(reason instanceof DOMException && reason.name === "AbortError")) setError(true); });
-    return () => controller.abort();
+    request.current = controller;
+    setLoading(true);
+    setError(false);
+    try {
+      const data = await loadCentreOperationsSummary(controller.signal);
+      if (!controller.signal.aborted) { setCentres(data); setRefreshedAt(new Date()); }
+    } catch (reason: unknown) {
+      if (!(reason instanceof DOMException && reason.name === "AbortError") && !controller.signal.aborted) setError(true);
+    } finally {
+      if (!controller.signal.aborted) setLoading(false);
+    }
   }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void refresh(); }, 0);
+    return () => { window.clearTimeout(timer); request.current?.abort(); };
+  }, [refresh]);
 
-  if (error) return <section className="admin-card" role="alert"><h2>Operations summary unavailable</h2><p>Refresh the page or open a permitted work queue directly.</p></section>;
+  if (error && centres === null) return <section className="admin-card" role="alert"><h2>Operations summary unavailable</h2><p>The scoped summary could not be loaded.</p><button type="button" className="button button-secondary" onClick={() => void refresh()}>Retry</button></section>;
   if (centres === null) return <section className="admin-card" role="status"><p>Loading centre summaries…</p></section>;
-  if (!centres.length) return <section className="admin-card"><h2>No centre operations access</h2><p>Ask an Owner to review your centre assignments and operational permissions.</p></section>;
+  if (!centres.length) return <section className="admin-card"><h2>No centre operations access</h2><p>Ask an Owner to review your centre assignments and operational permissions.</p><button type="button" className="button button-secondary" disabled={loading} onClick={() => void refresh()}>{loading ? "Refreshing…" : "Refresh"}</button></section>;
 
   return <div className="centre-operations-list">
-    <p className="admin-muted">Counts only. Patient names and private appointment, financial, sample or report details are not included.</p>
+    <div className="task-toolbar"><p className="admin-muted">Counts only. Patient names and private appointment, financial, sample or report details are not included.</p><div><button type="button" className="button button-secondary" disabled={loading} onClick={() => void refresh()}>{loading ? "Refreshing…" : "Refresh queues"}</button>{refreshedAt && <p className="admin-muted" aria-live="polite">Last updated {refreshedAt.toLocaleTimeString()}</p>}</div></div>
+    {error && <p role="alert">Refresh failed. Showing the last successfully loaded summary.</p>}
     {centres.map((centre) => <section className="admin-card centre-operations-card" key={centre.id}>
       <div><p className="eyebrow">{centre.code} · {centre.timeZone}</p><h2>{centre.name}</h2></div>
       <dl className="centre-operations-metrics">
@@ -37,13 +48,14 @@ export function CentreOperationsSummary() {
         {centre.metrics.pendingConfirmations !== undefined && <div><dt>Pending confirmations</dt><dd>{centre.metrics.pendingConfirmations}</dd></div>}
         {centre.metrics.pendingWebsiteEnquiries !== undefined && <div><dt>Website enquiries pending review</dt><dd>{centre.metrics.pendingWebsiteEnquiries}</dd></div>}
         {centre.metrics.openOrders !== undefined && <div><dt>Orders awaiting confirmation</dt><dd>{centre.metrics.openOrders}</dd></div>}
-        {centre.metrics.activeCollections !== undefined && <div><dt>Active collection jobs</dt><dd>{centre.metrics.activeCollections}</dd></div>}
+        {centre.metrics.activeCollections !== undefined && <div><dt>Open collection jobs</dt><dd>{centre.metrics.activeCollections}</dd></div>}
         {centre.metrics.pendingReceiving !== undefined && <div><dt>Samples awaiting Rudra receiving</dt><dd>{centre.metrics.pendingReceiving}</dd></div>}
         {centre.metrics.pendingDispatch !== undefined && <div><dt>Samples awaiting dispatch</dt><dd>{centre.metrics.pendingDispatch}</dd></div>}
         {centre.metrics.openExceptions !== undefined && <div><dt>Open sample exceptions</dt><dd>{centre.metrics.openExceptions}</dd></div>}
         {centre.metrics.overdueLeadFollowups !== undefined && <div><dt>Overdue lead follow-ups</dt><dd>{centre.metrics.overdueLeadFollowups}</dd></div>}
         {centre.metrics.overdueReportFollowups !== undefined && <div><dt>Overdue report follow-ups</dt><dd>{centre.metrics.overdueReportFollowups}</dd></div>}
         {centre.metrics.openTasks !== undefined && <div><dt>Open staff tasks</dt><dd>{centre.metrics.openTasks}</dd></div>}
+        {centre.metrics.openSupportRequests !== undefined && <div><dt>Open support requests</dt><dd>{centre.metrics.openSupportRequests}</dd></div>}
         {centre.metrics.pendingTaskApprovals !== undefined && <div><dt>Task approvals pending</dt><dd>{centre.metrics.pendingTaskApprovals}</dd></div>}
         {centre.metrics.taskApprovalExpiryDue !== undefined && <div><dt>Task approvals past expiry</dt><dd>{centre.metrics.taskApprovalExpiryDue}</dd></div>}
         {centre.metrics.taskApprovalEscalationDue !== undefined && <div><dt>Task approval escalations due</dt><dd>{centre.metrics.taskApprovalEscalationDue}</dd></div>}
@@ -70,6 +82,7 @@ export function CentreOperationsSummary() {
         {centre.metrics.overdueLeadFollowups !== undefined && <Link href={centreHref("/leads/followups", centre.id)}>Open lead follow-ups</Link>}
         {centre.metrics.overdueReportFollowups !== undefined && <Link href={centreHref("/reports/followups", centre.id)}>Open report follow-ups</Link>}
         {centre.metrics.openTasks !== undefined && <Link href={centreHref("/tasks", centre.id)}>Open staff tasks</Link>}
+        {centre.metrics.openSupportRequests !== undefined && <Link href={centreHref("/support/tickets", centre.id)}>Open support requests</Link>}
         {centre.metrics.taskApprovalExpiryDue !== undefined && <Link href={centreHref("/tasks/approvals", centre.id, { queue: "expiry-due" })}>Review expired approvals</Link>}
         {centre.metrics.taskApprovalEscalationDue !== undefined && <Link href={centreHref("/tasks/approvals", centre.id, { queue: "escalation-due" })}>Review task approval escalations</Link>}
         {centre.metrics.openEscalations !== undefined && <Link href={centreHref("/escalations", centre.id)}>Open escalation queue</Link>}

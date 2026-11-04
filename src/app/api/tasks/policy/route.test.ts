@@ -156,6 +156,15 @@ describe("task approval policy API boundary", () => {
     expect(getDb).not.toHaveBeenCalled();
   });
 
+  it("rejects an expiry deadline that would prevent the configured escalation from running", async () => {
+    const request = new Request("http://localhost/api/tasks/policy", { method: "PUT", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": "11111111-1111-4111-8111-111111111112" }, body: JSON.stringify({ centreId: null, actionType: "TASK_COMPLETION", enabled: false, approverStaffIds: [], escalationAfterMinutes: 60, escalationOwnerStaffId: "22222222-2222-4222-8222-222222222222", expireAfterMinutes: 45, expectedVersion: 0 }) });
+    const response = await PUT(request);
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: "invalid_approval_policy", fields: ["expireAfterMinutes"] });
+    expect(getApiAccess).not.toHaveBeenCalled();
+    expect(getDb).not.toHaveBeenCalled();
+  });
+
   it("requires an idempotency key for a valid policy mutation before authorization or database access", async () => {
     const request = new Request("http://localhost/api/tasks/policy", { method: "PUT", headers: { origin: "http://localhost", "content-type": "application/json" }, body: JSON.stringify({ centreId: null, actionType: "TASK_COMPLETION", enabled: false, approverStaffIds: [], escalationAfterMinutes: null, escalationOwnerStaffId: null, expectedVersion: 0 }) });
     const response = await PUT(request);

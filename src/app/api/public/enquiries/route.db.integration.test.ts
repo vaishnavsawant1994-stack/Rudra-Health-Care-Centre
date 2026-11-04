@@ -87,8 +87,22 @@ describe("public enquiry PostgreSQL integration", () => {
     expect(secondBody).toMatchObject({ page: 2, pageSize: 50, hasMore: false });
     expect(secondBody.enquiries).toHaveLength(5);
     expect(new Set([...firstBody.enquiries, ...secondBody.enquiries].map((row) => row.id)).size).toBe(55);
+    const historicalId = records[0].id;
+    const historical = await get(new Request(`http://localhost/api/public/enquiries?centreId=${centreId}&enquiryId=${historicalId}`));
+    const historicalBody = await historical.json() as { enquiries: Array<{ id: string; status: string; firstName: string; message: string }> };
+    expect(historical.status).toBe(200);
+    expect(historicalBody.enquiries).toHaveLength(1);
+    expect(historicalBody.enquiries[0]).toMatchObject({ id: historicalId, status: "DISMISSED", firstName: "Synthetic", message: "Synthetic review queue item" });
+    const unavailable = await get(new Request(`http://localhost/api/public/enquiries?centreId=${centreId}&enquiryId=${randomUUID()}`));
+    expect(unavailable.status).toBe(200);
+    expect(await unavailable.json()).toMatchObject({ enquiries: [], page: 1, pageSize: 1, hasMore: false });
+    const crossCentre = await get(new Request(`http://localhost/api/public/enquiries?centreId=${randomUUID()}&enquiryId=${historicalId}`));
+    expect(crossCentre.status).toBe(403);
+    expect(await crossCentre.json()).toEqual({ error: "forbidden" });
     const invalid = await get(new Request(`http://localhost/api/public/enquiries?centreId=${centreId}&page=0`));
     expect(invalid.status).toBe(400);
+    const invalidCombination = await get(new Request(`http://localhost/api/public/enquiries?centreId=${centreId}&enquiryId=${historicalId}&summary=true`));
+    expect(invalidCombination.status).toBe(400);
   });
 
   it("rejects an unknown public enquiry topic without storing a submission", async () => {

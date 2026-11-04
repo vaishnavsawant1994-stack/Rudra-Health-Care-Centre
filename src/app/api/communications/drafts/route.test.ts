@@ -27,6 +27,7 @@ describe("centre-scoped communication draft queue", () => {
     mocks.getDb.mockReturnValue({ select: vi.fn(() => chain) });
     const response = await GET(new Request(`http://localhost/api/communications/drafts?centreId=${centreId}&purpose=OPERATIONAL&page=1`));
     expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     const payload = await response.json();
     expect(payload).toMatchObject({ page: 1, pageSize: 25, hasMore: false, delivery: "DISABLED", drafts: [{ id: "draft-a", leadId: "lead-a", leadNumber: "RHC-L-1", creator: "Synthetic Staff (SYN-1)", canCancel: false }] });
     expect(JSON.stringify(payload)).not.toContain("private-ciphertext");

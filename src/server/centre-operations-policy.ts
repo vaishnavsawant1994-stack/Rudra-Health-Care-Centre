@@ -1,7 +1,7 @@
 import type { PermissionGrant } from "@/server/permissions";
 import { assignmentVisibility, assignmentVisibilityAtCentre } from "@/server/assignment-visibility";
 
-const aggregatePermissions = ["appointments.read", "appointments.assigned.read", "orders.read", "collections.read", "collections.assign", "collections.visit.record", "samples.read", "samples.receive", "samples.dispatch", "samples.exceptions.manage", "leads.read", "leads.followups.manage", "reports.followups.manage", "tasks.read", "tasks.assigned.read", "tasks.approve", "roster.read", "roster.manage", "escalations.read", "escalations.assigned.read", "finance.read"] as const;
+const aggregatePermissions = ["appointments.read", "appointments.assigned.read", "orders.read", "collections.read", "collections.assign", "collections.visit.record", "samples.read", "samples.receive", "samples.dispatch", "samples.exceptions.manage", "leads.read", "leads.followups.manage", "reports.followups.manage", "tasks.read", "tasks.assigned.read", "tasks.support.read", "tasks.approve", "roster.read", "roster.manage", "escalations.read", "escalations.assigned.read", "finance.read"] as const;
 
 export function canViewAnyOperationsSummary(grants: readonly PermissionGrant[]) {
   return aggregatePermissions.some((key) => grants.some((grant) => grant.key === key));
@@ -37,4 +37,13 @@ export function collectionSummaryIsAssignedOnly(grants: readonly PermissionGrant
   const inScope = (grant: PermissionGrant) => grant.centreId === null || grant.centreId === centreId;
   return grants.some((grant) => grant.key === "collections.visit.record" && inScope(grant))
     && !grants.some((grant) => grant.key === "collections.assign" && inScope(grant));
+}
+
+/** Collection jobs that still require operational attention, including failed visits awaiting follow-up. */
+export const openCollectionJobStatuses = ["PENDING_ASSIGNMENT", "ASSIGNED", "IN_PROGRESS", "UNSUCCESSFUL"] as const;
+
+export function collectionQueueTitle(status: string) {
+  if (status === "PENDING_ASSIGNMENT") return "Collection awaiting assignment";
+  if (status === "UNSUCCESSFUL") return "Unsuccessful collection needs follow-up";
+  return "Active collection";
 }

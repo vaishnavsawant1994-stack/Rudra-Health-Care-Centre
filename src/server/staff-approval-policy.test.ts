@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { approvalEscalationOwnerConflicts, approvalPolicyCentreScope, approvalPolicyDirectoryScopeAllowed, approvalPolicyScopeAllowed, buildApprovalPolicyDirectory, canRequestTaskApproval, getApprovalEscalationDueAt, getApprovalExpiryAt, isNamedApproverEligible, readApprovalSubmissionSnapshot, supportedStaffApprovalActions } from "./staff-approval-policy";
+import { approvalEscalationOwnerConflicts, approvalPolicyCentreScope, approvalPolicyDirectoryScopeAllowed, approvalPolicyScopeAllowed, buildApprovalPolicyDirectory, canRequestTaskApproval, filterTaskApproversWithReadAccess, getApprovalEscalationDueAt, getApprovalExpiryAt, isNamedApproverEligible, readApprovalSubmissionSnapshot, supportedStaffApprovalActions } from "./staff-approval-policy";
 
 describe("staff approval policy", () => {
   it("supports only enabled operational task-completion approval", () => {
@@ -15,6 +15,16 @@ describe("staff approval policy", () => {
     expect(isNamedApproverEligible([], "staff-a")).toBe(true);
     expect(isNamedApproverEligible(["staff-a"], "staff-a")).toBe(true);
     expect(isNamedApproverEligible(["staff-a"], "staff-b")).toBe(false);
+  });
+
+  it("only offers approvers who can also read pending tasks", () => {
+    const rows = [
+      { id: "approve-only", displayName: "Hidden", staffCode: "A1", permissionKey: "tasks.approve" },
+      { id: "reader-only", displayName: "Hidden", staffCode: "R1", permissionKey: "tasks.read" },
+      { id: "eligible", displayName: "Eligible", staffCode: "E1", permissionKey: "tasks.approve" },
+      { id: "eligible", displayName: "Eligible", staffCode: "E1", permissionKey: "tasks.read" },
+    ];
+    expect(filterTaskApproversWithReadAccess(rows)).toEqual([rows[2]]);
   });
 
   it("reads immutable approval submission snapshots and fails closed on corrupt snapshots", () => {

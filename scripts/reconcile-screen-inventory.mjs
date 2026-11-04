@@ -6,10 +6,155 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const specPath = path.join(root, "docs", "SCREEN_SPEC_178.md");
 const outputPath = path.join(root, "docs", "SCREEN_IMPLEMENTATION_MATRIX.csv");
 
-// Explicit mappings are for a proposed screen implemented as a distinct state
-// inside another route. Each entry is validated against live source markers so
-// the inventory does not silently treat a matching module as screen evidence.
+// Explicit mappings reconcile proposed screen IDs with validated source where
+// the canonical implementation route differs from the proposal. Each entry is
+// validated against live source markers so module-level matches are not treated
+// as screen-specific evidence.
 const explicitGroupedMappings = {
+  R013: {
+    route: "/leads",
+    source: "src/components/leads/lead-workbench.tsx",
+    pageMarker: "<LeadsDirectory />",
+    sourceMarkers: ["Record an enquiry only", "Contact permission starts pending", "Avoid medical details"],
+    note: "The proposed reception lead-capture inbox maps to the protected centre-scoped CRM directory and lead creation workflow.",
+    limitation: "Creating a lead does not authorize outreach; operational contact permission and marketing consent are separate records.",
+  },
+  R014: {
+    route: "/leads/[id]",
+    source: "src/components/leads/lead-workbench.tsx",
+    pageMarker: "<LeadDetail leadId={id}",
+    sourceMarkers: ["Activity history", "Follow-ups", "Operational contact authorization", "Marketing consent"],
+    note: "The proposed lead detail/follow-up screen maps to the protected Lead 360 workflow with assignment, activity, contact consent and follow-up history.",
+    limitation: "The screen does not send real communication; all contact attempts and future provider actions remain permission/consent gated.",
+  },
+  R015: {
+    route: "/communications",
+    source: "src/components/leads/communication-draft-queue.tsx",
+    pageMarker: "<UnifiedCommunicationInbox",
+    sourceMarkers: ["Website enquiries and staff-only drafts", "Drafts are never sent from here", "No external email, SMS, WhatsApp or voice provider is connected"],
+    note: "The proposed enquiries/callback inbox maps to the protected communications queue for website enquiries and unsent staff communication drafts.",
+    limitation: "This is not a telephone/call system and it does not send email, SMS, WhatsApp, or voice communications; real providers are unconnected.",
+  },
+  R016: {
+    route: "/catalogue/tests",
+    source: "src/components/catalogue/catalogue-workbench.tsx",
+    pageMarker: "<CatalogueDirectory serviceType=\"TEST\"",
+    sourceMarkers: ["Diagnostic tests", "verified price", "UNVERIFIED"],
+    note: "The proposed staff catalogue lookup maps to the protected diagnostic-test directory with verification-state-aware entries.",
+    limitation: "Catalogue records or prices shown as unverified are not approved customer prices and cannot be treated as confirmed quotes.",
+  },
+  R002: {
+    route: "/patients",
+    source: "src/components/patients/patient-workbench.tsx",
+    pageMarker: "<PatientList canCreate=",
+    sourceMarkers: ["Search exact patient name, ID substring or exact phone", "All authorized centres", "No patients found in your authorized centre scope"],
+    note: "The proposed reception patient search maps to the centre-scoped patient directory and exact/ID-substring lookup.",
+    limitation: "The directory does not expose a separate merge operation or generalized fuzzy name search; duplicate review is handled by protected registration/update workflows.",
+  },
+  R003: {
+    route: "/patients/[id]",
+    source: "src/components/patients/patient-workbench.tsx",
+    pageMarker: "<PatientProfile patientId={id}",
+    sourceMarkers: ["Patient activity", "Diagnostic order history", "Family relationships", "Adult records require their own authorization"],
+    note: "The proposed staff Patient 360 screen maps to the permission-protected patient profile with separately permissioned order, sample, report and finance sections.",
+    limitation: "Sensitive linked history is only loaded when its distinct module permission is present; family association does not authorize access.",
+  },
+  R004: {
+    route: "/patients/new",
+    source: "src/components/patients/patient-workbench.tsx",
+    pageMarker: "<PatientRegistrationForm",
+    sourceMarkers: ["Register patient", "NOT_RECORDED", "possible duplicate exists in this centre"],
+    note: "The proposed reception registration screen maps to centre-authorized patient registration with consent defaulting to Not recorded and duplicate safeguards.",
+    limitation: "Patient registration records staff-entered consent status and does not establish legal basis, patient portal identity, or verified identity proofing.",
+  },
+  R005: {
+    route: "/families/[id]",
+    source: "src/components/families/family-workbench.tsx",
+    pageMarker: "<FamilyOverview familyId={id} />",
+    sourceMarkers: ["All new family membership starts pending", "Relationship and membership alone do not permit access", "Record verification", "Family activity history"],
+    note: "The proposed family-link/consent screen maps to the staff Family 360 workflow for pending member links, evidence-backed verification, contact arrangements and explicit sharing.",
+    limitation: "Family links do not grant medical access; the workflow does not itself prove legal consent beyond recorded staff review evidence.",
+  },
+  R006: {
+    route: "/patients/[id]",
+    source: "src/components/patients/patient-workbench.tsx",
+    pageMarker: "<PatientProfile patientId={id}",
+    sourceMarkers: ["Patient activity", "No activity events are recorded yet.", "Diagnostic order history"],
+    note: "The proposed patient activity timeline is rendered within the authorized Patient 360 profile using recorded patient events and linked operational histories.",
+    limitation: "This is an embedded profile section, not a separate timeline URL; linked histories appear only with their distinct permissions.",
+  },
+  R007: {
+    route: "/appointments/calendar",
+    source: "src/components/appointments/appointment-workbench.tsx",
+    pageMarker: "<AppointmentCalendar />",
+    sourceMarkers: ["Appointment calendar", "value=\"day\">Daily", "value=\"week\">Weekly", "value=\"month\">Monthly", "open capacity is not inferred"],
+    note: "The proposed staff appointment calendar is implemented at the canonical protected `/appointments/calendar` route with daily, weekly and monthly views and centre selection.",
+    limitation: "The current calendar does not filter by assigned staff and displays recorded appointments only; it does not invent availability or reserve slots.",
+  },
+  R008: {
+    route: "/appointments/new",
+    source: "src/components/appointments/appointment-workbench.tsx",
+    pageMarker: "<AppointmentCreateForm",
+    sourceMarkers: ["Create booking request", "Search patients", "Separate home-visit service charge", "idempotency"],
+    note: "The proposed appointment form maps to the centre-authorized booking-request flow, including patient lookup, requested service and separately recorded home-visit charge.",
+    limitation: "The form creates a booking request, not a confirmed appointment or guaranteed slot; catalogue/service availability may remain unverified.",
+  },
+  R009: {
+    route: "/orders/new",
+    source: "src/components/orders/order-workbench.tsx",
+    pageMarker: "<OrderCreate />",
+    sourceMarkers: ["Create diagnostic order", "Create order draft", "Review order", "No sample or laboratory work is triggered"],
+    note: "The proposed staff order/quote entry maps to a protected order-draft workflow linked to an authorized appointment or existing patient.",
+    limitation: "Order creation does not trigger sample collection or external laboratory processing; confirmation requires eligible catalogue verification and pricing.",
+  },
+  R010: {
+    route: "/orders/[id]",
+    source: "src/components/orders/order-workbench.tsx",
+    pageMarker: "<OrderDetail id={id} />",
+    sourceMarkers: ["Replace draft service selection", "Review and confirm", "Order activity", "no collection, lab processing, report or invoice status"],
+    note: "The proposed order detail/status hub maps to the protected order detail workflow with service snapshots, controlled draft editing, confirmation/cancellation and history.",
+    limitation: "The screen does not advance sample, laboratory, report or invoice lifecycles; each remains a separate linked workflow.",
+  },
+  R011: {
+    route: "/workspaces/[role]",
+    source: "src/components/appointments/walk-in-queue.tsx",
+    pageMarker: "<WalkInQueue grants={staff.grants} />",
+    sourceMarkers: ["Walk-in tokens and calling queue", "Issue token", "Call next", "Only confirmed centre walk-ins with a recorded arrival"],
+    note: "The proposed walk-in queue is an actionable Reception workspace panel with centre-scoped token issue/call controls and server-backed queue APIs.",
+    limitation: "The queue does not add a separate no-show/redirect action or QR identity scan; token issue requires a prior appointment confirmation and recorded arrival.",
+  },
+  R012: {
+    route: "/appointments/arrivals",
+    source: "src/components/appointments/appointment-workbench.tsx",
+    pageMarker: "<AppointmentList awaitingArrival",
+    sourceMarkers: ["Record patient arrival", "arrival_already_recorded", "Only confirmed or assigned appointments can be checked in"],
+    note: "The proposed arrivals/check-in screen is implemented as a centre-scoped arrival queue with a recorded-arrival action in appointment details.",
+    limitation: "Check-in records physical arrival only; QR scanning and identity verification are not implemented by this workflow.",
+  },
+  R018: {
+    route: "/roster/handovers",
+    source: "src/components/roster/shift-handover-workbench.tsx",
+    pageMarker: "<ShiftHandoverWorkbench staffId=",
+    sourceMarkers: ["Pending items and handover note", "Acknowledge receipt", "Review centre operational queues"],
+    note: "The proposed front-desk shift handover is served by the encrypted, centre-scoped staff handover workbench at /roster/handovers, including incoming-staff acknowledgment and links to operational queues.",
+    limitation: "The workflow records a staff handover note and acknowledgment; it does not automatically transfer cash, appointments, tasks, or operational ownership, and does not itself summarize pending queues.",
+  },
+  C006: {
+    route: "/relationships/corporate",
+    source: "src/app/relationships/corporate/page.tsx",
+    pageMarker: "<BusinessRelationshipWorkbench type=\"CORPORATE\"",
+    sourceMarkers: ["corporate.read", "manageableCentreIds={grants.flatMap"],
+    note: "The proposed /corporates directory is implemented at Rudra's canonical /relationships/corporate staff route with centre-scoped directory and management actions.",
+    limitation: "The mapping establishes the directory route and its scoped workbench; it does not prove contracts, quotations, employee booking, or every C006 requirement.",
+  },
+  C008: {
+    route: "/relationships/corporate/[id]",
+    source: "src/components/relationships/business-relationship-workbench.tsx",
+    pageMarker: "initialRelationshipId={id} profileOnly",
+    sourceMarkers: ["profileOnly && !selected", "Open profile"],
+    note: "The proposed /corporates/[id] screen is implemented as a direct, centre-authorized corporate profile at /relationships/corporate/[id].",
+    limitation: "The mapping proves the direct encrypted relationship profile and links to existing CRM/appointment activity; it does not implement corporate camps, employee scheduling, contracts, or every C008 requirement.",
+  },
   W008: {
     route: "/book",
     source: "src/components/leads/public-enquiry-workbench.tsx",
@@ -17,6 +162,14 @@ const explicitGroupedMappings = {
     sourceMarkers: ["id=\"booking-review-title\"", "Edit request", "Send request for staff review"],
     note: "Booking review is an in-form state in /book; it is not a separate route and does not confirm or reserve an appointment.",
     limitation: "The explicit mapping proves the review state is embedded in the listed page/component; it does not prove every W008 requirement, confirmation, slot reservation, pricing, or appointment creation.",
+  },
+  F012: {
+    route: "/field/today",
+    source: "src/components/samples/sample-workbench.tsx",
+    pageMarker: "<CollectionOperations grants={staff.grants} showDailySchedule />",
+    sourceMarkers: ["Mark attempt unsuccessful", "Record a collected specimen", "Record exception", "Request recollection"],
+    note: "Assigned field work supports a recorded unsuccessful visit, specimen and sample exception actions, and existing manager-authorized recollection handling; open assigned exceptions are listed at /field/exceptions.",
+    limitation: "This maps implemented collection and sample exception actions only; no-show/insufficient-specimen reason taxonomy, all rescheduling rules and every F012 control still require review.",
   },
   M017: {
     route: "/marketing/campaigns",
@@ -99,8 +252,9 @@ for (const screen of rows) {
     const groupedSource = path.join(root, groupedMapping.source);
     if (!groupedPage || !allFiles.includes(groupedSource)) throw new Error(`${screen.id} grouped mapping source is missing.`);
     const [pageText, sourceText] = await Promise.all([readFile(groupedPage, "utf8"), readFile(groupedSource, "utf8")]);
-    if (!pageText.includes(groupedMapping.pageMarker) || groupedMapping.sourceMarkers.some((marker) => !sourceText.includes(marker))) {
-      throw new Error(`${screen.id} grouped mapping markers no longer match the implementation.`);
+    const missingMarkers = groupedMapping.sourceMarkers.filter((marker) => !sourceText.includes(marker));
+    if (!pageText.includes(groupedMapping.pageMarker) || missingMarkers.length > 0) {
+      throw new Error(`${screen.id} grouped mapping markers no longer match the implementation.${!pageText.includes(groupedMapping.pageMarker) ? " Page marker missing." : ""}${missingMarkers.length ? ` Source markers missing: ${missingMarkers.join(", ")}` : ""}`);
     }
     groupedMappingDescription = `${groupedMapping.route} (${rel(groupedPage)}); ${groupedMapping.source}; ${groupedMapping.note}`;
   }
@@ -110,7 +264,7 @@ for (const screen of rows) {
     W: ["public", "catalogue", "admin/website-content", "public/content"],
     P: ["patient-portal", "account", "public/account"],
     R: ["patients", "families", "appointments", "leads", "orders", "tasks", "roster", "public/enquiries"],
-    F: ["collections", "samples", "roster", "tasks"],
+    F: ["field", "collections", "samples", "roster", "tasks"],
     L: ["samples", "collections", "reports", "branch"],
     B: ["finance"], D: ["doctors", "business-relationships"],
     C: ["business-relationships", "corporate"], S: ["business-relationships", "partners"],
@@ -133,7 +287,14 @@ for (const screen of rows) {
   const groupedPages = appPages.map((file) => ({ file, route: routeForFile(file) }))
     .filter(({ route }) => pageRoots.some((prefix) => prefix === "/" ? route === "/" : route === prefix || route.startsWith(`${prefix}/`)))
     .map(({ file, route }) => `${route} (${rel(file)})`).slice(0, 24);
-  const apiCandidates = [...apiByPath.entries()].filter(([apiPath]) => moduleRoots.some((rootName) => apiPath === `/api/${rootName}` || apiPath.startsWith(`/api/${rootName}/`))).map(([apiPath]) => apiPath).sort();
+  const screenApiPaths = {
+    A006: ["/api/tasks"],
+    A007: ["/api/tasks/[id]"],
+  }[screen.id] ?? [];
+  const apiCandidates = [...new Set([
+    ...[...apiByPath.keys()].filter((apiPath) => moduleRoots.some((rootName) => apiPath === `/api/${rootName}` || apiPath.startsWith(`/api/${rootName}/`))),
+    ...screenApiPaths.filter((apiPath) => apiByPath.has(apiPath)),
+  ])].sort();
   const apiSources = apiCandidates.map((apiPath) => apiByPath.get(apiPath)).filter(Boolean);
   const imports = page ? [...new Set([...readImports(await readFile(page, "utf8"), "components"), ...readImports(await readFile(page, "utf8"), "server")])].sort() : [];
   const schemaSymbols = new Set();

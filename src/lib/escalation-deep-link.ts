@@ -5,6 +5,6 @@ export function escalationDeepLinkId(search: string) {
   return value && UUID_PATTERN.test(value) ? value : null;
 }
 
-export function escalationDeepLinkHref(id: string) {
-  return `/escalations?escalationId=${encodeURIComponent(id)}`;
+export function escalationDeepLinkHref(id: string, centreId?: string) {
+  return `/escalations?${new URLSearchParams({ escalationId: id, ...(centreId ? { centreId } : {}) })}`;
 }

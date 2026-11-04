@@ -3,9 +3,11 @@ import { getApiAccess } from "@/server/access";
 import { getDb } from "@/db/client";
 import { appointmentArrivalEvents, appointments, centres, collectionJobs, diagnosticOrders, leadFollowups, publicEnquiries, sampleExceptions, specimens, staffEscalations, staffShifts, staffTasks } from "@/db/schema";
 import { localDateTimeToUtc } from "@/server/appointment-policy";
-import { canViewOperationsMetric, canViewTaskApprovalExpiryQueue, canViewTeamRosterMetrics, collectionSummaryIsAssignedOnly, sampleExceptionSummaryScope, visibleOperationsCentres } from "@/server/centre-operations-policy";
+import { canViewOperationsMetric, canViewTaskApprovalExpiryQueue, canViewTeamRosterMetrics, collectionQueueTitle, collectionSummaryIsAssignedOnly, openCollectionJobStatuses, sampleExceptionSummaryScope, visibleOperationsCentres } from "@/server/centre-operations-policy";
 import { buildOperationsQueuePreview } from "@/server/centre-operations-queue";
 import { escalationDeepLinkHref } from "@/lib/escalation-deep-link";
+import { escalationSourceHref } from "@/lib/escalation-source-link";
+import { centreTaskHref } from "@/lib/centre-task-link";
 import { centreFollowupHref } from "@/server/centre-followup-link";
 
 export async function GET() {
@@ -22,7 +24,7 @@ export async function GET() {
   const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   const summaries = await Promise.all(centreRows.map(async (centre) => {
     const queue: Array<{ id: string; kind: string; title: string; reference: string; status: string; at: string; href: string }> = [];
-    const metrics: { appointmentsNext24Hours?: number; appointmentsWithoutArrivalToday?: number; pendingConfirmations?: number; pendingWebsiteEnquiries?: number; openOrders?: number; activeCollections?: number; pendingReceiving?: number; pendingDispatch?: number; openExceptions?: number; overdueLeadFollowups?: number; overdueReportFollowups?: number; openTasks?: number; pendingTaskApprovals?: number; taskApprovalExpiryDue?: number; taskApprovalEscalationDue?: number; overdueTasks?: number; scheduledStaff?: number; staffUnavailable?: number; openEscalations?: number; overdueEscalations?: number; financePendingPayments?: number; financeDisputes?: number; financeRefundRequests?: number } = {};
+    const metrics: { appointmentsNext24Hours?: number; appointmentsWithoutArrivalToday?: number; pendingConfirmations?: number; pendingWebsiteEnquiries?: number; openOrders?: number; activeCollections?: number; pendingReceiving?: number; pendingDispatch?: number; openExceptions?: number; overdueLeadFollowups?: number; overdueReportFollowups?: number; openTasks?: number; openSupportRequests?: number; pendingTaskApprovals?: number; taskApprovalExpiryDue?: number; taskApprovalEscalationDue?: number; overdueTasks?: number; scheduledStaff?: number; staffUnavailable?: number; openEscalations?: number; overdueEscalations?: number; financePendingPayments?: number; financeDisputes?: number; financeRefundRequests?: number } = {};
     if (canViewOperationsMetric(staff.grants, "appointments.read", centre.id) || canViewOperationsMetric(staff.grants, "appointments.assigned.read", centre.id)) {
       const assignedOnly = !canViewOperationsMetric(staff.grants, "appointments.read", centre.id);
       const conditions = [eq(appointments.organizationId, staff.organizationId), eq(appointments.centreId, centre.id), gte(appointments.scheduledAt, now), lt(appointments.scheduledAt, next24Hours), notInArray(appointments.status, ["CANCELLED", "NO_SHOW"])];
@@ -55,7 +57,7 @@ export async function GET() {
       const [pending] = await getDb().select({ value: count() }).from(publicEnquiries).where(and(...pendingConditions));
       metrics.pendingWebsiteEnquiries = pending?.value ?? 0;
       const rows = await getDb().select({ id: publicEnquiries.id, reference: publicEnquiries.enquiryNumber, status: publicEnquiries.status, createdAt: publicEnquiries.createdAt }).from(publicEnquiries).where(and(...pendingConditions)).orderBy(asc(publicEnquiries.createdAt), asc(publicEnquiries.id)).limit(10);
-      for (const item of rows) queue.push({ id: item.id, kind: "WEBSITE_ENQUIRY", title: "Website enquiry pending review", reference: item.reference, status: item.status, at: item.createdAt.toISOString(), href: "/leads/public-enquiries" });
+      for (const item of rows) queue.push({ id: item.id, kind: "WEBSITE_ENQUIRY", title: "Website enquiry pending review", reference: item.reference, status: item.status, at: item.createdAt.toISOString(), href: escalationSourceHref("PUBLIC_ENQUIRY", item.id, centre.id)! });
     }
     if (canViewOperationsMetric(staff.grants, "orders.read", centre.id)) {
       const [row] = await getDb().select({ value: count() }).from(diagnosticOrders).where(and(eq(diagnosticOrders.organizationId, staff.organizationId), eq(diagnosticOrders.centreId, centre.id), inArray(diagnosticOrders.status, ["DRAFT", "PENDING_VERIFICATION"])));
@@ -80,12 +82,12 @@ export async function GET() {
       for (const item of refunds) queue.push({ id: item.id, kind: "FINANCE_REFUND", title: "Refund request awaiting review", reference: `Payment ${item.paymentId.slice(0, 8).toUpperCase()}`, status: item.status, at: new Date(item.createdAt).toISOString(), href: "/finance/refunds" });
     }
     if (canViewOperationsMetric(staff.grants, "collections.read", centre.id) || canViewOperationsMetric(staff.grants, "collections.assign", centre.id) || canViewOperationsMetric(staff.grants, "collections.visit.record", centre.id)) {
-      const conditions = [eq(collectionJobs.organizationId, staff.organizationId), eq(collectionJobs.centreId, centre.id), inArray(collectionJobs.status, ["PENDING_ASSIGNMENT", "ASSIGNED", "IN_PROGRESS"])];
+      const conditions = [eq(collectionJobs.organizationId, staff.organizationId), eq(collectionJobs.centreId, centre.id), inArray(collectionJobs.status, openCollectionJobStatuses)];
       if (collectionSummaryIsAssignedOnly(staff.grants, centre.id)) conditions.push(eq(collectionJobs.assignedStaffId, staff.staffUserId));
       const [row] = await getDb().select({ value: count() }).from(collectionJobs).where(and(...conditions));
       metrics.activeCollections = row?.value ?? 0;
       const workRows = await getDb().select({ id: collectionJobs.id, number: collectionJobs.jobNumber, status: collectionJobs.status, scheduledStart: collectionJobs.scheduledStart }).from(collectionJobs).where(and(...conditions)).orderBy(asc(collectionJobs.scheduledStart), asc(collectionJobs.id)).limit(10);
-      for (const item of workRows) queue.push({ id: item.id, kind: "COLLECTION", title: item.status === "PENDING_ASSIGNMENT" ? "Collection awaiting assignment" : "Active collection", reference: item.number, status: item.status, at: item.scheduledStart.toISOString(), href: `/collections/${item.id}` });
+      for (const item of workRows) queue.push({ id: item.id, kind: "COLLECTION", title: collectionQueueTitle(item.status), reference: item.number, status: item.status, at: item.scheduledStart.toISOString(), href: `/collections/${item.id}` });
     }
     if (canViewOperationsMetric(staff.grants, "samples.receive", centre.id)) {
       const [row] = await getDb().select({ value: count() }).from(specimens).where(and(eq(specimens.organizationId, staff.organizationId), eq(specimens.centreId, centre.id), eq(specimens.status, "COLLECTED")));
@@ -112,7 +114,7 @@ export async function GET() {
         .innerJoin(specimens, and(eq(specimens.id, sampleExceptions.specimenId), eq(specimens.organizationId, sampleExceptions.organizationId), eq(specimens.centreId, sampleExceptions.centreId)))
         .innerJoin(collectionJobs, and(eq(collectionJobs.id, specimens.jobId), eq(collectionJobs.organizationId, specimens.organizationId), eq(collectionJobs.centreId, specimens.centreId)))
         .where(and(...exceptionConditions)).orderBy(asc(sampleExceptions.createdAt), asc(sampleExceptions.id)).limit(10);
-      for (const item of exceptions) queue.push({ id: item.id, kind: "SAMPLE_EXCEPTION", title: `Sample exception · ${item.kind.toLowerCase().replaceAll("_", " ")}`, reference: item.id.slice(0, 8).toUpperCase(), status: item.status, at: item.createdAt.toISOString(), href: "/samples/exceptions" });
+      for (const item of exceptions) queue.push({ id: item.id, kind: "SAMPLE_EXCEPTION", title: `Sample exception · ${item.kind.toLowerCase().replaceAll("_", " ")}`, reference: item.id.slice(0, 8).toUpperCase(), status: item.status, at: item.createdAt.toISOString(), href: escalationSourceHref("SAMPLE_EXCEPTION", item.id, centre.id)! });
     }
     if (canViewOperationsMetric(staff.grants, "leads.followups.manage", centre.id)) {
       const [row] = await getDb().select({ value: count() }).from(leadFollowups).where(and(eq(leadFollowups.organizationId, staff.organizationId), eq(leadFollowups.centreId, centre.id), eq(leadFollowups.status, "SCHEDULED"), lt(leadFollowups.dueAt, now)));
@@ -140,19 +142,26 @@ export async function GET() {
       const [overdue] = await getDb().select({ value: count() }).from(staffTasks).where(and(...overdueScope));
       metrics.openTasks = open?.value ?? 0; metrics.pendingTaskApprovals = approvals?.value ?? 0; metrics.overdueTasks = overdue?.value ?? 0;
       const taskRows = await getDb().select({ id: staffTasks.id, number: staffTasks.taskNumber, status: staffTasks.status, dueAt: staffTasks.dueAt }).from(staffTasks).where(and(...taskScope)).orderBy(asc(staffTasks.dueAt), asc(staffTasks.id)).limit(10);
-      for (const item of taskRows) queue.push({ id: item.id, kind: "TASK", title: "Staff task", reference: item.number, status: item.status, at: (item.dueAt ?? now).toISOString(), href: `/tasks?taskId=${encodeURIComponent(item.id)}` });
+      for (const item of taskRows) queue.push({ id: item.id, kind: "TASK", title: "Staff task", reference: item.number, status: item.status, at: (item.dueAt ?? now).toISOString(), href: centreTaskHref(item.id, centre.id) });
+    }
+    if (canViewOperationsMetric(staff.grants, "tasks.support.read", centre.id)) {
+      const supportScope = [eq(staffTasks.organizationId, staff.organizationId), eq(staffTasks.centreId, centre.id), eq(staffTasks.taskType, "SUPPORT_REQUEST"), inArray(staffTasks.status, ["OPEN", "IN_PROGRESS", "AWAITING_APPROVAL"])];
+      const [open] = await getDb().select({ value: count() }).from(staffTasks).where(and(...supportScope));
+      metrics.openSupportRequests = open?.value ?? 0;
+      const supportRows = await getDb().select({ id: staffTasks.id, number: staffTasks.taskNumber, status: staffTasks.status, dueAt: staffTasks.dueAt, createdAt: staffTasks.createdAt }).from(staffTasks).where(and(...supportScope)).orderBy(asc(staffTasks.dueAt), asc(staffTasks.createdAt), asc(staffTasks.id)).limit(10);
+      for (const item of supportRows) queue.push({ id: item.id, kind: "SUPPORT_REQUEST", title: "Open support request", reference: item.number, status: item.status, at: (item.dueAt ?? item.createdAt).toISOString(), href: `/support/tickets/${encodeURIComponent(item.id)}` });
     }
     if (canViewTaskApprovalExpiryQueue(staff.grants, centre.id)) {
       const expiryScope = and(eq(staffTasks.organizationId, staff.organizationId), eq(staffTasks.centreId, centre.id), eq(staffTasks.status, "AWAITING_APPROVAL"), eq(staffTasks.approvalStatus, "PENDING"), lt(staffTasks.approvalExpiresAt, now));
       const [expiryDue] = await getDb().select({ value: count() }).from(staffTasks).where(expiryScope);
       metrics.taskApprovalExpiryDue = expiryDue?.value ?? 0;
       const dueTasks = await getDb().select({ id: staffTasks.id, number: staffTasks.taskNumber, expiresAt: staffTasks.approvalExpiresAt }).from(staffTasks).where(expiryScope).orderBy(asc(staffTasks.approvalExpiresAt), asc(staffTasks.id)).limit(10);
-      for (const task of dueTasks) if (task.expiresAt) queue.push({ id: task.id, kind: "TASK_APPROVAL_EXPIRY", title: "Task approval deadline elapsed", reference: task.number, status: "PENDING", at: task.expiresAt.toISOString(), href: `/tasks/approvals?queue=expiry-due&taskId=${encodeURIComponent(task.id)}` });
+      for (const task of dueTasks) if (task.expiresAt) queue.push({ id: task.id, kind: "TASK_APPROVAL_EXPIRY", title: "Task approval deadline elapsed", reference: task.number, status: "PENDING", at: task.expiresAt.toISOString(), href: centreTaskHref(task.id, centre.id, "expiry-due") });
       const escalationScope = and(eq(staffTasks.organizationId, staff.organizationId), eq(staffTasks.centreId, centre.id), eq(staffTasks.status, "AWAITING_APPROVAL"), eq(staffTasks.approvalStatus, "PENDING"), isNull(staffTasks.escalationProcessedAt), lt(staffTasks.escalationDueAt, now));
       const [escalationDue] = await getDb().select({ value: count() }).from(staffTasks).where(escalationScope);
       metrics.taskApprovalEscalationDue = escalationDue?.value ?? 0;
       const escalationTasks = await getDb().select({ id: staffTasks.id, number: staffTasks.taskNumber, dueAt: staffTasks.escalationDueAt }).from(staffTasks).where(escalationScope).orderBy(asc(staffTasks.escalationDueAt), asc(staffTasks.id)).limit(10);
-      for (const task of escalationTasks) if (task.dueAt) queue.push({ id: task.id, kind: "TASK_APPROVAL_ESCALATION", title: "Task approval escalation due", reference: task.number, status: "PENDING", at: task.dueAt.toISOString(), href: `/tasks/approvals?queue=escalation-due&taskId=${encodeURIComponent(task.id)}` });
+      for (const task of escalationTasks) if (task.dueAt) queue.push({ id: task.id, kind: "TASK_APPROVAL_ESCALATION", title: "Task approval escalation due", reference: task.number, status: "PENDING", at: task.dueAt.toISOString(), href: centreTaskHref(task.id, centre.id, "escalation-due") });
     }
     if (canViewTeamRosterMetrics(staff.grants, centre.id)) {
       const windowScope = [eq(staffShifts.organizationId, staff.organizationId), eq(staffShifts.centreId, centre.id), eq(staffShifts.status, "ACTIVE"), gte(staffShifts.endsAt, now), lt(staffShifts.startsAt, next24Hours)];
@@ -171,11 +180,11 @@ export async function GET() {
       metrics.openEscalations = open[0]?.value ?? 0;
       metrics.overdueEscalations = overdue[0]?.value ?? 0;
       const escalationRows = await getDb().select({ id: staffEscalations.id, number: staffEscalations.escalationNumber, status: staffEscalations.status, dueAt: staffEscalations.dueAt }).from(staffEscalations).where(and(...scope)).orderBy(asc(staffEscalations.dueAt), asc(staffEscalations.id)).limit(10);
-      for (const item of escalationRows) queue.push({ id: item.id, kind: "ESCALATION", title: "Operational escalation", reference: item.number, status: item.status, at: item.dueAt.toISOString(), href: escalationDeepLinkHref(item.id) });
+      for (const item of escalationRows) queue.push({ id: item.id, kind: "ESCALATION", title: "Operational escalation", reference: item.number, status: item.status, at: item.dueAt.toISOString(), href: escalationDeepLinkHref(item.id, centre.id) });
     }
     const queuePreview = buildOperationsQueuePreview(queue, metrics);
     return { id: centre.id, code: centre.code, name: centre.name, timeZone: centre.timeZone, metrics, queue: queuePreview.items, omittedByKind: queuePreview.omittedByKind };
   }));
 
-  return Response.json({ range: { from: now.toISOString(), to: next24Hours.toISOString() }, centres: summaries });
+  return Response.json({ range: { from: now.toISOString(), to: next24Hours.toISOString() }, centres: summaries }, { headers: { "cache-control": "private, no-store" } });
 }

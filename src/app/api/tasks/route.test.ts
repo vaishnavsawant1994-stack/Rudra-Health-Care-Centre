@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { PgDialect } from "drizzle-orm/pg-core";
 
 const { getApiAccess, getDb } = vi.hoisted(() => ({ getApiAccess: vi.fn(), getDb: vi.fn() }));
 vi.mock("@/server/access", () => ({ getApiAccess }));
@@ -35,6 +36,35 @@ describe("staff task queue filters", () => {
     }
     expect(getApiAccess).not.toHaveBeenCalled();
     expect(getDb).not.toHaveBeenCalled();
+  });
+
+  it("rejects arbitrary assignee identifiers so callers cannot filter another staff member's tasks", async () => {
+    const response = await GET(new Request("http://localhost/api/tasks?assigned=staff-b"));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "invalid_assignment_filter" });
+    expect(getApiAccess).not.toHaveBeenCalled();
+    expect(getDb).not.toHaveBeenCalled();
+  });
+
+  it("adds the authenticated staff identity to the database predicate for the self-assigned view", async () => {
+    const staff = { organizationId: "org-a", staffUserId: "staff-a", grants: [{ key: "tasks.read", centreId: "centre-a" }] };
+    getApiAccess.mockResolvedValue({ staff, response: null });
+    const query = { from: vi.fn(), innerJoin: vi.fn(), where: vi.fn(), orderBy: vi.fn(), limit: vi.fn(), offset: vi.fn() };
+    query.from.mockReturnValue(query);
+    query.innerJoin.mockReturnValue(query);
+    query.where.mockReturnValue(query);
+    query.orderBy.mockReturnValue(query);
+    query.limit.mockReturnValue(query);
+    query.offset.mockResolvedValue([]);
+    getDb.mockReturnValue({ select: vi.fn(() => query) });
+
+    const response = await GET(new Request("http://localhost/api/tasks?assigned=me"));
+
+    expect(response.status).toBe(200);
+    const predicate = new PgDialect().sqlToQuery(query.where.mock.calls[0][0]);
+    expect(predicate.sql).toContain('"staff_tasks"."assigned_staff_id"');
+    expect(predicate.params).toContain("staff-a");
+    expect(predicate.params).not.toContain("staff-b");
   });
 
   it("denies support-request creation unless the scoped support-create grant exists", async () => {

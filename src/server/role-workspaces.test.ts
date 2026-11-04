@@ -44,7 +44,14 @@ describe("role workspace permission filtering", () => {
   });
   it("shows the awaiting-receiving queue to phlebotomists with sample read access, not unrelated roles", () => {
     expect(getRoleWorkspacePanels("phlebotomist", [{ key: "samples.read", centreId: "c1" }])).toContain("sample_handover");
+    expect(getRoleWorkspacePanels("phlebotomist", [{ key: "collections.visit.record", centreId: "c1" }])).toContain("sample_handover");
     expect(getRoleWorkspacePanels("manager", [{ key: "samples.read", centreId: "c1" }])).not.toContain("sample_handover");
+  });
+  it("embeds field exception reporting only in the visit-authorized phlebotomist workspace", () => {
+    expect(getRoleWorkspacePanels("phlebotomist", [{ key: "collections.visit.record", centreId: "c1" }])).toContain("field_exceptions");
+    expect(getRoleWorkspacePanels("phlebotomist", [{ key: "samples.read", centreId: "c1" }])).not.toContain("field_exceptions");
+    expect(getRoleWorkspacePanels("support", [{ key: "collections.visit.record", centreId: "c1" }])).not.toContain("field_exceptions");
+    expect(getRoleWorkspacePanels("phlebotomist", [])).not.toContain("field_exceptions");
   });
   it("shows shift handover only to staff with the dedicated handover grant", () => {
     expect(getRoleWorkspaceLinks("reception", [{ key: "roster.read", centreId: "c1" }]).some(([href]) => href === "/roster/handovers")).toBe(false);
@@ -57,7 +64,9 @@ describe("role workspace permission filtering", () => {
   });
   it("shows only granted operational destinations", () => {
     const links = getRoleWorkspaceLinks("phlebotomist", [{ key: "collections.visit.record", centreId: "c1" }]);
-    expect(links.map(([href]) => href)).toEqual(["/field/today"]);
+    expect(links.map(([href]) => href)).toEqual(["/field/today", "/field/handover", "/field/exceptions"]);
+    expect(getRoleWorkspaceLinks("phlebotomist", []).some(([href]) => href === "/field/handover")).toBe(false);
+    expect(getRoleWorkspaceLinks("phlebotomist", []).some(([href]) => href === "/field/exceptions")).toBe(false);
   });
   it("exposes the aggregate CRM acquisition view in Sales and Owner workspaces only with lead read access", () => {
     expect(getRoleWorkspaceLinks("sales", []).some(([href]) => href === "/leads/analytics")).toBe(false);
@@ -86,7 +95,15 @@ describe("role workspace permission filtering", () => {
   });
   it("keeps owner tools behind their specific grants", () => {
     const links = getRoleWorkspaceLinks("owner", [{ key: "organization.read", centreId: null }]);
-    expect(links.map(([href]) => href)).toEqual(["/branch/operations", "/owner"]);
+    expect(links.map(([href]) => href)).toEqual(["/owner"]);
+    const operationsLinks = getRoleWorkspaceLinks("owner", [{ key: "organization.read", centreId: null }, { key: "workspace.read", centreId: null }, { key: "appointments.read", centreId: null }]);
+    expect(operationsLinks.map(([href]) => href)).toContain("/branch/operations");
+  });
+  it("links any authorized operational reader to Centre Operations, without requiring appointment access", () => {
+    expect(getRoleWorkspaceLinks("manager", [{ key: "workspace.read", centreId: "c1" }, { key: "samples.receive", centreId: "c1" }]).some(([href]) => href === "/branch/operations")).toBe(true);
+    expect(getRoleWorkspaceLinks("manager", [{ key: "workspace.read", centreId: "c1" }, { key: "finance.read", centreId: "c1" }]).some(([href]) => href === "/branch/operations")).toBe(true);
+    expect(getRoleWorkspaceLinks("manager", [{ key: "workspace.read", centreId: "c1" }]).some(([href]) => href === "/branch/operations")).toBe(false);
+    expect(getRoleWorkspaceLinks("manager", [{ key: "appointments.read", centreId: "c1" }]).some(([href]) => href === "/branch/operations")).toBe(false);
   });
   it("shows centre task approval policy configuration only to policy managers", () => {
     expect(getRoleWorkspaceLinks("manager", [{ key: "tasks.approve", centreId: "c1" }]).some(([href]) => href === "/tasks/approvals/policies")).toBe(false);
@@ -137,6 +154,14 @@ describe("role workspace permission filtering", () => {
     expect(getRoleWorkspacePanels("reception", [{ key: "leads.read", centreId: "c1" }])).toContain("public_enquiries");
     expect(getRoleWorkspacePanels("manager", [{ key: "leads.read", centreId: "c1" }])).not.toContain("public_enquiries");
     expect(getRoleWorkspacePanels("reception", [{ key: "leads.create", centreId: "c1" }])).not.toContain("public_enquiries");
+  });
+  it("links the dedicated support queue only for support readers", () => {
+    expect(getRoleWorkspaceLinks("support", [{ key: "tasks.support.read", centreId: "c1" }]).some(([href]) => href === "/support/tickets")).toBe(true);
+    expect(getRoleWorkspaceLinks("manager", [{ key: "tasks.support.read", centreId: "c1" }]).some(([href]) => href === "/support/tickets")).toBe(true);
+    expect(getRoleWorkspaceLinks("support", [{ key: "tasks.support.create", centreId: "c1" }]).some(([href]) => href === "/support/tickets")).toBe(false);
+    expect(getRoleWorkspaceLinks("reception", [{ key: "tasks.assigned.read", centreId: "c1" }]).some(([href]) => href === "/support/tickets")).toBe(true);
+    expect(getRoleWorkspaceLinks("support", [{ key: "workspace.read", centreId: "c1" }, { key: "tasks.support.read", centreId: "c1" }]).some(([href]) => href === "/branch/operations")).toBe(true);
+    expect(getRoleWorkspaceLinks("support", [{ key: "tasks.support.read", centreId: "c1" }]).some(([href]) => href === "/branch/operations")).toBe(false);
   });
   it("embeds only role work panels authorized by the staff grants", () => {
     expect(getRoleWorkspacePanels("reception", [{ key: "appointments.read", centreId: "c1" }, { key: "tasks.assigned.read", centreId: "c1" }])).toEqual(["confirmation_queue", "arrival_queue", "appointment_schedule", "walk_in_queue", "support_requests", "staff_tasks"]);

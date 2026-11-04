@@ -30,6 +30,17 @@ export async function processDueTaskApprovalDeadlines(limit = 50, now = new Date
       JOIN permissions owner_permission
         ON owner_permission.id = owner_role_permission.permission_id
        AND owner_permission.key = 'tasks.approve'
+      AND EXISTS (
+        SELECT 1 FROM staff_role_assignments owner_read_assignment
+        JOIN roles owner_read_role ON owner_read_role.id = owner_read_assignment.role_id
+        JOIN role_permissions owner_read_role_permission ON owner_read_role_permission.role_id = owner_read_role.id
+        JOIN permissions owner_read_permission ON owner_read_permission.id = owner_read_role_permission.permission_id
+        WHERE owner_read_assignment.staff_user_id = owner_user.id
+          AND owner_read_assignment.organization_id = owner_user.organization_id
+          AND owner_read_assignment.revoked_at IS NULL
+          AND (owner_read_assignment.centre_id = staff_tasks.centre_id OR owner_read_assignment.centre_id IS NULL)
+          AND owner_read_permission.key = 'tasks.read'
+      )
       WHERE owner_user.id = staff_tasks.escalation_owner_staff_id
         AND owner_user.organization_id = staff_tasks.organization_id
         AND owner_user.status = 'ACTIVE'
@@ -74,7 +85,17 @@ export async function processDueTaskApprovalDeadlines(limit = 50, now = new Date
         .innerJoin(staffRoleAssignments, and(eq(staffRoleAssignments.staffUserId, staffUsers.id), eq(staffRoleAssignments.organizationId, staffUsers.organizationId), isNull(staffRoleAssignments.revokedAt)))
         .innerJoin(roles, eq(roles.id, staffRoleAssignments.roleId)).innerJoin(rolePermissions, eq(rolePermissions.roleId, roles.id))
         .innerJoin(permissions, and(eq(permissions.id, rolePermissions.permissionId), eq(permissions.key, "tasks.approve")))
-        .where(and(eq(staffUsers.id, task.escalationOwnerStaffId), eq(staffUsers.organizationId, task.organizationId), eq(staffUsers.status, "ACTIVE"), or(eq(staffRoleAssignments.centreId, task.centreId), isNull(staffRoleAssignments.centreId)))).limit(1);
+        .where(and(eq(staffUsers.id, task.escalationOwnerStaffId), eq(staffUsers.organizationId, task.organizationId), eq(staffUsers.status, "ACTIVE"), or(eq(staffRoleAssignments.centreId, task.centreId), isNull(staffRoleAssignments.centreId)), sql`EXISTS (
+          SELECT 1 FROM staff_role_assignments read_assignment
+          JOIN roles read_role ON read_role.id = read_assignment.role_id
+          JOIN role_permissions read_role_permission ON read_role_permission.role_id = read_role.id
+          JOIN permissions read_permission ON read_permission.id = read_role_permission.permission_id
+          WHERE read_assignment.staff_user_id = ${staffUsers.id}
+            AND read_assignment.organization_id = ${staffUsers.organizationId}
+            AND read_assignment.revoked_at IS NULL
+            AND (read_assignment.centre_id = ${task.centreId} OR read_assignment.centre_id IS NULL)
+            AND read_permission.key = 'tasks.read'
+        )`)).limit(1);
       if (!eligible) { skippedInvalidOwner++; continue; }
       const [updated] = await tx.update(staffTasks).set({ escalationProcessedAt: now, versionNumber: task.versionNumber + 1, updatedAt: now }).where(and(eq(staffTasks.id, task.id), eq(staffTasks.versionNumber, task.versionNumber), isNull(staffTasks.escalationProcessedAt))).returning({ versionNumber: staffTasks.versionNumber });
       if (!updated) continue;

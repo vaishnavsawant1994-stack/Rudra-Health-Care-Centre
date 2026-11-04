@@ -1,6 +1,18 @@
 import type { PermissionGrant } from "@/server/permissions";
 
 export const supportedStaffApprovalActions = ["TASK_COMPLETION"] as const;
+
+/** An approval requires both decision authority and permission to read the pending task. */
+export function filterTaskApproversWithReadAccess<T extends { id: string; permissionKey: string }>(rows: readonly T[]) {
+  const permissionsByStaff = new Map<string, Set<string>>();
+  for (const row of rows) {
+    const keys = permissionsByStaff.get(row.id) ?? new Set<string>();
+    keys.add(row.permissionKey);
+    permissionsByStaff.set(row.id, keys);
+  }
+  const eligible = new Set([...permissionsByStaff].filter(([, keys]) => keys.has("tasks.approve") && keys.has("tasks.read")).map(([id]) => id));
+  return rows.filter((row) => eligible.has(row.id) && row.permissionKey === "tasks.approve");
+}
 export type SupportedStaffApprovalAction = (typeof supportedStaffApprovalActions)[number];
 
 export function canRequestTaskApproval(policy: { actionType: string; enabled: boolean } | null | undefined): policy is { actionType: "TASK_COMPLETION"; enabled: true } {

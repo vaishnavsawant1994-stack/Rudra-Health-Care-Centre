@@ -19,7 +19,7 @@ const actionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("UPDATE"), expectedVersion: z.number().int().positive(), severity: z.enum(["LOW", "MODERATE", "HIGH", "URGENT"]).optional(), priority: z.enum(["LOW", "NORMAL", "HIGH", "URGENT"]).optional(), dueAt: z.iso.datetime().optional(), reason: z.string().trim().min(3).max(500) }).refine((value) => value.severity !== undefined || value.priority !== undefined || value.dueAt !== undefined, { message: "At least one escalation field must change." }),
   z.object({ action: z.literal("REASSIGN"), expectedVersion: z.number().int().positive(), assignedOwnerStaffId: uuid, reason: z.string().trim().min(3).max(500) }),
   z.object({ action: z.literal("RESOLVE"), expectedVersion: z.number().int().positive(), reason: z.string().trim().min(3).max(500) }),
-  z.object({ action: z.literal("REOPEN"), expectedVersion: z.number().int().positive(), reason: z.string().trim().min(3).max(500) }),
+  z.object({ action: z.literal("REOPEN"), expectedVersion: z.number().int().positive(), dueAt: z.iso.datetime(), reason: z.string().trim().min(3).max(500) }),
   z.object({ action: z.literal("CANCEL"), expectedVersion: z.number().int().positive(), reason: z.string().trim().min(3).max(500) }),
 ]);
 type PrivateData = { title: string; description: string; reason?: string };
@@ -133,6 +133,7 @@ export async function PATCH(request: Request, route: { params: Promise<{ id: str
       const nextOwner = action === "REASSIGN" ? parsed.data.assignedOwnerStaffId : row.assignedOwnerStaffId;
       if (action === "UPDATE" && !["OPEN", "ACKNOWLEDGED"].includes(row.status)) throw new Error("invalid_transition");
       if (action === "UPDATE" && parsed.data.dueAt !== undefined && new Date(parsed.data.dueAt).getTime() !== row.dueAt.getTime() && Date.parse(parsed.data.dueAt) <= Date.now()) throw new Error("due_date_must_be_future");
+      if (action === "REOPEN" && Date.parse(parsed.data.dueAt) <= Date.now()) throw new Error("due_date_must_be_future");
       if (action === "REASSIGN") {
         const [assignee] = await tx.select({ id: staffUsers.id }).from(staffUsers).innerJoin(staffRoleAssignments, and(eq(staffRoleAssignments.staffUserId, staffUsers.id), eq(staffRoleAssignments.organizationId, staffUsers.organizationId), isNull(staffRoleAssignments.revokedAt))).innerJoin(roles, eq(roles.id, staffRoleAssignments.roleId)).innerJoin(rolePermissions, eq(rolePermissions.roleId, roles.id)).innerJoin(permissions, and(eq(permissions.id, rolePermissions.permissionId), inArray(permissions.key, ["escalations.read", "escalations.assigned.read"]))).where(and(eq(staffUsers.id, nextOwner), eq(staffUsers.organizationId, row.organizationId), eq(staffUsers.status, "ACTIVE"), or(eq(staffRoleAssignments.centreId, row.centreId), isNull(staffRoleAssignments.centreId)))).limit(1);
         if (!assignee) throw new Error("assignee_not_found");
@@ -147,6 +148,7 @@ export async function PATCH(request: Request, route: { params: Promise<{ id: str
         if (parsed.data.dueAt !== undefined) updateFields.dueAt = new Date(parsed.data.dueAt);
         privateData.reason = parsed.data.reason;
       }
+      if (action === "REOPEN") updateFields.dueAt = new Date(parsed.data.dueAt);
       if ("reason" in parsed.data) privateData.reason = parsed.data.reason;
       await tx.update(staffEscalations).set({ ...updateFields, ...(action === "COMMENT" ? {} : { privateDataCiphertext: encryptOperationalData(privateData, ctx(row.organizationId, row.centreId, row.id)) }), assignedOwnerStaffId: nextOwner, status: nextStatus, resolvedByStaffId: nextStatus === "RESOLVED" ? actor.staffUserId : null, resolvedAt: nextStatus === "RESOLVED" ? new Date() : null, versionNumber: row.versionNumber + 1, updatedAt: new Date() }).where(and(eq(staffEscalations.id, row.id), eq(staffEscalations.versionNumber, row.versionNumber)));
       const eventId = randomUUID();

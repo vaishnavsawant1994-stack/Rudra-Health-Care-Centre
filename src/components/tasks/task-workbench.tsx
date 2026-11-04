@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getStaffTaskQueueBadges } from "@/lib/staff-task-queue-badges";
 import { IdempotencyAttempt } from "@/lib/idempotency-attempt";
 import { taskWorkbenchAuthorizedQueueCentre, taskWorkbenchInitialTypeFilter } from "@/lib/task-workbench-filters";
+import { taskReferenceHref } from "@/lib/task-reference-link";
 import { canApproveTaskInCentre, canAssignTaskInCentre, canEscalateTaskInCentre, canUpdateTask } from "@/lib/task-permissions";
 import type { TaskReferencePrefillType, TaskRelationshipReferenceType } from "@/lib/task-reference-permissions";
 import type { PermissionGrant } from "@/server/permissions";
@@ -17,24 +18,6 @@ type ReferenceOption = { id: string; label: string };
 type TaskEvent = { id: string; eventType: string; actorType: "STAFF" | "SYSTEM"; actorName: string | null; approverName?: string; recordedAt: string; comment?: string | null; reason?: string | null; supportResolutionOutcome?: string };
 
 async function responseBody<T>(response: Response) { return response.json().catch(() => ({})) as Promise<T>; }
-function taskReferenceHref(type: string, id: string) {
-  if (type === "APPOINTMENT") return `/appointments/${id}`;
-  if (type === "LEAD") return `/leads/${id}`;
-  if (type === "PUBLIC_ENQUIRY") return "/leads/public-enquiries";
-  if (type === "COLLECTION_JOB") return `/collections/${id}`;
-  if (type === "SAMPLE_EXCEPTION") return "/samples/exceptions";
-  if (type === "REPORT") return `/reports/${id}`;
-  if (type === "REPORT_FOLLOWUP") return "/reports/followups";
-  if (type === "FINANCE_PAYMENT") return `/finance/payments/${id}`;
-  if (type === "FINANCE_REFUND") return "/finance/refunds";
-  if (type === "STAFF_TASK") return "/tasks";
-  if (type === "STAFF_ESCALATION") return `/escalations?escalationId=${encodeURIComponent(id)}`;
-  if (type === "CORPORATE_RELATIONSHIP") return "/relationships/corporate";
-  if (type === "PARTNER_RELATIONSHIP") return "/relationships/partners";
-  if (type === "DOCTOR_RELATIONSHIP") return "/relationships/doctors";
-  return null;
-}
-
 export function TaskWorkbench({ staffId, permissionGrants = [], canCreate, canRead = true, canUpdate, canApprove, canFilterCentre = false, relationshipReferenceTypes = [], initialFilter = "", initialTaskType = "", initialTaskId, initialCentreId, initialQueueCentreId, initialReferenceType, initialReferenceId, fixedTaskType }: { staffId: string; permissionGrants?: PermissionGrant[]; canCreate: boolean; canRead?: boolean; canUpdate: boolean; canApprove: boolean; canAssign: boolean; canEscalate?: boolean; canFilterCentre?: boolean; relationshipReferenceTypes?: TaskRelationshipReferenceType[]; initialFilter?: string; initialTaskType?: string; initialTaskId?: string; initialCentreId?: string; initialQueueCentreId?: string; initialReferenceType?: TaskReferencePrefillType; initialReferenceId?: string; fixedTaskType?: string }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [centres, setCentres] = useState<Centre[]>([]);
@@ -53,6 +36,7 @@ export function TaskWorkbench({ staffId, permissionGrants = [], canCreate, canRe
   const taskEscalationAttempts = useRef(new Map<string, IdempotencyAttempt>());
   const [centreId, setCentreId] = useState(initialCentreId ?? "");
   const [centreFilter, setCentreFilter] = useState(initialQueueCentreId ?? "");
+  const [assignedToMe, setAssignedToMe] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [title, setTitle] = useState("");
@@ -90,7 +74,7 @@ export function TaskWorkbench({ staffId, permissionGrants = [], canCreate, canRe
     if (!canRead) return;
     setMessage("Loading tasks…");
     try {
-      const params = new URLSearchParams(); if (filter) params.set("status", filter); if (typeFilter) params.set("type", typeFilter); if (centreFilter) params.set("centreId", centreFilter); params.set("page", String(page));
+      const params = new URLSearchParams(); if (filter) params.set("status", filter); if (typeFilter) params.set("type", typeFilter); if (centreFilter) params.set("centreId", centreFilter); if (assignedToMe) params.set("assigned", "me"); params.set("page", String(page));
       const response = await fetch(`/api/tasks${params.size ? `?${params}` : ""}`, { cache: "no-store" });
       const body = await responseBody<{ tasks?: Task[]; error?: string; hasMore?: boolean }>(response);
       if (!response.ok) throw new Error(body.error ?? "task_service_unavailable");
@@ -98,12 +82,12 @@ export function TaskWorkbench({ staffId, permissionGrants = [], canCreate, canRe
       setHasMore(body.hasMore ?? false);
       setMessage(body.tasks?.length ? "" : "No tasks in this view.");
     } catch { setTasks([]); setMessage("Task service is unavailable. Retry when connected."); }
-  }, [canRead, filter, typeFilter, centreFilter, page]);
+  }, [canRead, filter, typeFilter, centreFilter, assignedToMe, page]);
 
   useEffect(() => {
     if (!canRead) return;
     let active = true;
-    const params = new URLSearchParams(); if (filter) params.set("status", filter); if (typeFilter) params.set("type", typeFilter); if (centreFilter) params.set("centreId", centreFilter); params.set("page", String(page));
+    const params = new URLSearchParams(); if (filter) params.set("status", filter); if (typeFilter) params.set("type", typeFilter); if (centreFilter) params.set("centreId", centreFilter); if (assignedToMe) params.set("assigned", "me"); params.set("page", String(page));
     fetch(`/api/tasks${params.size ? `?${params}` : ""}`, { cache: "no-store" })
       .then(async (response) => ({ response, body: await responseBody<{ tasks?: Task[]; error?: string; hasMore?: boolean }>(response) }))
       .then(({ response, body }) => {
@@ -115,7 +99,7 @@ export function TaskWorkbench({ staffId, permissionGrants = [], canCreate, canRe
       })
       .catch(() => { if (active) { setTasks([]); setMessage("Task service is unavailable. Retry when connected."); } });
     return () => { active = false; };
-  }, [canRead, filter, typeFilter, centreFilter, page]);
+  }, [canRead, filter, typeFilter, centreFilter, assignedToMe, page]);
   useEffect(() => {
     if (!canCreate) return;
     void fetch("/api/tasks/centres", { cache: "no-store" }).then((response) => responseBody<{ centres?: Centre[] }>(response)).then((body) => {
@@ -256,13 +240,13 @@ export function TaskWorkbench({ staffId, permissionGrants = [], canCreate, canRe
       <button className="button button-primary" disabled={busy || !centreId}>{busy ? "Saving…" : "Create task"}</button>
     </form></section>}
     {!canRead && message && <p role="status">{message}</p>}
-    {canRead ? <section className="admin-card"><div className="task-toolbar"><div><h2>{fixedTaskType === "SUPPORT_REQUEST" || initialTaskType === "SUPPORT_REQUEST" ? "Support requests and service issues" : initialFilter === "ESCALATED" ? "Exception and escalation queue" : initialFilter === "APPROVAL_ESCALATION_DUE" ? "Task approval escalations due" : canUpdate ? "Task queue" : "My tasks"}</h2><p>Approval decisions are restricted to separate supervisors with the task approval permission. Exception-review entries link back to their authorized operational record.</p></div>{canApprove && <button type="button" className="button button-secondary" disabled={busy} onClick={() => void processDueDeadlines()}>Process due approval deadlines</button>}{canFilterCentre && readCentres.length > 1 && <label>Centre<select value={centreFilter} onChange={(event) => { setCentreFilter(event.target.value); setPage(1); }}><option value="">All authorized centres</option>{readCentres.map((centre) => <option key={centre.id} value={centre.id}>{centre.name} ({centre.code})</option>)}</select></label>}<label>Status<select value={filter} onChange={(event) => { setFilter(event.target.value); setPage(1); }}><option value="">All visible</option>{["OVERDUE", "ESCALATED", "APPROVAL_EXPIRY_DUE", "APPROVAL_ESCALATION_DUE", "OPEN", "IN_PROGRESS", "AWAITING_APPROVAL", "COMPLETED", "CANCELLED"].map((status) => <option key={status}>{status.replaceAll("_", " ")}</option>)}</select></label>{!fixedTaskType && <label>Type<select value={typeFilter} onChange={(event) => { setTypeFilter(event.target.value); setPage(1); }}><option value="">All task types</option>{["GENERAL", "OPERATIONS", "FOLLOW_UP", "EXCEPTION_REVIEW", "SUPPORT_REQUEST"].map((type) => <option key={type} value={type}>{type.replaceAll("_", " ")}</option>)}</select></label>}</div>
+    {canRead ? <section className="admin-card"><div className="task-toolbar"><div><h2>{fixedTaskType === "SUPPORT_REQUEST" || initialTaskType === "SUPPORT_REQUEST" ? "Support requests and service issues" : initialFilter === "ESCALATED" ? "Exception and escalation queue" : initialFilter === "APPROVAL_ESCALATION_DUE" ? "Task approval escalations due" : canUpdate ? "Task queue" : "My tasks"}</h2><p>Approval decisions are restricted to separate supervisors with the task approval permission. Exception-review entries link back to their authorized operational record.</p></div>{canApprove && <button type="button" className="button button-secondary" disabled={busy} onClick={() => void processDueDeadlines()}>Process due approval deadlines</button>}{canFilterCentre && readCentres.length > 1 && <label>Centre<select value={centreFilter} onChange={(event) => { setCentreFilter(event.target.value); setPage(1); }}><option value="">All authorized centres</option>{readCentres.map((centre) => <option key={centre.id} value={centre.id}>{centre.name} ({centre.code})</option>)}</select></label>}<label>Status<select value={filter} onChange={(event) => { setFilter(event.target.value); setPage(1); }}><option value="">All visible</option>{["OVERDUE", "ESCALATED", "APPROVAL_EXPIRY_DUE", "APPROVAL_ESCALATION_DUE", "OPEN", "IN_PROGRESS", "AWAITING_APPROVAL", "COMPLETED", "CANCELLED"].map((status) => <option key={status}>{status.replaceAll("_", " ")}</option>)}</select></label>{!fixedTaskType && <label>Type<select value={typeFilter} onChange={(event) => { setTypeFilter(event.target.value); setPage(1); }}><option value="">All task types</option>{["GENERAL", "OPERATIONS", "FOLLOW_UP", "EXCEPTION_REVIEW", "SUPPORT_REQUEST"].map((type) => <option key={type} value={type}>{type.replaceAll("_", " ")}</option>)}</select></label>}<label className="task-checkbox"><input type="checkbox" checked={assignedToMe} onChange={(event) => { setAssignedToMe(event.target.checked); setPage(1); }} />Assigned directly to me</label></div>
       {deadlineMessage && <p role="status" aria-live="polite">{deadlineMessage}</p>}
       {message && <p role="status">{message}</p>}
       {tasks.length > 0 && <div className="table-scroll"><table className="admin-table"><thead><tr><th>Task</th><th>Type</th><th>Priority</th><th>Assigned to</th><th>Due</th><th>Status</th><th>Action</th></tr></thead><tbody>{tasks.map((task) => { const badges = getStaffTaskQueueBadges(task); return <tr key={task.id}><td><strong>{task.title}</strong><small className="appointment-sub">{task.taskNumber}{task.description ? ` · ${task.description}` : ""}</small></td><td>{task.taskType}</td><td>{task.priority}</td><td>{task.assignedStaffName}</td><td>{task.dueAt ? new Date(task.dueAt).toLocaleString() : "No due date"}</td><td>{task.status}{task.approvalStatus === "PENDING" ? " · approval pending" : ""}{badges.map((badge) => ` · ${badge}`).join("")}</td><td><button type="button" className="text-button" onClick={() => void openTask(task.id)}>Details</button></td></tr>; })}</tbody></table></div>}
       <nav aria-label="Task queue pages" className="task-pagination"><button type="button" className="button button-secondary" disabled={page <= 1} onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}>Previous</button><span>Page {page}</span><button type="button" className="button button-secondary" disabled={!hasMore} onClick={() => setPage((currentPage) => currentPage + 1)}>Next</button></nav>
     </section> : null}
-    {current && <section className="admin-card task-detail"><div className="task-toolbar"><div><p className="eyebrow">{current.taskNumber}</p><h2>{current.title}</h2><p>{current.description || "No description provided."}</p>{current.reference && <p>Linked: {taskReferenceHref(current.reference.type, current.reference.id) ? <Link href={taskReferenceHref(current.reference.type, current.reference.id)!}>{current.reference.label}</Link> : current.reference.label}</p>}</div><button type="button" className="button button-secondary" onClick={() => setSelected(null)}>Close</button></div>
+    {current && <section className="admin-card task-detail"><div className="task-toolbar"><div><p className="eyebrow">{current.taskNumber}</p><h2>{current.title}</h2><p>{current.description || "No description provided."}</p>{current.reference && <p>Linked: {taskReferenceHref(current.reference.type, current.reference.id, current.centreId) ? <Link href={taskReferenceHref(current.reference.type, current.reference.id, current.centreId)!}>{current.reference.label}</Link> : current.reference.label}</p>}</div><button type="button" className="button button-secondary" onClick={() => setSelected(null)}>Close</button></div>
       {currentCanUpdate && !["COMPLETED", "CANCELLED"].includes(current.status) && <form className="admin-form task-form" onSubmit={(event) => { event.preventDefault(); void action(current, "UPDATE", { title: editTitle, description: editDescription, priority: editPriority, dueAt: editDueAt ? new Date(editDueAt).toISOString() : null, ...(currentCanAssign ? { assignedStaffId: assigneeId } : {}) }); }}><h3>Edit task</h3><label>Title<input required minLength={3} maxLength={120} value={editTitle} onChange={(event) => setEditTitle(event.target.value)} /></label><label>Description<textarea maxLength={1000} value={editDescription} onChange={(event) => setEditDescription(event.target.value)} /></label><label>Priority<select value={editPriority} onChange={(event) => setEditPriority(event.target.value)}>{["LOW", "NORMAL", "HIGH", "URGENT"].map((item) => <option key={item}>{item}</option>)}</select></label><label>Due date<input type="datetime-local" value={editDueAt} onChange={(event) => setEditDueAt(event.target.value)} /></label>{currentCanAssign && <label>Assignee<select value={assigneeId} onChange={(event) => setAssigneeId(event.target.value)}>{assignees.map((item) => <option key={item.id} value={item.id}>{item.displayName} ({item.staffCode})</option>)}</select></label>}<button className="button button-secondary" disabled={busy}>Save task changes</button></form>}
       <div className="task-actions">
         {currentCanEscalate && current.status !== "CANCELLED" && <section className="admin-card"><h3>Operational escalation</h3>{!showTaskEscalation ? <button className="button button-secondary" type="button" onClick={() => { setTaskEscalationTitle(`Review ${current.taskNumber}`); setTaskEscalationDueAt(new Date(Date.now() + 24 * 60 * 60_000 - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16)); setShowTaskEscalation(true); }}>Raise escalation for this task</button> : <form className="admin-form task-form" onSubmit={(event) => void raiseTaskEscalation(event, current)}><label>Title<input required minLength={3} maxLength={120} value={taskEscalationTitle} onChange={(event) => setTaskEscalationTitle(event.target.value)} /></label><label>Description<textarea maxLength={2000} value={taskEscalationDescription} onChange={(event) => setTaskEscalationDescription(event.target.value)} /></label><label>Severity<select value={taskEscalationSeverity} onChange={(event) => setTaskEscalationSeverity(event.target.value)}>{["LOW", "MODERATE", "HIGH", "URGENT"].map((value) => <option key={value}>{value}</option>)}</select></label><label>Priority<select value={taskEscalationPriority} onChange={(event) => setTaskEscalationPriority(event.target.value)}>{["LOW", "NORMAL", "HIGH", "URGENT"].map((value) => <option key={value}>{value}</option>)}</select></label><label>Due at<input type="datetime-local" required value={taskEscalationDueAt} onChange={(event) => setTaskEscalationDueAt(event.target.value)} /></label><button className="button button-primary" disabled={busy}>Create escalation</button><button className="button button-secondary" type="button" disabled={busy} onClick={() => setShowTaskEscalation(false)}>Cancel</button></form>}</section>}

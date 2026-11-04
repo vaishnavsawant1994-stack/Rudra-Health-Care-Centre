@@ -41,6 +41,19 @@ describe("assigned escalation detail access", () => {
     expect(getDb).not.toHaveBeenCalled();
   });
 
+  it("requires a due time when reopening a resolved escalation", async () => {
+    const id = "11111111-1111-4111-8111-111111111111";
+    const response = await PATCH(new Request(`http://localhost/api/escalations/${id}`, {
+      method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": "44444444-4444-4444-8444-444444444444" },
+      body: JSON.stringify({ action: "REOPEN", expectedVersion: 2, reason: "Synthetic reopening reason" }),
+    }), { params: Promise.resolve({ id }) });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: "invalid_escalation_action" });
+    expect(getApiAccess).not.toHaveBeenCalled();
+    expect(getDb).not.toHaveBeenCalled();
+  });
+
   it("rechecks the requested action permission before returning an idempotent replay", async () => {
     const centreId = "22222222-2222-4222-8222-222222222222";
     const escalationId = "11111111-1111-4111-8111-111111111111";

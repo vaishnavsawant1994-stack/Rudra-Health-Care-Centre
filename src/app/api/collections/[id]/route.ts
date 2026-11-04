@@ -37,29 +37,27 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   const parsed = collectionJobActionSchema.safeParse(body); if (!parsed.success) return Response.json({ error: "invalid_collection_action", fields: parsed.error.issues.map((issue) => issue.path.join(".")) }, { status: 400 });
   const permission = parsed.data.action === "assign" || parsed.data.action === "cancel" ? "collections.assign" : parsed.data.action === "complete" ? "samples.collect" : "collections.visit.record";
   const rawIdempotencyKey = request.headers.get("idempotency-key");
-  if (parsed.data.action === "assign" && !idSchema.safeParse(rawIdempotencyKey).success) return Response.json({ error: "idempotency_key_required" }, { status: 400 });
-  const mutationIdempotencyKey = parsed.data.action === "assign" ? `collection:assign:${id}:${rawIdempotencyKey}` : null;
-  const legacyMutationRequestHash = mutationIdempotencyKey ? createHash("sha256").update(JSON.stringify(parsed.data)).digest("hex") : null;
+  if (!idSchema.safeParse(rawIdempotencyKey).success) return Response.json({ error: "idempotency_key_required" }, { status: 400 });
+  const mutationIdempotencyKey = parsed.data.action === "assign" ? `collection:assign:${id}:${rawIdempotencyKey}` : `collection:${parsed.data.action}:${id}:${rawIdempotencyKey}`;
+  const legacyMutationRequestHash = parsed.data.action === "assign" ? createHash("sha256").update(JSON.stringify(parsed.data)).digest("hex") : null;
   const base = await getApiAccess(permission); if (base.response) return base.response;
   const db = getDb(); const [initial] = await db.select({ organizationId: collectionJobs.organizationId, centreId: collectionJobs.centreId, assignedStaffId: collectionJobs.assignedStaffId }).from(collectionJobs).where(and(eq(collectionJobs.id, id), eq(collectionJobs.organizationId, base.staff.organizationId))).limit(1);
   if (!initial) return Response.json({ error: "not_found" }, { status: 404 });
-  const mutationFingerprintContext = mutationIdempotencyKey ? operationalContext({ organizationId: initial.organizationId, centreId: initial.centreId, recordId: `${id}:${rawIdempotencyKey}` }, "collection-assignment-idempotency") : null;
-  const mutationRequestHash = mutationIdempotencyKey && mutationFingerprintContext ? fingerprintOperationalRequest(parsed.data, mutationFingerprintContext) : null;
+  const mutationFingerprintContext = operationalContext({ organizationId: initial.organizationId, centreId: initial.centreId, recordId: `${id}:${rawIdempotencyKey}` }, parsed.data.action === "assign" ? "collection-assignment-idempotency" : "collection-action-idempotency");
+  const mutationRequestHash = fingerprintOperationalRequest(parsed.data, mutationFingerprintContext);
   const access = await getApiAccess(permission, initial.centreId); if (access.response) return access.response;
   if (["collections.visit.record", "samples.collect"].includes(permission) && !isAssignedCollector(access.staff.staffUserId, initial.assignedStaffId, access.staff.grants, initial.centreId)) return Response.json({ error: "forbidden" }, { status: 403 });
   try {
     const result = await db.transaction(async (tx) => {
       const [job] = await tx.select().from(collectionJobs).where(and(eq(collectionJobs.id, id), eq(collectionJobs.organizationId, access.staff.organizationId), eq(collectionJobs.centreId, initial.centreId))).for("update").limit(1);
       if (!job) throw new Error("not_found");
-      if (mutationIdempotencyKey && mutationRequestHash) {
-        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${job.organizationId}:${mutationIdempotencyKey}`}, 0))`);
-        const [prior] = await tx.select({ entityType: auditEvents.entityType, entityId: auditEvents.entityId, actorStaffId: auditEvents.actorStaffId, details: auditEvents.details }).from(auditEvents)
-          .where(and(eq(auditEvents.organizationId, job.organizationId), sql`${auditEvents.details}->>'mutationIdempotencyKey' = ${mutationIdempotencyKey}`)).limit(1);
-        if (prior) {
-          const details = prior.details as Record<string, unknown>;
-          if (prior.entityType !== "collection_job" || prior.entityId !== id || prior.actorStaffId !== access.staff.staffUserId || typeof details.mutationRequestHash !== "string" || !((mutationFingerprintContext && verifyOperationalRequestFingerprint(parsed.data, details.mutationRequestHash, mutationFingerprintContext)) || details.mutationRequestHash === legacyMutationRequestHash)) throw new Error("idempotency_conflict");
-          return { id: job.id, status: job.status, versionNumber: job.versionNumber, replayed: true };
-        }
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${job.organizationId}:${mutationIdempotencyKey}`}, 0))`);
+      const [prior] = await tx.select({ entityType: auditEvents.entityType, entityId: auditEvents.entityId, actorStaffId: auditEvents.actorStaffId, details: auditEvents.details }).from(auditEvents)
+        .where(and(eq(auditEvents.organizationId, job.organizationId), sql`${auditEvents.details}->>'mutationIdempotencyKey' = ${mutationIdempotencyKey}`)).limit(1);
+      if (prior) {
+        const details = prior.details as Record<string, unknown>;
+        if (prior.entityType !== "collection_job" || prior.entityId !== id || prior.actorStaffId !== access.staff.staffUserId || typeof details.mutationRequestHash !== "string" || !(verifyOperationalRequestFingerprint(parsed.data, details.mutationRequestHash, mutationFingerprintContext) || (legacyMutationRequestHash !== null && details.mutationRequestHash === legacyMutationRequestHash))) throw new Error("idempotency_conflict");
+        return { id: job.id, status: job.status, versionNumber: job.versionNumber, replayed: true };
       }
       if (job.versionNumber !== parsed.data.expectedVersion) throw new Error("version_conflict");
       if (parsed.data.action === "assign") {
@@ -72,7 +70,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         if (conflict || appointmentConflict) throw new Error("staff_schedule_conflict");
         const was = job.assignedStaffId; const updated = await tx.update(collectionJobs).set({ assignedStaffId: collector.id, status: "ASSIGNED", versionNumber: job.versionNumber + 1, updatedAt: new Date() }).where(and(eq(collectionJobs.id, id), eq(collectionJobs.versionNumber, job.versionNumber))).returning({ id: collectionJobs.id, status: collectionJobs.status, versionNumber: collectionJobs.versionNumber });
         const eventId=randomUUID();await tx.insert(collectionJobEvents).values({ id:eventId,organizationId: job.organizationId, centreId: job.centreId, jobId: id, eventType: was ? "REASSIGNED" : "ASSIGNED", source: "STAFF",privateDataCiphertext:encryptOperationalData({reason:parsed.data.reason,evidenceReference:null},operationalContext({organizationId:job.organizationId,centreId:job.centreId,recordId:eventId},"collection-job-event")), staffId: collector.id, previousStaffId: was, actorStaffId: access.staff.staffUserId });
-        await appendAuditEvent(tx, { organizationId: job.organizationId, centreId: job.centreId, actorStaffId: access.staff.staffUserId, action: "collection_job.assigned", entityType: "collection_job", entityId: id, details: { reassigned: Boolean(was), ...(mutationIdempotencyKey && mutationRequestHash ? { mutationIdempotencyKey, mutationRequestHash } : {}) } }); return { ...updated[0], replayed: false };
+        await appendAuditEvent(tx, { organizationId: job.organizationId, centreId: job.centreId, actorStaffId: access.staff.staffUserId, action: "collection_job.assigned", entityType: "collection_job", entityId: id, details: { reassigned: Boolean(was), mutationIdempotencyKey, mutationRequestHash } }); return { ...updated[0], replayed: false };
       }
       let eventType: string; let nextStatus = job.status;
       if (parsed.data.action === "start") { if (job.status !== "ASSIGNED") throw new Error("invalid_transition"); eventType = "VISIT_STARTED"; nextStatus = "IN_PROGRESS"; }
@@ -82,7 +80,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       else { if (["COLLECTED", "CANCELLED"].includes(job.status)) throw new Error("job_closed"); eventType = "CANCELLED"; nextStatus = "CANCELLED"; }
       const updated = await tx.update(collectionJobs).set({ status: nextStatus, versionNumber: job.versionNumber + 1, updatedAt: new Date() }).where(and(eq(collectionJobs.id, id), eq(collectionJobs.versionNumber, job.versionNumber))).returning({ id: collectionJobs.id, status: collectionJobs.status, versionNumber: collectionJobs.versionNumber });
       const eventId=randomUUID();const evidenceReference=parsed.data.action === "arrive" ? parsed.data.evidenceReference : null;await tx.insert(collectionJobEvents).values({ id:eventId,organizationId: job.organizationId, centreId: job.centreId, jobId: id, eventType, source: "STAFF",privateDataCiphertext:encryptOperationalData({reason:parsed.data.reason,evidenceReference},operationalContext({organizationId:job.organizationId,centreId:job.centreId,recordId:eventId},"collection-job-event")), actorStaffId: access.staff.staffUserId });
-      await appendAuditEvent(tx, { organizationId: job.organizationId, centreId: job.centreId, actorStaffId: access.staff.staffUserId, action: `collection_job.${parsed.data.action}`, entityType: "collection_job", entityId: id, details: { status: nextStatus } }); return { ...updated[0], replayed: false };
+      await appendAuditEvent(tx, { organizationId: job.organizationId, centreId: job.centreId, actorStaffId: access.staff.staffUserId, action: `collection_job.${parsed.data.action}`, entityType: "collection_job", entityId: id, details: { status: nextStatus, mutationIdempotencyKey, mutationRequestHash } }); return { ...updated[0], replayed: false };
     });
     return Response.json({ job: result, replayed: result.replayed });
   } catch (error) {

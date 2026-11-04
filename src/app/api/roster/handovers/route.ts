@@ -2,12 +2,13 @@ import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db/client";
-import { permissions, rolePermissions, roles, staffRoleAssignments, staffShiftHandoverEvents, staffShiftHandovers, staffShifts, staffUsers } from "@/db/schema";
+import { appointments, collectionJobs, permissions, rolePermissions, roles, staffRoleAssignments, staffShiftHandoverEvents, staffShiftHandovers, staffShifts, staffTasks, staffUsers } from "@/db/schema";
 import { appendAuditEvent } from "@/server/audit";
 import { getApiAccess } from "@/server/access";
 import { csrfRejected, isSameOriginRequest } from "@/server/csrf";
 import { decryptOperationalData, encryptOperationalData, operationalContext } from "@/server/operational-crypto";
 import { handoverCreateFingerprint, legacyHandoverCreateFingerprint, sameHandoverPrivateNote } from "@/server/staff-roster-idempotency";
+import { filterHandoverWorkSnapshot, readableHandoverCategories, type HandoverWorkCategory, type HandoverWorkSnapshot } from "@/server/shift-handover-workload";
 
 const uuid = z.uuid();
 const HANDOVER_PAGE_SIZE = 50;
@@ -42,7 +43,15 @@ export async function GET(request: Request) {
   const hasMore = pageRows.length > HANDOVER_PAGE_SIZE;
   const rows = pageRows.slice(0, HANDOVER_PAGE_SIZE);
   const events = rows.length ? await db.select().from(staffShiftHandoverEvents).where(and(eq(staffShiftHandoverEvents.organizationId, staff.organizationId), eq(staffShiftHandoverEvents.centreId, centreId), inArray(staffShiftHandoverEvents.handoverId, rows.map((row) => row.id)))).orderBy(asc(staffShiftHandoverEvents.recordedAt), asc(staffShiftHandoverEvents.id)) : [];
-  const handovers = rows.map((row) => ({ id: row.id, centreId: row.centreId, outgoingShiftId: row.outgoingShiftId, outgoingStaffId: row.outgoingStaffId, incomingStaffId: row.incomingStaffId, status: row.status, versionNumber: row.versionNumber, acknowledgedByStaffId: row.acknowledgedByStaffId, acknowledgedAt: row.acknowledgedAt, createdAt: row.createdAt, ...decryptOperationalData<{ handoverNote: string }>(row.privateDataCiphertext, handoverContext(row.organizationId, row.centreId, row.id)), history: events.filter((event) => event.handoverId === row.id).map((event) => ({ id: event.id, eventType: event.eventType, actorStaffId: event.actorStaffId, recordedAt: event.recordedAt, ...decryptOperationalData<Record<string, string>>(event.privateDataCiphertext, handoverContext(event.organizationId, event.centreId, event.id, "staff-shift-handover-event")) })) }));
+  const handovers = rows.map((row) => {
+    const privateData = decryptOperationalData<{ handoverNote: string; pendingWorkSnapshot?: HandoverWorkSnapshot }>(row.privateDataCiphertext, handoverContext(row.organizationId, row.centreId, row.id));
+    return {
+      id: row.id, centreId: row.centreId, outgoingShiftId: row.outgoingShiftId, outgoingStaffId: row.outgoingStaffId, incomingStaffId: row.incomingStaffId, status: row.status, versionNumber: row.versionNumber, acknowledgedByStaffId: row.acknowledgedByStaffId, acknowledgedAt: row.acknowledgedAt, createdAt: row.createdAt,
+      handoverNote: privateData.handoverNote,
+      pendingWorkSnapshot: filterHandoverWorkSnapshot(privateData.pendingWorkSnapshot, staff.grants, row.centreId),
+      history: events.filter((event) => event.handoverId === row.id).map((event) => ({ id: event.id, eventType: event.eventType, actorStaffId: event.actorStaffId, recordedAt: event.recordedAt, ...decryptOperationalData<Record<string, string>>(event.privateDataCiphertext, handoverContext(event.organizationId, event.centreId, event.id, "staff-shift-handover-event")) })),
+    };
+  });
   return Response.json({ handovers, page, pageSize: HANDOVER_PAGE_SIZE, hasMore, shifts, incomingStaff, canManage: manager });
 }
 
@@ -80,7 +89,32 @@ export async function POST(request: Request) {
         .where(and(eq(staffUsers.id, parsed.data.incomingStaffId), eq(staffUsers.organizationId, staff.organizationId), eq(staffUsers.status, "ACTIVE"), or(eq(staffRoleAssignments.centreId, parsed.data.centreId), isNull(staffRoleAssignments.centreId)))).limit(1);
       if (!incoming) throw new Error("incoming_staff_unavailable");
       const id = randomUUID();
-      await tx.insert(staffShiftHandovers).values({ id, organizationId: staff.organizationId, centreId: parsed.data.centreId, outgoingShiftId: shift.id, outgoingStaffId: shift.staffId, incomingStaffId: parsed.data.incomingStaffId, privateDataCiphertext: encryptOperationalData({ handoverNote: parsed.data.handoverNote }, handoverContext(staff.organizationId, parsed.data.centreId, id)), idempotencyKey: key!, requestHash, createdByStaffId: staff.staffUserId });
+      const readableCategories = readableHandoverCategories(staff.grants, parsed.data.centreId);
+      const categories: HandoverWorkSnapshot["categories"] = {};
+      const openStatuses: Record<HandoverWorkCategory, string[]> = {
+        appointments: ["REQUESTED", "CONFIRMED", "ASSIGNED", "RESCHEDULED"],
+        collections: ["PENDING_ASSIGNMENT", "ASSIGNED", "IN_PROGRESS", "UNSUCCESSFUL"],
+        tasks: ["OPEN", "IN_PROGRESS", "AWAITING_APPROVAL"],
+      };
+      for (const category of readableCategories) {
+        let count: number;
+        if (category === "appointments") {
+          const [result] = await tx.select({ count: sql<number>`count(*)::int` }).from(appointments)
+            .where(and(eq(appointments.organizationId, staff.organizationId), eq(appointments.centreId, parsed.data.centreId), inArray(appointments.status, openStatuses.appointments)));
+          count = Number(result?.count ?? 0);
+        } else if (category === "collections") {
+          const [result] = await tx.select({ count: sql<number>`count(*)::int` }).from(collectionJobs)
+            .where(and(eq(collectionJobs.organizationId, staff.organizationId), eq(collectionJobs.centreId, parsed.data.centreId), inArray(collectionJobs.status, openStatuses.collections)));
+          count = Number(result?.count ?? 0);
+        } else {
+          const [result] = await tx.select({ count: sql<number>`count(*)::int` }).from(staffTasks)
+            .where(and(eq(staffTasks.organizationId, staff.organizationId), eq(staffTasks.centreId, parsed.data.centreId), inArray(staffTasks.status, openStatuses.tasks)));
+          count = Number(result?.count ?? 0);
+        }
+        categories[category] = { count };
+      }
+      const pendingWorkSnapshot: HandoverWorkSnapshot = { capturedAt: new Date().toISOString(), categories };
+      await tx.insert(staffShiftHandovers).values({ id, organizationId: staff.organizationId, centreId: parsed.data.centreId, outgoingShiftId: shift.id, outgoingStaffId: shift.staffId, incomingStaffId: parsed.data.incomingStaffId, privateDataCiphertext: encryptOperationalData({ handoverNote: parsed.data.handoverNote, pendingWorkSnapshot }, handoverContext(staff.organizationId, parsed.data.centreId, id)), idempotencyKey: key!, requestHash, createdByStaffId: staff.staffUserId });
       const eventId = randomUUID();
       await tx.insert(staffShiftHandoverEvents).values({ id: eventId, organizationId: staff.organizationId, centreId: parsed.data.centreId, handoverId: id, eventType: "PREPARED", privateDataCiphertext: encryptOperationalData({ note: "Handover prepared for incoming staff acknowledgment." }, handoverContext(staff.organizationId, parsed.data.centreId, eventId, "staff-shift-handover-event")), actorStaffId: staff.staffUserId });
       await appendAuditEvent(tx, { organizationId: staff.organizationId, centreId: parsed.data.centreId, actorStaffId: staff.staffUserId, action: "staff_shift_handover.prepared", entityType: "staff_shift_handover", entityId: id, details: { status: "PENDING" } });

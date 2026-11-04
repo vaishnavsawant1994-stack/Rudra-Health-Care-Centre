@@ -1,6 +1,7 @@
 import {beforeEach,describe,expect,it,vi} from "vitest";
-const {getApiAccess}=vi.hoisted(()=>({getApiAccess:vi.fn()}));
+const {getApiAccess,getDb}=vi.hoisted(()=>({getApiAccess:vi.fn(),getDb:vi.fn()}));
 vi.mock("@/server/access",()=>({getApiAccess}));
+vi.mock("@/db/client",()=>({getDb}));
 import { GET, POST } from "./route";
 
 describe("reports API access boundary",()=>{
@@ -10,4 +11,10 @@ describe("reports API access boundary",()=>{
   it("rejects cross-origin writes before authentication",async()=>{expect((await POST(request("https://untrusted.invalid"))).status).toBe(403);expect(getApiAccess).not.toHaveBeenCalled();});
   it("requires idempotency and rejects signed-out or MFA-incomplete staff",async()=>{expect((await POST(request("http://localhost",""))).status).toBe(400);getApiAccess.mockResolvedValueOnce({staff:null,response:Response.json({error:"authentication_required"},{status:401})});expect((await POST(request())).status).toBe(401);getApiAccess.mockResolvedValueOnce({staff:null,response:Response.json({error:"mfa_setup_required"},{status:428})});expect((await POST(request())).status).toBe(428);});
   it("rejects unauthenticated report-list and detail reads",async()=>{getApiAccess.mockResolvedValueOnce({staff:null,response:Response.json({error:"authentication_required"},{status:401})});expect((await GET(new Request("http://localhost/api/reports"))).status).toBe(401);});
+  it("marks the authorized report directory private and non-cacheable",async()=>{
+    getApiAccess.mockResolvedValueOnce({staff:{organizationId:"org-synthetic",staffUserId:"staff-synthetic",grants:[{key:"reports.read",centreId:null}]},response:null});
+    const execute=vi.fn().mockResolvedValue({rows:[]});getDb.mockReturnValue({execute});
+    const response=await GET(new Request("http://localhost/api/reports"));
+    expect(response.status).toBe(200);expect(response.headers.get("cache-control")).toBe("private, no-store");expect(execute).toHaveBeenCalledTimes(2);
+  });
 });

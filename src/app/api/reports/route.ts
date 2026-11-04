@@ -45,7 +45,7 @@ export async function GET(request:Request) {
   const scopedOrderCentres=orderScope.filter((x):x is string[]=>x!==null);
   const authorizedOrderCentres=scopedOrderCentres.length?scopedOrderCentres.reduce((a,b)=>a.filter(v=>b.includes(v))):null;
   const orderResult=canRegister?await db.execute(sql`SELECT o.id,o.order_number AS "orderNumber",o.centre_id AS "centreId",p.patient_number AS "patientNumber" FROM diagnostic_orders o JOIN patients p ON p.id=o.patient_id AND p.organization_id=o.organization_id AND p.centre_id=o.centre_id WHERE o.organization_id=${access.staff.organizationId} AND o.status='CONFIRMED' AND (${centreId?sql`o.centre_id=${centreId}`:authorizedOrderCentres?sql`o.centre_id=ANY(${authorizedOrderCentres}::uuid[])`:sql`true`}) ORDER BY o.created_at DESC LIMIT 200`):{rows:[]};
-  return Response.json({reports:reportRows,centres:(centresResult as unknown as {rows:unknown[]}).rows,confirmedOrders:(orderResult as unknown as {rows:unknown[]}).rows});
+  return Response.json({reports:reportRows,centres:(centresResult as unknown as {rows:unknown[]}).rows,confirmedOrders:(orderResult as unknown as {rows:unknown[]}).rows},{headers:{"cache-control":"private, no-store"}});
 }
 
 export async function POST(request:Request) {
@@ -117,7 +117,7 @@ export async function POST(request:Request) {
       await appendAuditEvent(tx,{organizationId:base.staff.organizationId,centreId:report.centre_id,actorStaffId:base.staff.staffUserId,action:`report.${data.action}`,entityType:"diagnostic_report",entityId:report.id,details:{status}});
       return {id:report.id,status};
     });
-    return Response.json({report:result},{status:(data.action==="register"||data.action==="supersede")&&!("replayed" in result&&result.replayed)?201:200});
+    return Response.json({report:result},{status:(data.action==="register"||data.action==="supersede")&&!("replayed" in result&&result.replayed)?201:200,headers:{"cache-control":"private, no-store"}});
   }catch(error){const code=error instanceof Error?error.message:"";const known=["forbidden","confirmed_order_required","not_found","independent_clean_document_required","clean_scanned_document_required","separate_release_approver_required","report_state_locked","report_not_on_hold","report_not_released","report_not_in_exception","delivery_evidence_required","idempotency_key_required","only_released_report_can_be_corrected","report_transition_invalid"];
     if(code==="forbidden")return Response.json({error:code},{status:403});if(code==="not_found")return Response.json({error:code},{status:404});if(known.includes(code))return Response.json({error:code},{status:409});return Response.json({error:"report_operation_unavailable"},{status:409});}
 }

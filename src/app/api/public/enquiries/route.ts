@@ -16,7 +16,9 @@ import { hasLeadCentrePermission } from "@/server/lead-policy";
 import { isAssignableStaff } from "@/server/lead-assignments";
 import { sealBusinessRelationship, sealBusinessRelationshipEvent, type BusinessRelationshipType, type BusinessRelationshipPrivateData } from "@/server/business-relationship-data";
 
-const reviewQuery = z.object({ centreId: z.uuid(), status: z.enum(["PENDING_REVIEW", "CONVERTED_TO_LEAD", "CONVERTED_TO_RELATIONSHIP", "DISMISSED"]).default("PENDING_REVIEW"), page: z.coerce.number().int().min(1).max(10000).default(1), summary: z.enum(["true"]).optional() });
+const reviewQuery = z.object({ centreId: z.uuid(), status: z.enum(["PENDING_REVIEW", "CONVERTED_TO_LEAD", "CONVERTED_TO_RELATIONSHIP", "DISMISSED"]).default("PENDING_REVIEW"), page: z.coerce.number().int().min(1).max(10000).default(1), summary: z.enum(["true"]).optional(), enquiryId: z.uuid().optional() }).superRefine((value, context) => {
+  if (value.enquiryId && (value.summary || value.page !== 1)) context.addIssue({ code: "custom", message: "Exact enquiry lookup cannot be combined with summary or pagination." });
+});
 const PUBLIC_CONTACT_SUBMISSION_LIMIT = 5;
 const PUBLIC_CONTACT_SUBMISSION_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -121,6 +123,14 @@ export async function GET(request: Request) {
   if (!parsed.success) return Response.json({ error: "invalid_filters" }, { status: 400 });
   const access = await getApiAccess("leads.read", parsed.data.centreId);
   if (access.response) return access.response;
+  if (parsed.data.enquiryId) {
+    const [row] = await getDb().select().from(publicEnquiries).where(and(eq(publicEnquiries.id, parsed.data.enquiryId), eq(publicEnquiries.organizationId, access.staff.organizationId), eq(publicEnquiries.centreId, parsed.data.centreId))).limit(1);
+    if (!row) return Response.json({ enquiries: [], page: 1, pageSize: 1, hasMore: false }, { headers: { "Cache-Control": "private, no-store" } });
+    try {
+      const data = decryptLeadValue<PublicEnquiryPayload>("private-data", row.privateDataCiphertext, publicEnquiryContext({ organizationId: row.organizationId, centreId: row.centreId, id: row.id }));
+      return Response.json({ enquiries: [{ id: row.id, reference: row.enquiryNumber, status: row.status, version: row.versionNumber, centreId: row.centreId, createdAt: row.createdAt, resultingLeadId: row.resultingLeadId, ...data }], page: 1, pageSize: 1, hasMore: false }, { headers: { "Cache-Control": "private, no-store" } });
+    } catch { return Response.json({ error: "enquiry_data_unavailable" }, { status: 503, headers: { "Cache-Control": "private, no-store" } }); }
+  }
   if (parsed.data.summary === "true") {
     const rows = await getDb().select({ id: publicEnquiries.id, reference: publicEnquiries.enquiryNumber, status: publicEnquiries.status, centreId: publicEnquiries.centreId, createdAt: publicEnquiries.createdAt })
       .from(publicEnquiries).where(and(eq(publicEnquiries.organizationId, access.staff.organizationId), eq(publicEnquiries.centreId, parsed.data.centreId), eq(publicEnquiries.status, parsed.data.status)))

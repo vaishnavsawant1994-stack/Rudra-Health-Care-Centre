@@ -17,5 +17,5 @@ export async function POST(request:Request){
   const extra=data.data.kind==="patient"?sql`r.patient_id=${data.data.recordId}`:data.data.kind==="order"?sql`r.order_id=${data.data.recordId}`:sql`r.order_id IN(SELECT id FROM diagnostic_orders WHERE appointment_id=${data.data.recordId} AND organization_id=${base.staff.organizationId} AND centre_id=${scope.centre_id})`;
   const result=await db.execute(sql`SELECT r.id,r.organization_id AS "organizationId",r.centre_id AS "centreId",r.private_data_ciphertext AS "privateDataCiphertext",r.report_number AS "reportNumber",r.status,r.version_number AS "versionNumber",r.created_at AS "createdAt" FROM diagnostic_reports r WHERE r.organization_id=${base.staff.organizationId} AND r.centre_id=${scope.centre_id} AND ${extra} ORDER BY r.created_at DESC`);
   const reports=(result as unknown as {rows:Array<Record<string,unknown>&{id:string;organizationId:string;centreId:string;privateDataCiphertext:string}>}).rows.map(({privateDataCiphertext,...row})=>({...row,externalReference:decryptFinanceReportPrivateData<{externalReference:string|null}>("report-private",privateDataCiphertext,{organizationId:row.organizationId,centreId:row.centreId,recordId:row.id}).externalReference}));
-  return Response.json({reports});
+  return Response.json({reports},{headers:{"cache-control":"private, no-store"}});
 }

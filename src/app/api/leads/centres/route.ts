@@ -13,6 +13,6 @@ export async function GET(request: Request) {
   if (scope !== null && !scope.length) return Response.json({ centres: [] });
   const conditions = [eq(centres.organizationId, access.staff.organizationId), eq(centres.status, "ACTIVE")];
   if (scope !== null) conditions.push(inArray(centres.id, scope));
-  const result = await getDb().select({ id: centres.id, code: centres.code, name: centres.name }).from(centres).where(and(...conditions));
+  const result = await getDb().select({ id: centres.id, code: centres.code, name: centres.name, timeZone: centres.timeZone }).from(centres).where(and(...conditions));
   return Response.json({ centres: result });
 }

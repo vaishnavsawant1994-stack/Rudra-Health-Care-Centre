@@ -6,7 +6,7 @@ import { auditEvents, centres, permissions, rolePermissions, roles, staffApprova
 import { appendAuditEvent } from "@/server/audit";
 import { getApiAccess } from "@/server/access";
 import { csrfRejected, isSameOriginRequest } from "@/server/csrf";
-import { approvalPolicyCentreScope, approvalPolicyScopeAllowed, buildApprovalPolicyDirectory } from "@/server/staff-approval-policy";
+import { approvalPolicyCentreScope, approvalPolicyScopeAllowed, buildApprovalPolicyDirectory, filterTaskApproversWithReadAccess } from "@/server/staff-approval-policy";
 
 const uuid = z.uuid();
 const policyIdempotencyKeySchema = z.uuid();
@@ -17,18 +17,19 @@ const policyInput = z.object({
 }).superRefine((value, ctx) => {
   if (new Set(value.approverStaffIds).size !== value.approverStaffIds.length) ctx.addIssue({ code: "custom", path: ["approverStaffIds"], message: "Approver selections must be unique." });
   if ((value.escalationAfterMinutes === null) !== (value.escalationOwnerStaffId === null)) ctx.addIssue({ code: "custom", path: ["escalationOwnerStaffId"], message: "Escalation time and owner must be configured together." });
+  if (value.escalationAfterMinutes !== null && value.expireAfterMinutes !== null && value.expireAfterMinutes <= value.escalationAfterMinutes) ctx.addIssue({ code: "custom", path: ["expireAfterMinutes"], message: "Approval expiry must be later than the escalation time." });
   if (value.escalationOwnerStaffId && value.approverStaffIds.length && !value.approverStaffIds.includes(value.escalationOwnerStaffId)) ctx.addIssue({ code: "custom", path: ["escalationOwnerStaffId"], message: "Escalation owner must be in the selected approver list." });
 });
 
 async function eligibleApprovers(organizationId: string, centreId: string | null) {
-  const rows = await getDb().selectDistinct({ id: staffUsers.id, displayName: staffUsers.displayName, staffCode: staffUsers.staffCode })
+  const rows = await getDb().selectDistinct({ id: staffUsers.id, displayName: staffUsers.displayName, staffCode: staffUsers.staffCode, permissionKey: permissions.key })
     .from(staffUsers)
     .innerJoin(staffRoleAssignments, and(eq(staffRoleAssignments.staffUserId, staffUsers.id), eq(staffRoleAssignments.organizationId, staffUsers.organizationId), isNull(staffRoleAssignments.revokedAt)))
     .innerJoin(roles, eq(roles.id, staffRoleAssignments.roleId))
     .innerJoin(rolePermissions, eq(rolePermissions.roleId, roles.id))
-    .innerJoin(permissions, and(eq(permissions.id, rolePermissions.permissionId), eq(permissions.key, "tasks.approve")))
+    .innerJoin(permissions, and(eq(permissions.id, rolePermissions.permissionId), inArray(permissions.key, ["tasks.approve", "tasks.read"])))
     .where(and(eq(staffUsers.organizationId, organizationId), eq(staffUsers.status, "ACTIVE"), centreId ? or(eq(staffRoleAssignments.centreId, centreId), isNull(staffRoleAssignments.centreId)) : isNull(staffRoleAssignments.centreId)));
-  return rows;
+  return filterTaskApproversWithReadAccess(rows);
 }
 
 export async function GET(request: Request) {
@@ -104,7 +105,7 @@ export async function GET(request: Request) {
   const approvers = policy ? await getDb().select({ staffId: staffApprovalPolicyApprovers.staffId }).from(staffApprovalPolicyApprovers).where(and(eq(staffApprovalPolicyApprovers.organizationId, access.staff.organizationId), eq(staffApprovalPolicyApprovers.policyId, policy.id))) : [];
   return Response.json({ policy: policy ? { id: policy.id, centreId: policy.centreId, actionType: policy.actionType, enabled: policy.enabled, approverPermission: policy.approverPermission, approverStaffIds: approvers.map((item) => item.staffId), escalationAfterMinutes: policy.escalationAfterMinutes, escalationOwnerStaffId: policy.escalationOwnerStaffId, expireAfterMinutes: policy.expireAfterMinutes, versionNumber: policy.versionNumber } : null,
     effectivePolicy: centreId ? { source: policy ? "CENTRE" : inheritedPolicy ? "ORGANIZATION" : "NONE", enabled: (policy ?? inheritedPolicy)?.enabled ?? false } : undefined,
-    eligibleApprovers: await eligibleApprovers(access.staff.organizationId, centreId) });
+    eligibleApprovers: (await eligibleApprovers(access.staff.organizationId, centreId)).map(({ permissionKey: _permissionKey, ...row }) => row) });
 }
 
 export async function PUT(request: Request) {
@@ -155,15 +156,15 @@ export async function PUT(request: Request) {
       // Recheck and lock the current authorization rows inside the policy
       // transaction. The earlier query gives fast feedback, but cannot be the
       // authority if a role or centre assignment changes before this commit.
-      const eligibleAtCommitRows = await tx.select({ id: staffUsers.id })
+      const eligibleAtCommitRows = await tx.select({ id: staffUsers.id, permissionKey: permissions.key })
         .from(staffUsers)
         .innerJoin(staffRoleAssignments, and(eq(staffRoleAssignments.staffUserId, staffUsers.id), eq(staffRoleAssignments.organizationId, staffUsers.organizationId), isNull(staffRoleAssignments.revokedAt)))
         .innerJoin(roles, eq(roles.id, staffRoleAssignments.roleId))
         .innerJoin(rolePermissions, eq(rolePermissions.roleId, roles.id))
-        .innerJoin(permissions, and(eq(permissions.id, rolePermissions.permissionId), eq(permissions.key, "tasks.approve")))
+        .innerJoin(permissions, and(eq(permissions.id, rolePermissions.permissionId), inArray(permissions.key, ["tasks.approve", "tasks.read"])))
         .where(and(eq(staffUsers.organizationId, orgId), eq(staffUsers.status, "ACTIVE"), input.centreId ? or(eq(staffRoleAssignments.centreId, input.centreId), isNull(staffRoleAssignments.centreId)) : isNull(staffRoleAssignments.centreId)))
         .for("share");
-      const eligibleAtCommit = new Set(eligibleAtCommitRows.map((row) => row.id));
+      const eligibleAtCommit = new Set(filterTaskApproversWithReadAccess(eligibleAtCommitRows).map((row) => row.id));
       if (input.approverStaffIds.some((staffId) => !eligibleAtCommit.has(staffId)) || (input.escalationOwnerStaffId && !eligibleAtCommit.has(input.escalationOwnerStaffId))) throw new Error("approver_not_eligible");
       if (input.enabled && !input.approverStaffIds.length && eligibleAtCommit.size === 0) throw new Error("approver_required");
       const policyId = existing?.id ?? crypto.randomUUID();

@@ -71,13 +71,18 @@ export function ApprovalPolicyWorkbench({ sessionStaffId }: { sessionStaffId: st
   }, [centreId, historyBefore, policy?.versionNumber]);
 
   async function save(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setBusy(true); setMessage("Saving policy…");
+    event.preventDefault();
     const minutes = escalationMinutes.trim() ? Number(escalationMinutes) : null;
+    const expiry = expiryMinutes.trim() ? Number(expiryMinutes) : null;
+    if (minutes !== null && expiry !== null && expiry <= minutes) {
+      setMessage("Approval expiry must be later than escalation so the escalation can run.");
+      return;
+    }
+    setBusy(true); setMessage("Saving policy…");
     const scopeKey = `${sessionStaffId}:${centreId || "organization"}`;
     const attempt = saveAttempts.current.get(scopeKey) ?? new IdempotencyAttempt(`rudra:approval-policy:${scopeKey}`);
     saveAttempts.current.set(scopeKey, attempt);
     try {
-      const expiry = expiryMinutes.trim() ? Number(expiryMinutes) : null;
       const payload = JSON.stringify({ centreId: centreId || null, actionType: "TASK_COMPLETION", enabled, approverStaffIds: approverIds, escalationAfterMinutes: minutes, escalationOwnerStaffId: minutes === null ? null : escalationOwner || null, expireAfterMinutes: expiry, expectedVersion: policy?.versionNumber ?? 0 });
       const response = await fetch("/api/tasks/policy", { method: "PUT", headers: { "content-type": "application/json", "idempotency-key": await attempt.keyFor(payload) }, body: payload });
       const data = await read<{ policy?: Policy & { replayed?: boolean }; error?: string }>(response);

@@ -155,6 +155,40 @@ describe("escalation action replay authorization PostgreSQL integration", () => 
     expect(body.history[0]).toMatchObject({ eventType: "COMMENTED", comment });
   });
 
+  it("reopens a resolved escalation with a new future deadline and records that deadline in history", async () => {
+    const reopenedId = randomUUID();
+    const reopenedKey = randomUUID();
+    const nextDueAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+    const ciphertext = encryptOperationalData(
+      { title: "Synthetic resolved escalation", description: "Synthetic escalation for reopen qualification" },
+      operationalContext({ organizationId, centreId, recordId: reopenedId }, "staff-escalation"),
+    );
+    await pool!.query(
+      "INSERT INTO staff_escalations(id,organization_id,centre_id,escalation_number,source_type,source_id,private_data_ciphertext,severity,priority,status,assigned_owner_staff_id,created_by_staff_id,resolved_by_staff_id,resolved_at,due_at,idempotency_key,request_hash,version_number) VALUES($1,$2,$3,$4,'LEAD',$5,$6,'HIGH','NORMAL','RESOLVED',$7,$7,$7,now()-interval '1 hour',now()-interval '30 minutes',$8,$9,3)",
+      [reopenedId, organizationId, centreId, `RHC-E-REOPEN-${reopenedId.slice(0, 8)}`, randomUUID(), ciphertext, staffUserId, randomUUID(), "f".repeat(64)],
+    );
+    mocks.getApiAccess.mockImplementation(async (permission: string) => ["escalations.read", "escalations.manage"].includes(permission)
+      ? { staff: { organizationId, staffUserId, grants: [{ key: "escalations.read", centreId }, { key: "escalations.manage", centreId }] }, response: null }
+      : { staff: null, response: Response.json({ error: "forbidden" }, { status: 403 }) });
+
+    const response = await patch(new Request(`http://localhost/api/escalations/${reopenedId}`, {
+      method: "PATCH",
+      headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": reopenedKey },
+      body: JSON.stringify({ action: "REOPEN", expectedVersion: 3, dueAt: nextDueAt.toISOString(), reason: "Synthetic follow-up deadline" }),
+    }), { params: Promise.resolve({ id: reopenedId }) });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ escalation: { id: reopenedId, status: "OPEN", versionNumber: 4, replayed: false } });
+    const reopened = await pool!.query("SELECT status,version_number,due_at,resolved_at FROM staff_escalations WHERE id=$1 AND organization_id=$2", [reopenedId, organizationId]);
+    expect(reopened.rows[0]).toMatchObject({ status: "OPEN", version_number: 4, resolved_at: null });
+    expect(new Date(reopened.rows[0].due_at).getTime()).toBe(nextDueAt.getTime());
+    const event = await pool!.query("SELECT id,event_type,private_data_ciphertext FROM staff_escalation_events WHERE escalation_id=$1 AND idempotency_key=$2", [reopenedId, reopenedKey]);
+    expect(event.rows).toHaveLength(1);
+    expect(event.rows[0].event_type).toBe("REOPENED");
+    const eventData = decryptOperationalData<Record<string, unknown>>(event.rows[0].private_data_ciphertext, operationalContext({ organizationId, centreId, recordId: event.rows[0].id }, "staff-escalation-event"));
+    expect(eventData).toMatchObject({ reason: "Synthetic follow-up deadline", dueAt: nextDueAt.toISOString(), result: { status: "OPEN", versionNumber: 4 } });
+  });
+
   it("denies PostgreSQL duplicate-suppression replay after escalation centre access is lost", async () => {
     const sourceId = randomUUID(); const sourceEscalationId = randomUUID(); const sourceEventId = randomUUID();
     const requestKey = randomUUID();

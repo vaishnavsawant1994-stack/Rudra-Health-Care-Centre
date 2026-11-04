@@ -38,7 +38,7 @@ export async function POST(request:Request,context:Context){
       return {id:docId,scanStatus:scan.status,replayed:false};
     });
     if(result.replayed)await removeReportPdf(storageKey);
-    return Response.json({document:result,message:result.scanStatus==="QUARANTINED"?"Stored privately in quarantine; no preview, verification or release is allowed until a trusted malware scanner reports clean.":undefined},{status:result.replayed?200:201});
+    return Response.json({document:result,message:result.scanStatus==="QUARANTINED"?"Stored privately in quarantine; no preview, verification or release is allowed until a trusted malware scanner reports clean.":undefined},{status:result.replayed?200:201,headers:{"cache-control":"private, no-store"}});
   }catch(error){if(saved)await removeReportPdf(storageKey);const code=error instanceof Error?error.message:"";return Response.json({error:code==="forbidden"?code:code==="report_state_locked"?code:"document_upload_unavailable"},{status:code==="forbidden"?403:code==="report_state_locked"?409:503});}
 }
 

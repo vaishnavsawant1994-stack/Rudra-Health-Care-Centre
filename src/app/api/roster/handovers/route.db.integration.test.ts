@@ -5,7 +5,7 @@ import { loadProjectEnvironment } from "../../../../../scripts/load-project-env.
 import { runMigrations } from "../../../../../scripts/migrate.mjs";
 import { encryptOperationalData, operationalContext } from "@/server/operational-crypto";
 
-const mocks = vi.hoisted(() => ({ getApiAccess: vi.fn(), staffUserId: "" }));
+const mocks = vi.hoisted(() => ({ getApiAccess: vi.fn(), staffUserId: "", taskRead: false }));
 vi.mock("@/server/access", () => ({ getApiAccess: mocks.getApiAccess }));
 
 describe("staff shift handover PostgreSQL integration", () => {
@@ -49,6 +49,8 @@ describe("staff shift handover PostgreSQL integration", () => {
       handoverPermission = await pool.query("SELECT id FROM permissions WHERE key='roster.handover' LIMIT 1");
     }
     await pool.query("INSERT INTO role_permissions(role_id,permission_id) VALUES($1,$2) ON CONFLICT DO NOTHING", [roleId, handoverPermission.rows[0].id]);
+    const taskReadPermission = await pool.query("SELECT id FROM permissions WHERE key='tasks.read' LIMIT 1");
+    await pool.query("INSERT INTO role_permissions(role_id,permission_id) VALUES($1,$2) ON CONFLICT DO NOTHING", [roleId, taskReadPermission.rows[0].id]);
     unprivilegedStaffId = randomUUID();
     for (const [staffId, name, assignedRoleId] of [[outgoingStaffId, "Synthetic outgoing", roleId], [incomingStaffId, "Synthetic incoming", roleId], [outsiderStaffId, "Synthetic outsider", roleId], [unprivilegedStaffId, "Synthetic unprivileged", unprivilegedRoleId]] as const) {
       const authId = randomUUID();
@@ -59,7 +61,7 @@ describe("staff shift handover PostgreSQL integration", () => {
     await pool.query("INSERT INTO staff_shifts(id,organization_id,centre_id,staff_id,shift_type,starts_at,ends_at,time_zone,private_data_ciphertext,created_by_staff_id,idempotency_key,request_hash) VALUES($1,$2,$3,$4,'SCHEDULED',now()-interval '1 hour',now()+interval '7 hours','Asia/Kolkata','synthetic-shift-cipher',$4,$5,$6)", [outgoingShiftId, organizationId, centreId, outgoingStaffId, randomUUID(), "a".repeat(64)]);
     await pool.query("INSERT INTO staff_shifts(id,organization_id,centre_id,staff_id,shift_type,starts_at,ends_at,time_zone,private_data_ciphertext,created_by_staff_id,idempotency_key,request_hash) VALUES($1,$2,$3,$4,'SCHEDULED',now()+interval '8 hours',now()+interval '16 hours','Asia/Kolkata','synthetic-shift-cipher',$4,$5,$6)", [secondOutgoingShiftId, organizationId, centreId, outgoingStaffId, randomUUID(), "b".repeat(64)]);
     mocks.staffUserId = outgoingStaffId;
-    mocks.getApiAccess.mockImplementation(async () => ({ staff: { organizationId, staffUserId: mocks.staffUserId, grants: [{ key: "roster.handover", centreId }] }, response: null }));
+    mocks.getApiAccess.mockImplementation(async () => ({ staff: { organizationId, staffUserId: mocks.staffUserId, grants: [{ key: "roster.handover", centreId }, ...(mocks.taskRead ? [{ key: "tasks.read", centreId }] : [])] }, response: null }));
     ({ GET: get, POST: post } = await import("./route"));
     ({ PATCH: patch } = await import("./[id]/route"));
   }, 120_000);
@@ -168,6 +170,32 @@ describe("staff shift handover PostgreSQL integration", () => {
     const response = await post(createRequest({ centreId, outgoingShiftId, incomingStaffId: unprivilegedStaffId, handoverNote: "Synthetic note for an ineligible recipient." }));
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: "incoming_staff_unavailable" });
+  });
+
+  it("stores an encrypted centre-wide open-task snapshot and redacts it when current read permission is absent", async () => {
+    mocks.staffUserId = outgoingStaffId;
+    mocks.taskRead = true;
+    const shiftId = randomUUID();
+    await pool.query("INSERT INTO staff_shifts(id,organization_id,centre_id,staff_id,shift_type,starts_at,ends_at,time_zone,private_data_ciphertext,created_by_staff_id,idempotency_key,request_hash) VALUES($1,$2,$3,$4,'SCHEDULED',now()+interval '60 hours',now()+interval '68 hours','Asia/Kolkata','synthetic-shift-cipher',$4,$5,$6)", [shiftId, organizationId, centreId, outgoingStaffId, randomUUID(), "d".repeat(64)]);
+    const taskId = randomUUID();
+    const taskCiphertext = encryptOperationalData({ title: "Synthetic pending shift task", description: "Only encrypted test detail" }, operationalContext({ organizationId, centreId, recordId: taskId }, "staff-task"));
+    await pool.query("INSERT INTO staff_tasks(id,organization_id,centre_id,task_number,private_data_ciphertext,task_type,priority,status,approval_status,assigned_staff_id,created_by_staff_id,idempotency_key,request_hash) VALUES($1,$2,$3,$4,$5,'GENERAL','NORMAL','OPEN','NOT_REQUIRED',$6,$6,$7,$8)", [taskId, organizationId, centreId, `HT-${taskId.slice(0, 8)}`, taskCiphertext, outgoingStaffId, randomUUID(), "e".repeat(64)]);
+    const key = randomUUID();
+    const created = await post(createRequest({ centreId, outgoingShiftId: shiftId, incomingStaffId, handoverNote: "Synthetic open task remains for incoming staff." }, key));
+    expect(created.status).toBe(201);
+    const handoverId = (await created.json()).handover.id as string;
+    const stored = await pool.query("SELECT private_data_ciphertext FROM staff_shift_handovers WHERE id=$1", [handoverId]);
+    const privateData = (await import("@/server/operational-crypto")).decryptOperationalData<{ handoverNote: string; pendingWorkSnapshot: { capturedAt: string; categories: { tasks?: { count: number } } } }>(stored.rows[0].private_data_ciphertext, operationalContext({ organizationId, centreId, recordId: handoverId }, "staff-shift-handover"));
+    expect(privateData.pendingWorkSnapshot.categories.tasks?.count).toBe(1);
+    expect(stored.rows[0].private_data_ciphertext).not.toContain("Synthetic pending shift task");
+
+    const visible = await get(new Request(`http://localhost/api/roster/handovers?centreId=${centreId}`));
+    const visibleBody = await visible.json();
+    expect(visibleBody.handovers.find((handover: { id: string }) => handover.id === handoverId).pendingWorkSnapshot.categories.tasks.count).toBe(1);
+    mocks.taskRead = false;
+    const redacted = await get(new Request(`http://localhost/api/roster/handovers?centreId=${centreId}`));
+    const redactedBody = await redacted.json();
+    expect(redactedBody.handovers.find((handover: { id: string }) => handover.id === handoverId).pendingWorkSnapshot).toBeNull();
   });
 
   it("paginates the complete authorized handover history without overlap", async () => {

@@ -10,6 +10,7 @@ import { decryptOperationalData, encryptOperationalData, operationalContext } fr
 import { hasPermission } from "@/server/permissions";
 import { canRequestTaskApproval } from "@/server/staff-approval-policy";
 import { legacyTaskCreateFingerprint, sameTaskCreatePrivateData, taskCreateFingerprint } from "@/server/staff-task-idempotency";
+import { parseTaskAssignmentFilter } from "@/server/task-queue-filter";
 import { resolveTaskReference, type TaskReference } from "@/server/task-reference";
 import { z } from "zod";
 
@@ -39,6 +40,8 @@ export async function GET(request: Request) {
   const page = Number(pageValue);
   const centreValue = params.get("centreId") ?? undefined;
   if (centreValue && !uuid.safeParse(centreValue).success) return Response.json({ error: "invalid_centre" }, { status: 400 });
+  const assignmentFilter = parseTaskAssignmentFilter(params.get("assigned"));
+  if (!assignmentFilter) return Response.json({ error: "invalid_assignment_filter" }, { status: 400 });
   const access = await taskReadAccess(centreValue);
   if (access.response) return access.response;
   const staff = access.staff;
@@ -53,6 +56,7 @@ export async function GET(request: Request) {
     const assignedCondition = or(eq(staffTasks.assignedStaffId, staff.staffUserId), and(eq(staffTasks.escalationOwnerStaffId, staff.staffUserId), eq(staffTasks.status, "AWAITING_APPROVAL"), eq(staffTasks.approvalStatus, "PENDING"), sql`${staffTasks.escalationProcessedAt} IS NOT NULL`))!;
     conditions.push(access.supportQueue ? or(assignedCondition, eq(staffTasks.taskType, "SUPPORT_REQUEST"))! : assignedCondition);
   }
+  if (assignmentFilter === "ASSIGNED_TO_ME") conditions.push(eq(staffTasks.assignedStaffId, staff.staffUserId));
   if (access.supportOnly) conditions.push(eq(staffTasks.taskType, "SUPPORT_REQUEST"));
   const filter = params.get("status");
   const typeFilter = params.get("type");

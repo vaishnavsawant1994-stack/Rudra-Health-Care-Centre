@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const {getApiAccess}=vi.hoisted(()=>({getApiAccess:vi.fn()}));
+const {getApiAccess,getDb}=vi.hoisted(()=>({getApiAccess:vi.fn(),getDb:vi.fn()}));
 vi.mock("@/server/access",()=>({getApiAccess}));
+vi.mock("@/db/client",()=>({getDb}));
 import { GET, POST } from "./route";
 
 describe("finance API boundary",()=>{
@@ -27,5 +28,14 @@ describe("finance API boundary",()=>{
     const response=await GET(new Request("http://localhost/api/finance?centreId=not-a-uuid"));
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({error:"invalid_centre"});
+  });
+  it("marks the authorized financial overview private and non-cacheable",async()=>{
+    getApiAccess.mockResolvedValueOnce({staff:{organizationId:"org-synthetic",staffUserId:"staff-synthetic",grants:[{key:"finance.read",centreId:null}]},response:null});
+    const execute=vi.fn().mockResolvedValue({rows:[]});
+    getDb.mockReturnValue({execute});
+    const response=await GET(new Request("http://localhost/api/finance"));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(execute).toHaveBeenCalledTimes(10);
   });
 });

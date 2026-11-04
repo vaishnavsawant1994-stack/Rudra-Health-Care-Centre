@@ -48,5 +48,5 @@ export async function GET(request: Request) {
     pageSize: 25,
     hasMore: rows.length > 25,
     delivery: "DISABLED",
-  });
+  }, { headers: { "cache-control": "private, no-store" } });
 }

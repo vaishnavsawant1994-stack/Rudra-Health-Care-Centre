@@ -86,7 +86,7 @@ export async function GET(request:Request){
   const safeEvents=eventRows.slice(0,pageSize).map(({privateDataCiphertext,...row})=>({...row,...decodePrivate<{reason:string|null;evidenceReference:string|null}>("finance-event",privateDataCiphertext,{organizationId:row.organizationId,centreId:row.centreId,recordId:row.id})}));
   const pageRows=<T,>(value:unknown)=>{const result=rows<T>(value);return {items:result.slice(0,pageSize),hasMore:result.length>pageSize};};
   const chargePage=pageRows(charges),paymentPage=pageRows(payments),refundPage=pageRows(refunds),reconciliationPage=pageRows(reconciliations),orderPage=pageRows(orders),eventPage=pageRows(events);
-  return Response.json({charges:chargePage.items,payments:safePayments,refunds:safeRefunds,reconciliations:safeReconciliations,policies:rows(policies),summary:rows(summary)[0]??{},centres:rows(centres),orders:orderPage.items,events:safeEvents,pagination:{page,pageSize,hasMore:{charges:chargePage.hasMore,payments:paymentPage.hasMore,refunds:refundPage.hasMore,reconciliations:reconciliationPage.hasMore,orders:orderPage.hasMore,events:eventPage.hasMore}}});
+  return Response.json({charges:chargePage.items,payments:safePayments,refunds:safeRefunds,reconciliations:safeReconciliations,policies:rows(policies),summary:rows(summary)[0]??{},centres:rows(centres),orders:orderPage.items,events:safeEvents,pagination:{page,pageSize,hasMore:{charges:chargePage.hasMore,payments:paymentPage.hasMore,refunds:refundPage.hasMore,reconciliations:reconciliationPage.hasMore,orders:orderPage.hasMore,events:eventPage.hasMore}}}, { headers: { "cache-control": "private, no-store" } });
 }
 
 export async function POST(request:Request){
@@ -145,7 +145,7 @@ export async function POST(request:Request){
       }
       throw new Error("unsupported_action");
     });
-    return Response.json({result},{status:201});
+    return Response.json({result},{status:201,headers:{"cache-control":"private, no-store"}});
   }catch(error){const code=error instanceof Error?error.message:"";const diagnostic=error as {code?:unknown;constraint?:unknown;cause?:{code?:unknown;constraint?:unknown}};const source=error instanceof Error?error.stack?.split("\n").find(line=>/^\s+at\s/.test(line))?.trim():undefined;console.error("finance_operation_failed",{operation:parsed.data.action,errorType:error instanceof Error?error.name:typeof error,postgresCode:typeof diagnostic.code==="string"?diagnostic.code:typeof diagnostic.cause?.code==="string"?diagnostic.cause.code:undefined,constraint:typeof diagnostic.constraint==="string"?diagnostic.constraint:typeof diagnostic.cause?.constraint==="string"?diagnostic.cause.constraint:undefined,source});const exposed=["confirmed_order_required","appointment_mismatch","charge_unavailable","allocation_exceeds_balance","payment_not_found","payment_not_refundable","refund_state_conflict","separation_of_duties_required","version_or_state_conflict","reconciliation_state_conflict","amount_out_of_range"];return Response.json({error:exposed.includes(code)?code:"finance_operation_conflict"},{status:code==="forbidden"?403:exposed.includes(code)?409:400});}
 }
 

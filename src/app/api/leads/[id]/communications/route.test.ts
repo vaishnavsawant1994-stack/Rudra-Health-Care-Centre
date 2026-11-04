@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ getApiAccess: vi.fn(), getDb: vi.fn(), appendAuditEvent: vi.fn() }));
 vi.mock("@/server/access", () => ({ getApiAccess: mocks.getApiAccess }));
@@ -6,6 +6,13 @@ vi.mock("@/db/client", () => ({ getDb: mocks.getDb }));
 vi.mock("@/server/audit", () => ({ appendAuditEvent: mocks.appendAuditEvent }));
 
 import { GET, PATCH, POST } from "./route";
+import { encryptLeadValue } from "@/server/lead-crypto";
+
+const priorEncryptionConfig = { keys: process.env.RUDRA_FIELD_ENCRYPTION_KEYS, activeKeyId: process.env.RUDRA_FIELD_ACTIVE_KEY_ID };
+afterEach(() => {
+  if (priorEncryptionConfig.keys === undefined) delete process.env.RUDRA_FIELD_ENCRYPTION_KEYS; else process.env.RUDRA_FIELD_ENCRYPTION_KEYS = priorEncryptionConfig.keys;
+  if (priorEncryptionConfig.activeKeyId === undefined) delete process.env.RUDRA_FIELD_ACTIVE_KEY_ID; else process.env.RUDRA_FIELD_ACTIVE_KEY_ID = priorEncryptionConfig.activeKeyId;
+});
 
 const id = "e7a8b594-0c9b-4b71-a8e1-b7c2683a4a34";
 const context = { params: Promise.resolve({ id }) };
@@ -39,6 +46,29 @@ describe("lead communication draft API authorization", () => {
     mocks.getApiAccess.mockResolvedValue({ staff: { organizationId: "org-a", grants: [{ key: "leads.read", centreId: "centre-b" }] }, response: null });
     const response = await GET(new Request(`http://localhost/api/leads/${id}/communications`), context);
     expect(response.status).toBe(404); expect(select).toHaveBeenCalledTimes(1);
+  });
+  it("returns authorized decrypted drafts with private no-store caching", async () => {
+    const testKeyId = "communication-route-test";
+    process.env.RUDRA_FIELD_ACTIVE_KEY_ID = testKeyId;
+    process.env.RUDRA_FIELD_ENCRYPTION_KEYS = JSON.stringify({ [testKeyId]: Buffer.alloc(32, 63).toString("base64") });
+    const centreId = crypto.randomUUID();
+    const draftId = crypto.randomUUID();
+    const organizationId = "org-a";
+    const ciphertext = encryptLeadValue("communication-draft", "Synthetic unsent message", { organizationId, centreId, recordId: draftId });
+    const lead = { id, organizationId, centreId, preferredChannel: "EMAIL", marketingConsent: "NOT_RECORDED" };
+    const draft = { id: draftId, organizationId, centreId, leadId: id, purpose: "OPERATIONAL", channel: "EMAIL", status: "DRAFT", templateId: null, templateVersion: null, createdAt: new Date("2026-11-01T10:00:00Z"), updatedAt: new Date("2026-11-01T10:00:00Z"), bodyCiphertext: ciphertext };
+    let query = 0;
+    mocks.getDb.mockReturnValue({ select: () => {
+      query++;
+      if (query === 1) return { from: () => ({ where: () => ({ limit: async () => [lead] }) }) };
+      return { from: () => ({ where: () => ({ orderBy: () => ({ limit: async () => [draft] }) }) }) };
+    } });
+    mocks.getApiAccess.mockResolvedValue({ staff: { organizationId, grants: [{ key: "leads.read", centreId }] }, response: null });
+
+    const response = await GET(new Request(`http://localhost/api/leads/${id}/communications`), context);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(await response.json()).toMatchObject({ drafts: [{ id: draftId, body: "Synthetic unsent message" }] });
   });
   it("rejects cross-origin draft writes before authentication or persistence", async () => {
     const response = await POST(new Request(`http://localhost/api/leads/${id}/communications`, { method: "POST", headers: { origin: "https://not-localhost.invalid", "content-type": "application/json" }, body: "{}" }), context);

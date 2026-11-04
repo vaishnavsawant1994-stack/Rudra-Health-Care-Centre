@@ -1,8 +1,10 @@
 import type { PermissionGrant } from "@/server/permissions";
+import { canViewAnyOperationsSummary } from "@/server/centre-operations-policy";
 
 export const roleWorkspaceDefinitions = {
   reception: { title: "Reception workspace", description: "Patient registration, booking coordination and front-desk follow-up.", links: [
     ["/roster/handovers", "Shift handover", "roster.handover", "Record outstanding work and hand it to the next authorized staff member."],
+    ["/support/tickets", "Support requests", "tasks.support.read", "Review centre-scoped service requests and their authorized task history."],
     ["/patients", "Patient search and registration", "patients.read", "Find a patient or open the authorized registration workflow."],
     ["/appointments/new?source=WALK_IN", "Coordinate a walk-in", "appointments.create", "Register/select the patient and record the walk-in as a booking request for staff confirmation."],
     ["/appointments", "Appointment queue", "appointments.read", "Review bookings and use permitted appointment actions."],
@@ -12,10 +14,12 @@ export const roleWorkspaceDefinitions = {
   phlebotomist: { title: "Phlebotomist workspace", description: "Field assignments, collection progress and sample handover.", links: [
     ["/roster/handovers", "Shift handover", "roster.handover", "Record and acknowledge shift responsibility handovers."],
     ["/field/today", "My collection assignments", "collections.visit.record", "Open assigned jobs and record authorized visit events."],
-    ["/samples", "My sample work", "samples.read", "Review sample records within your role and centre scope."],
+    ["/field/handover", "My sample handover", "collections.visit.record", "Review only collected specimens linked to your assigned jobs."],
+    ["/field/exceptions", "My collection exceptions", "collections.visit.record", "Report an operational exception for an eligible specimen assigned to you."],
     ["/tasks", "My tasks", "tasks.assigned.read", "Review operational tasks assigned to you."],
   ] },
   manager: { title: "Centre manager workspace", description: "Centre queues, staff coverage, tasks and operational exceptions.", links: [
+    ["/support/tickets", "Support requests", "tasks.support.read", "Monitor centre-scoped service requests and their authorized task history."],
     ["/quality/service", "Service quality", "tasks.support.read", "Review centre-scoped service issue workload and recorded outcomes."],
     ["/roster/handovers", "Shift handover", "roster.handover", "Monitor and manage staff handovers within authorized centres."],
     ["/branch/operations", "Centre operations", "appointments.read", "Review permission-scoped centre queues."],
@@ -54,6 +58,8 @@ export const roleWorkspaceDefinitions = {
     ["/escalations", "Assigned escalations", "escalations.assigned.read", "Review escalations assigned to your account."],
   ] },
   support: { title: "Support workspace", description: "Patient enquiries, permitted follow-ups and service tasks.", links: [
+    ["/branch/operations", "Centre support workload", "workspace.read", "Review centre-level queues available to your support permissions."],
+    ["/support/tickets", "Support request queue", "tasks.support.read", "Work centre-scoped support requests without sending external messages."],
     ["/quality/service", "Service quality and issues", "tasks.support.read", "Review assigned centre-scoped issues and record verified operational outcomes."],
     ["/roster/handovers", "Shift handover", "roster.handover", "Hand over open support work to an authorized receiving staff member."],
     ["/leads", "Enquiries", "leads.read", "Review authorized enquiries and communication preferences."],
@@ -63,6 +69,7 @@ export const roleWorkspaceDefinitions = {
     ["/escalations", "Assigned escalations", "escalations.assigned.read", "Review assigned service escalations."],
   ] },
   owner: { title: "Owner operations workspace", description: "Organization oversight, centre performance and authorized approvals.", links: [
+    ["/support/tickets", "Support requests", "tasks.support.read", "Review support requests only within your granted organization and centre scope."],
     ["/quality/service", "Service quality", "tasks.support.read", "Review service issue workload across centres covered by your grants."],
     ["/roster/handovers", "Shift handover", "roster.handover", "Review staff handovers and acknowledgments in permitted centres."],
     ["/branch/operations", "Cross-centre operations", "organization.read", "Review operations overview within owner permissions."],
@@ -117,6 +124,12 @@ export function getRoleWorkspaceCapabilities(grants: readonly PermissionGrant[])
 
 export function getRoleWorkspaceLinks(key: RoleWorkspaceKey, grants: readonly PermissionGrant[]) {
   return roleWorkspaceDefinitions[key].links.filter(([href, , permission]) => {
+    if (href === "/support/tickets") return grants.some((grant) => ["tasks.read", "tasks.assigned.read", "tasks.support.read"].includes(grant.key));
+    // The endpoint itself requires workspace.read and then returns whichever
+    // queues the caller can read. Requiring appointments.read here hid useful
+    // operations from staff whose only centre-wide queue was samples, finance,
+    // tasks, follow-ups, or roster.
+    if (href === "/branch/operations") return grants.some((grant) => grant.key === "workspace.read") && canViewAnyOperationsSummary(grants);
     if (href === "/reports/followups") return hasOverlappingPermissionScope(grants, ["reports.read", "reports.followups.manage"]);
     if (href === "/leads/followups") return hasOverlappingPermissionScope(grants, ["leads.read", "leads.followups.manage"]);
     if (href === "/relationships/referrals") return ["doctors.read", "corporate.read", "partners.read"].some((permission) => hasOverlappingPermissionScope(grants, ["leads.read", permission]));
@@ -127,7 +140,7 @@ export function getRoleWorkspaceLinks(key: RoleWorkspaceKey, grants: readonly Pe
   });
 }
 
-export type RoleWorkspacePanel = "patient_directory" | "public_enquiries" | "arrival_queue" | "confirmation_queue" | "assigned_appointments" | "appointment_schedule" | "walk_in_queue" | "walk_in_tokens" | "order_coordination" | "sample_receiving" | "sample_handover" | "sample_dispatch" | "sample_exceptions" | "approval_queue" | "collection_work" | "roster_workload" | "finance_operations" | "sales_pipeline" | "sales_followups" | "report_followups" | "support_requests" | "staff_tasks" | "escalation_work";
+export type RoleWorkspacePanel = "patient_directory" | "public_enquiries" | "arrival_queue" | "confirmation_queue" | "assigned_appointments" | "appointment_schedule" | "walk_in_queue" | "walk_in_tokens" | "order_coordination" | "sample_receiving" | "sample_handover" | "sample_dispatch" | "sample_exceptions" | "field_exceptions" | "approval_queue" | "collection_work" | "roster_workload" | "finance_operations" | "sales_pipeline" | "sales_followups" | "report_followups" | "support_requests" | "staff_tasks" | "escalation_work";
 export function getRoleWorkspacePanels(key: RoleWorkspaceKey, grants: readonly PermissionGrant[]): RoleWorkspacePanel[] {
   const has = (permission: string) => grants.some((grant) => grant.key === permission);
   const panels: RoleWorkspacePanel[] = [];
@@ -140,7 +153,8 @@ export function getRoleWorkspacePanels(key: RoleWorkspaceKey, grants: readonly P
   if ((key === "reception" || key === "manager") && has("orders.read")) panels.push("order_coordination");
   if (key === "manager" && has("samples.receive")) panels.push("sample_receiving");
   if (key === "manager" && has("samples.dispatch")) panels.push("sample_dispatch");
-  if (key === "phlebotomist" && has("samples.read")) panels.push("sample_handover");
+  if (key === "phlebotomist" && (has("samples.read") || has("collections.visit.record"))) panels.push("sample_handover");
+  if (key === "phlebotomist" && has("collections.visit.record")) panels.push("field_exceptions");
   if ((key === "phlebotomist" || key === "manager") && has("samples.read")) panels.push("sample_exceptions");
   // Field staff can read their own assigned collection queue through the
   // visit-record grant; requiring the centre-wide reader grant hid the same

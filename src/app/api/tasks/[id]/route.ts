@@ -17,6 +17,17 @@ type PrivateTask = { title: string; description: string; reference?: (TaskRefere
 type TaskActionResult = { id: string; versionNumber: number; status: string; approvalStatus: string };
 const taskContext = (organizationId: string, centreId: string, id: string) => operationalContext({ organizationId, centreId, recordId: id }, "staff-task");
 const eventContext = (organizationId: string, centreId: string, id: string) => operationalContext({ organizationId, centreId, recordId: id }, "staff-task-event");
+const taskReadGrantForStaff = (centreId: string) => sql`EXISTS (
+  SELECT 1 FROM staff_role_assignments read_assignment
+  JOIN roles read_role ON read_role.id = read_assignment.role_id
+  JOIN role_permissions read_role_permission ON read_role_permission.role_id = read_role.id
+  JOIN permissions read_permission ON read_permission.id = read_role_permission.permission_id
+  WHERE read_assignment.staff_user_id = staff_users.id
+    AND read_assignment.organization_id = staff_users.organization_id
+    AND read_assignment.revoked_at IS NULL
+    AND (read_assignment.centre_id = ${centreId} OR read_assignment.centre_id IS NULL)
+    AND read_permission.key = 'tasks.read'
+)`;
 
 async function readAccess(centreId: string) {
   const broad = await getApiAccess("tasks.read", centreId);
@@ -171,6 +182,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         approvalPolicy = (action === "SUBMIT_APPROVAL" ? await policyQuery.for("share").limit(1) : await policyQuery.limit(1))[0];
       }
       if (action === "SUBMIT_APPROVAL" && !canRequestTaskApproval(approvalPolicy)) throw new Error("approval_policy_unavailable");
+      if (action === "SUBMIT_APPROVAL" && typeof approvalPolicy?.escalationAfterMinutes === "number" && typeof approvalPolicy.expireAfterMinutes === "number" && approvalPolicy.expireAfterMinutes <= approvalPolicy.escalationAfterMinutes) throw new Error("approval_policy_deadline_conflict");
       if (action === "SUBMIT_APPROVAL" && approvalPolicy?.escalationAfterMinutes !== null && approvalPolicy?.escalationAfterMinutes !== undefined && approvalEscalationOwnerConflicts(approvalPolicy.escalationOwnerStaffId, task.assignedStaffId, task.createdByStaffId)) throw new Error("escalation_owner_conflict");
       let submissionApproverIds: string[] | undefined;
       if (action === "SUBMIT_APPROVAL" && approvalPolicy) {
@@ -180,7 +192,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
           .innerJoin(roles, eq(roles.id, staffRoleAssignments.roleId))
           .innerJoin(rolePermissions, eq(rolePermissions.roleId, roles.id))
           .innerJoin(permissions, and(eq(permissions.id, rolePermissions.permissionId), eq(permissions.key, "tasks.approve")))
-          .where(and(eq(staffUsers.organizationId, orgId), eq(staffUsers.status, "ACTIVE"), or(eq(staffRoleAssignments.centreId, task.centreId), isNull(staffRoleAssignments.centreId))))
+          .where(and(eq(staffUsers.organizationId, orgId), eq(staffUsers.status, "ACTIVE"), or(eq(staffRoleAssignments.centreId, task.centreId), isNull(staffRoleAssignments.centreId)), taskReadGrantForStaff(task.centreId)))
           .for("share");
         const eligibleIds = new Set(currentlyEligible.map((row) => row.id));
         // Freeze only independent reviewers. A policy may still contain an
@@ -231,14 +243,14 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
             .innerJoin(staffRoleAssignments, and(eq(staffRoleAssignments.staffUserId, staffUsers.id), eq(staffRoleAssignments.organizationId, staffUsers.organizationId), isNull(staffRoleAssignments.revokedAt)))
             .innerJoin(roles, eq(roles.id, staffRoleAssignments.roleId)).innerJoin(rolePermissions, eq(rolePermissions.roleId, roles.id))
             .innerJoin(permissions, and(eq(permissions.id, rolePermissions.permissionId), eq(permissions.key, "tasks.approve")))
-            .where(and(eq(staffUsers.organizationId, orgId), eq(staffUsers.status, "ACTIVE"), or(eq(staffRoleAssignments.centreId, task.centreId), isNull(staffRoleAssignments.centreId)), inArray(staffUsers.id, allowedIds)))
+            .where(and(eq(staffUsers.organizationId, orgId), eq(staffUsers.status, "ACTIVE"), or(eq(staffRoleAssignments.centreId, task.centreId), isNull(staffRoleAssignments.centreId)), inArray(staffUsers.id, allowedIds), taskReadGrantForStaff(task.centreId)))
             .for("share").limit(1) : [];
           if (stillEligibleReviewer) throw new Error("approver_reassignment_not_required");
           const [eligibleTarget] = await tx.select({ id: staffUsers.id }).from(staffUsers)
             .innerJoin(staffRoleAssignments, and(eq(staffRoleAssignments.staffUserId, staffUsers.id), eq(staffRoleAssignments.organizationId, staffUsers.organizationId), isNull(staffRoleAssignments.revokedAt)))
             .innerJoin(roles, eq(roles.id, staffRoleAssignments.roleId)).innerJoin(rolePermissions, eq(rolePermissions.roleId, roles.id))
             .innerJoin(permissions, and(eq(permissions.id, rolePermissions.permissionId), eq(permissions.key, "tasks.approve")))
-            .where(and(eq(staffUsers.id, parsed.data.approverStaffId!), eq(staffUsers.organizationId, orgId), eq(staffUsers.status, "ACTIVE"), or(eq(staffRoleAssignments.centreId, task.centreId), isNull(staffRoleAssignments.centreId))))
+            .where(and(eq(staffUsers.id, parsed.data.approverStaffId!), eq(staffUsers.organizationId, orgId), eq(staffUsers.status, "ACTIVE"), or(eq(staffRoleAssignments.centreId, task.centreId), isNull(staffRoleAssignments.centreId)), taskReadGrantForStaff(task.centreId)))
             .for("share").limit(1);
           if (!eligibleTarget) throw new Error("approver_not_eligible");
           if (parsed.data.approverStaffId === task.createdByStaffId || parsed.data.approverStaffId === task.assignedStaffId) throw new Error("separation_of_duties");
@@ -277,7 +289,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         // escalation assignment/deadline; it does not approve the task.
         if (task.status !== "AWAITING_APPROVAL" || task.approvalStatus !== "PENDING" || !task.escalationDueAt) throw new Error("escalation_not_due");
         if (approvalEscalationOwnerConflicts(parsed.data.escalationOwnerStaffId ?? null, task.assignedStaffId, task.createdByStaffId)) throw new Error("escalation_owner_conflict");
-        const [assignee] = await tx.select({ id: staffUsers.id }).from(staffUsers).innerJoin(staffRoleAssignments, and(eq(staffRoleAssignments.staffUserId, staffUsers.id), eq(staffRoleAssignments.organizationId, staffUsers.organizationId), isNull(staffRoleAssignments.revokedAt))).innerJoin(roles, eq(roles.id, staffRoleAssignments.roleId)).innerJoin(rolePermissions, eq(rolePermissions.roleId, roles.id)).innerJoin(permissions, and(eq(permissions.id, rolePermissions.permissionId), eq(permissions.key, "tasks.approve"))).where(and(eq(staffUsers.id, parsed.data.escalationOwnerStaffId!), eq(staffUsers.organizationId, orgId), eq(staffUsers.status, "ACTIVE"), or(eq(staffRoleAssignments.centreId, task.centreId), isNull(staffRoleAssignments.centreId)))).limit(1);
+        const [assignee] = await tx.select({ id: staffUsers.id }).from(staffUsers).innerJoin(staffRoleAssignments, and(eq(staffRoleAssignments.staffUserId, staffUsers.id), eq(staffRoleAssignments.organizationId, staffUsers.organizationId), isNull(staffRoleAssignments.revokedAt))).innerJoin(roles, eq(roles.id, staffRoleAssignments.roleId)).innerJoin(rolePermissions, eq(rolePermissions.roleId, roles.id)).innerJoin(permissions, and(eq(permissions.id, rolePermissions.permissionId), eq(permissions.key, "tasks.approve"))).where(and(eq(staffUsers.id, parsed.data.escalationOwnerStaffId!), eq(staffUsers.organizationId, orgId), eq(staffUsers.status, "ACTIVE"), or(eq(staffRoleAssignments.centreId, task.centreId), isNull(staffRoleAssignments.centreId)), taskReadGrantForStaff(task.centreId))).limit(1);
         if (!assignee) throw new Error("approver_not_eligible");
         set.escalationOwnerStaffId = parsed.data.escalationOwnerStaffId!; set.escalationDueAt = new Date(parsed.data.escalationDueAt!); set.escalationProcessedAt = null; eventType = "ESCALATION_REASSIGNED"; eventData.escalationOwnerStaffId = parsed.data.escalationOwnerStaffId!; eventData.escalationDueAt = parsed.data.escalationDueAt!;
       }
@@ -295,7 +307,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         const escalationOwnerStaffId = task.escalationOwnerStaffId;
         const escalationDueAt = task.escalationDueAt;
         if (!escalationOwnerStaffId || !escalationDueAt) throw new Error("escalation_not_due");
-        const [eligibleOwner] = await tx.select({ id: staffUsers.id }).from(staffUsers).innerJoin(staffRoleAssignments, and(eq(staffRoleAssignments.staffUserId, staffUsers.id), eq(staffRoleAssignments.organizationId, staffUsers.organizationId), isNull(staffRoleAssignments.revokedAt))).innerJoin(roles, eq(roles.id, staffRoleAssignments.roleId)).innerJoin(rolePermissions, eq(rolePermissions.roleId, roles.id)).innerJoin(permissions, and(eq(permissions.id, rolePermissions.permissionId), eq(permissions.key, "tasks.approve"))).where(and(eq(staffUsers.id, escalationOwnerStaffId), eq(staffUsers.organizationId, orgId), eq(staffUsers.status, "ACTIVE"), or(eq(staffRoleAssignments.centreId, task.centreId), isNull(staffRoleAssignments.centreId)))).limit(1);
+        const [eligibleOwner] = await tx.select({ id: staffUsers.id }).from(staffUsers).innerJoin(staffRoleAssignments, and(eq(staffRoleAssignments.staffUserId, staffUsers.id), eq(staffRoleAssignments.organizationId, staffUsers.organizationId), isNull(staffRoleAssignments.revokedAt))).innerJoin(roles, eq(roles.id, staffRoleAssignments.roleId)).innerJoin(rolePermissions, eq(rolePermissions.roleId, roles.id)).innerJoin(permissions, and(eq(permissions.id, rolePermissions.permissionId), eq(permissions.key, "tasks.approve"))).where(and(eq(staffUsers.id, escalationOwnerStaffId), eq(staffUsers.organizationId, orgId), eq(staffUsers.status, "ACTIVE"), or(eq(staffRoleAssignments.centreId, task.centreId), isNull(staffRoleAssignments.centreId)), taskReadGrantForStaff(task.centreId))).limit(1);
         if (!eligibleOwner) throw new Error("approver_not_eligible");
         set.escalationProcessedAt = now; eventType = "ESCALATED"; eventData.escalationOwnerStaffId = escalationOwnerStaffId; eventData.escalationDueAt = escalationDueAt.toISOString();
       }
@@ -329,7 +341,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return Response.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : "task_action_failed";
-    const status = message === "not_found" ? 404 : message === "forbidden" ? 403 : message === "approver_not_eligible" ? 403 : message === "separation_of_duties" ? 403 : message === "version_conflict" || message === "idempotency_conflict" ? 409 : message === "invalid_transition" || message === "approval_policy_unavailable" || message === "approval_policy_approver_unavailable" || message === "approval_snapshot_invalid" || message === "approver_reassignment_not_required" || message === "escalation_not_due" || message === "escalation_owner_conflict" || message === "approval_expiry_due" || message === "approval_expiry_not_due" ? 409 : message === "assignee_not_found" || message === "support_resolution_outcome_required_or_unexpected" ? 400 : 500;
+    const status = message === "not_found" ? 404 : message === "forbidden" ? 403 : message === "approver_not_eligible" ? 403 : message === "separation_of_duties" ? 403 : message === "version_conflict" || message === "idempotency_conflict" ? 409 : message === "invalid_transition" || message === "approval_policy_unavailable" || message === "approval_policy_approver_unavailable" || message === "approval_policy_deadline_conflict" || message === "approval_snapshot_invalid" || message === "approver_reassignment_not_required" || message === "escalation_not_due" || message === "escalation_owner_conflict" || message === "approval_expiry_due" || message === "approval_expiry_not_due" ? 409 : message === "assignee_not_found" || message === "support_resolution_outcome_required_or_unexpected" ? 400 : 500;
     return Response.json({ error: status === 500 ? "task_action_failed" : message }, { status });
   }
 }

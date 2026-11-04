@@ -57,7 +57,7 @@ export async function GET(request: Request, { params }: Context) {
   return Response.json({ drafts: rows.map((row) => ({
     id: row.id, purpose: row.purpose, channel: row.channel, status: row.status, templateId: row.templateId, templateVersion: row.templateVersion, createdAt: row.createdAt, updatedAt: row.updatedAt,
     body: decryptLeadValue<string>("communication-draft", row.bodyCiphertext, { organizationId: row.organizationId, centreId: row.centreId, recordId: row.id }),
-  })) });
+  })) }, { headers: { "cache-control": "private, no-store" } });
 }
 
 export async function POST(request: Request, { params }: Context) {

@@ -76,5 +76,6 @@ export async function getLeadDetail(staff: StaffContext, leadId: string) {
     patientRead: hasLeadCentrePermission(staff.grants, "patients.read", lead.centreId),
     patientCreate: hasLeadCentrePermission(staff.grants, "patients.create", lead.centreId),
     appointmentCreate: hasLeadCentrePermission(staff.grants, "appointments.create", lead.centreId),
+    quoteDraft: hasLeadCentrePermission(staff.grants, "finance.read", lead.centreId) && hasLeadCentrePermission(staff.grants, "catalogue.read", lead.centreId) && hasLeadCentrePermission(staff.grants, "orders.create", lead.centreId),
   } });
 }

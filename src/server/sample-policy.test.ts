@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isAssignedCollector, sampleCollectSchema, sampleDirectoryStatuses } from "./sample-policy";
+import { assignedHandoverCentreScope, isAssignedCollector, matchesSpecimenCollectionReplay, sampleCollectSchema, sampleDirectoryStatusFilter, sampleDirectoryStatuses, sampleHandoverSubmitSchema } from "./sample-policy";
 
 describe("collection and sample policy", () => {
   it("limits field actions to the assigned collector or an authorized scheduler", () => {
@@ -14,6 +14,20 @@ describe("collection and sample policy", () => {
     expect(sampleCollectSchema.safeParse({ ...base, identityCheckConfirmed: false }).success).toBe(false);
     expect(sampleCollectSchema.safeParse({ ...base, identityCheckConfirmed: true, requirementReference: "" }).success).toBe(false);
   });
+  it("only replays an identical specimen request by the original collector", () => {
+    const request = { jobId: "c1aeacbb-bf66-44f0-a27a-7bf06c60a6b5", specimenType: "Synthetic tube", requirementReference: "SYNTHETIC-SOP-1", identityCheckConfirmed: true as const, procedureApprovalId: "a8bad75c-b226-46d8-b238-86501998dd41", reason: "Synthetic collection" };
+    const existing = { ...request, collectedByStaffId: "staff-a" };
+    expect(matchesSpecimenCollectionReplay(existing, request, "staff-a")).toBe(true);
+    expect(matchesSpecimenCollectionReplay({ ...existing, reason: "Different reason" }, request, "staff-a")).toBe(false);
+    expect(matchesSpecimenCollectionReplay({ ...existing, procedureApprovalId: "b8bad75c-b226-46d8-b238-86501998dd41" }, request, "staff-a")).toBe(false);
+    expect(matchesSpecimenCollectionReplay(existing, request, "staff-b")).toBe(false);
+  });
+  it("requires a versioned, reasoned handover submission for an identified specimen", () => {
+    const valid = { specimenId: "af0f6a69-ccf2-4a6e-a329-150215537d87", expectedVersion: 1, reason: "Submitted to Rudra receiving queue" };
+    expect(sampleHandoverSubmitSchema.safeParse(valid).success).toBe(true);
+    expect(sampleHandoverSubmitSchema.safeParse({ ...valid, expectedVersion: 0 }).success).toBe(false);
+    expect(sampleHandoverSubmitSchema.safeParse({ ...valid, reason: "x" }).success).toBe(false);
+  });
 });
 
 describe("sample directory query filters", () => {
@@ -22,5 +36,15 @@ describe("sample directory query filters", () => {
     expect(sampleDirectoryStatuses("receiving")).toEqual(["COLLECTED"]);
     expect(sampleDirectoryStatuses("handover")).toEqual(["COLLECTED"]);
     expect(sampleDirectoryStatuses("exceptions")).toEqual(["EXCEPTION", "RECOLLECTION_REQUIRED"]);
+  });
+  it("keeps direct exception links resolvable after the specimen advances to another valid status", () => {
+    expect(sampleDirectoryStatusFilter("exceptions")).toEqual(["EXCEPTION", "RECOLLECTION_REQUIRED"]);
+    expect(sampleDirectoryStatusFilter("exceptions", "synthetic-exception-id")).toBeNull();
+    expect(sampleDirectoryStatusFilter("all", "synthetic-exception-id")).toBeNull();
+  });
+  it("keeps assigned sample handover within the collection-visit centre grants", () => {
+    expect(assignedHandoverCentreScope([{ key: "collections.visit.record", centreId: "centre-a" }, { key: "collections.visit.record", centreId: "centre-b" }])).toEqual(["centre-a", "centre-b"]);
+    expect(assignedHandoverCentreScope([{ key: "collections.visit.record", centreId: null }])).toBeNull();
+    expect(assignedHandoverCentreScope([{ key: "samples.read", centreId: "centre-a" }])).toEqual([]);
   });
 });

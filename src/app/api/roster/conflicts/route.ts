@@ -6,6 +6,7 @@ import { appointments, collectionJobs, staffEscalations, staffShifts, staffUsers
 import { collectionSummaryIsAssignedOnly } from "@/server/centre-operations-policy";
 import { rosterAssignmentConflictFlags, type RosterShiftBlock } from "@/server/staff-roster-policy";
 import { buildRosterConflictEscalationLinks } from "@/server/roster-escalation-links";
+import { canReadTeamRoster } from "@/server/staff-roster-visibility";
 
 type ScheduledWork = { id: string; kind: "APPOINTMENT" | "COLLECTION"; label: string; staffId: string; staffName: string; startsAt: Date; endsAt: Date; centreId: string; versionNumber: number; expectedUpdatedAt: Date | null; flags: Set<string> };
 const PAGE_SIZE = 100;
@@ -20,7 +21,8 @@ export async function GET(request: Request) {
   const access = await getApiAccess("roster.read", centreId!);
   if (access.response) return access.response;
   const orgId = access.staff.organizationId; const start = new Date(from!); const end = new Date(to!); const db = getDb();
-  const scheduledRows = await db.select({ staffId: staffShifts.staffId, startsAt: staffShifts.startsAt, endsAt: staffShifts.endsAt, shiftType: staffShifts.shiftType }).from(staffShifts).where(and(eq(staffShifts.organizationId, orgId), eq(staffShifts.centreId, centreId!), eq(staffShifts.status, "ACTIVE"), lt(staffShifts.startsAt, end), gte(staffShifts.endsAt, start)));
+  const canReadTeamSchedule = canReadTeamRoster(access.staff.grants, centreId!);
+  const scheduledRows = await db.select({ staffId: staffShifts.staffId, startsAt: staffShifts.startsAt, endsAt: staffShifts.endsAt, shiftType: staffShifts.shiftType }).from(staffShifts).where(and(eq(staffShifts.organizationId, orgId), eq(staffShifts.centreId, centreId!), eq(staffShifts.status, "ACTIVE"), lt(staffShifts.startsAt, end), gte(staffShifts.endsAt, start), canReadTeamSchedule ? undefined : eq(staffShifts.staffId, access.staff.staffUserId)));
   const work: ScheduledWork[] = []; let appointmentsHaveMore = false; let collectionsHaveMore = false;
   const appointmentAccess = await getApiAccess("appointments.read", centreId!);
   const appointmentAssigned = appointmentAccess.response ? await getApiAccess("appointments.assigned.read", centreId!) : null;
@@ -73,7 +75,10 @@ export async function GET(request: Request) {
     `);
     for (const row of overlapResult.rows as Array<{ kind: string; id: string }>) overlapping.add(`${row.kind}:${row.id}`);
   }
-  const detected = rosterAssignmentConflictFlags(work, shiftBlocks);
+  // Basic roster readers can inspect their own schedule only. Do not infer a
+  // coworker's availability from missing or unavailable shift records.
+  const workWithVisibleRoster = canReadTeamSchedule ? work : work.filter((item) => item.staffId === access.staff.staffUserId);
+  const detected = rosterAssignmentConflictFlags(workWithVisibleRoster, shiftBlocks);
   const conflictMap = new Map(detected.map((item) => [`${item.kind}:${item.id}`, item]));
   for (const item of work) {
     const key = `${item.kind}:${item.id}`;

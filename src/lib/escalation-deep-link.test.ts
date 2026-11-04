@@ -4,6 +4,7 @@ import { escalationDeepLinkHref, escalationDeepLinkId } from "./escalation-deep-
 describe("escalation deep links", () => {
   it("builds an item-specific queue link", () => {
     expect(escalationDeepLinkHref("550e8400-e29b-41d4-a716-446655440000")).toBe("/escalations?escalationId=550e8400-e29b-41d4-a716-446655440000");
+    expect(escalationDeepLinkHref("550e8400-e29b-41d4-a716-446655440000", "centre-id")).toBe("/escalations?escalationId=550e8400-e29b-41d4-a716-446655440000&centreId=centre-id");
   });
 
   it("accepts only a valid UUID query value", () => {

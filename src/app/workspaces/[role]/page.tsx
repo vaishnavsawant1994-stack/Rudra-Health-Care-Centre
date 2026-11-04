@@ -14,6 +14,7 @@ import { TaskWorkbench } from "@/components/tasks/task-workbench";
 import { EscalationWorkbench } from "@/components/escalations/escalation-workbench";
 import { OrderDirectory } from "@/components/orders/order-workbench";
 import { PatientList } from "@/components/patients/patient-workbench";
+import { FieldExceptionQueue } from "@/components/samples/field-exception-queue";
 import { canReadTaskQueue, getRoleWorkspaceCapabilities, getRoleWorkspaceLinks, getRoleWorkspacePanels, roleWorkspaceDefinitions, usesDailyCollectionSchedule, type RoleWorkspaceKey } from "@/server/role-workspaces";
 import { getTaskRelationshipReferenceTypes } from "@/lib/task-reference-permissions";
 import { canViewAnyOperationsSummary } from "@/server/centre-operations-policy";
@@ -44,8 +45,9 @@ export default async function RoleWorkspacePage({ params }: { params: Promise<{ 
       {panels.includes("appointment_schedule") && <section className="workspace-operations"><AppointmentTeamSchedule /></section>}
       {panels.includes("order_coordination") && <section className="workspace-operations"><h2>Pending diagnostic orders</h2><OrderDirectory showSummary={false} initialStatus="PENDING_VERIFICATION" canCreate={capabilities.createOrder} /></section>}
       {panels.includes("approval_queue") && <section className="workspace-operations"><h2>Pending task completion approvals</h2><TaskWorkbench staffId={staff.staffUserId} permissionGrants={staff.grants} canCreate={false} canUpdate={false} canApprove={true} canAssign={staff.grants.some((grant) => grant.key === "tasks.assign")} canFilterCentre={staff.grants.some((grant) => grant.key === "tasks.read")} initialFilter="AWAITING_APPROVAL" /></section>}
-      {panels.includes("collection_work") && <section className="workspace-operations"><h2>{key === "manager" ? "Centre collection workload" : "My collection work"}</h2><CollectionOperations grants={staff.grants} showDailySchedule={usesDailyCollectionSchedule(key)} /></section>}
-      {panels.includes("sample_handover") && <section className="workspace-operations"><h2>My collected samples awaiting Rudra receiving</h2><SamplesDirectory mode="handover" /></section>}
+      {panels.includes("collection_work") && <section className="workspace-operations"><h2>{key === "manager" ? "Centre collection workload" : "My collection work"}</h2><CollectionOperations grants={staff.grants} showDailySchedule={usesDailyCollectionSchedule(key)} showScheduleDateFilter={key === "manager"} /></section>}
+      {panels.includes("sample_handover") && <section className="workspace-operations"><h2>My collected samples awaiting Rudra receiving</h2><SamplesDirectory mode="handover" grants={staff.grants} /></section>}
+      {panels.includes("field_exceptions") && <section className="workspace-operations"><FieldExceptionQueue /></section>}
       {panels.includes("sample_receiving") && <section className="workspace-operations"><h2>Rudra sample receiving queue</h2><SamplesDirectory mode="receiving" grants={staff.grants} /></section>}
       {panels.includes("sample_exceptions") && <section className="workspace-operations"><h2>{key === "phlebotomist" ? "My sample exceptions" : "Centre sample exceptions"}</h2><SamplesDirectory mode="exceptions" grants={staff.grants} /></section>}
       {panels.includes("sample_dispatch") && <section className="workspace-operations"><h2>Sample packing and dispatch queue</h2><DispatchDesk grants={staff.grants} /></section>}

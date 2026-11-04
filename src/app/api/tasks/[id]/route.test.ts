@@ -470,6 +470,46 @@ describe("staff task detail authorization boundary", () => {
     expect(decryptOperationalData<Record<string, unknown>>(savedEvent.privateDataCiphertext, operationalContext({ organizationId, centreId, recordId: savedEvent.id }, "staff-task-event"))).toMatchObject({ approvalSnapshotVersion: 1, approvalPolicyId: currentPolicyId, approvalPolicyVersion: 7, approvalApproverStaffIds: [newApproverId] });
   });
 
+  it("fails closed when a legacy approval policy expires before its escalation deadline", async () => {
+    const { PATCH } = await import("./route");
+    const organizationId = "c2000000-0000-4000-8000-000000000001";
+    const centreId = "c2000000-0000-4000-8000-000000000002";
+    const creatorId = "c2000000-0000-4000-8000-000000000003";
+    const assigneeId = "c2000000-0000-4000-8000-000000000004";
+    const policyId = "c2000000-0000-4000-8000-000000000005";
+    process.env.RUDRA_FIELD_ENCRYPTION_KEYS = JSON.stringify({ synthetic_test_key: Buffer.alloc(32, 13).toString("base64") });
+    process.env.RUDRA_FIELD_ACTIVE_KEY_ID = "synthetic_test_key";
+    const task = {
+      id: taskId, organizationId, centreId, taskNumber: "RHC-T-LEGACY-POLICY", taskType: "GENERAL", priority: "NORMAL",
+      status: "IN_PROGRESS", approvalStatus: "CHANGES_REQUESTED", approvalPolicyId: policyId, approvalExpiresAt: null,
+      escalationOwnerStaffId: null, escalationDueAt: null, escalationProcessedAt: null, assignedStaffId: assigneeId,
+      createdByStaffId: creatorId, versionNumber: 2, requiresApproval: true,
+      privateDataCiphertext: encryptOperationalData({ title: "Synthetic legacy approval", description: "Existing policy must be checked at submission" }, operationalContext({ organizationId, centreId, recordId: taskId }, "staff-task")),
+    };
+    const policy = { id: policyId, organizationId, centreId, actionType: "TASK_COMPLETION", enabled: true, versionNumber: 2, escalationAfterMinutes: 60, escalationOwnerStaffId: "c2000000-0000-4000-8000-000000000006", expireAfterMinutes: 45 };
+    const results: unknown[][] = [[], [task], [policy]];
+    const select = vi.fn(() => {
+      const value = results.shift();
+      const query: Record<string, ReturnType<typeof vi.fn>> = {};
+      query.from = vi.fn(() => query); query.where = vi.fn(() => query); query.for = vi.fn(() => query);
+      query.orderBy = vi.fn(() => query); query.limit = vi.fn(async () => value ?? []);
+      query.then = vi.fn((resolve: (rows: unknown[]) => unknown) => Promise.resolve(value ?? []).then(resolve));
+      return query;
+    });
+    const update = vi.fn(); const insert = vi.fn();
+    const tx = { select, execute: vi.fn(), update, insert };
+    getDb.mockReturnValue({ transaction: async (callback: (transaction: typeof tx) => unknown) => callback(tx) });
+    getApiAccess.mockImplementation(async () => ({ staff: { organizationId, staffUserId: assigneeId, grants: ["workspace.read", "tasks.read", "tasks.assigned.read", "tasks.update"].map((key) => ({ key, centreId })) }, response: null }));
+
+    const response = await PATCH(patchRequest({ expectedVersion: 2, action: "SUBMIT_APPROVAL" }), taskParams);
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: "approval_policy_deadline_conflict" });
+    expect(select).toHaveBeenCalledTimes(3);
+    expect(update).not.toHaveBeenCalled();
+    expect(insert).not.toHaveBeenCalled();
+  });
+
   it("records due approval expiry with an independent authorized approver", async () => {
     const { PATCH } = await import("./route");
     const organizationId = "bd000000-0000-4000-8000-000000000001";
