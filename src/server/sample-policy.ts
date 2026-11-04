@@ -57,6 +57,13 @@ export function collectionAttemptProgress(eventTypes: readonly string[]) {
   };
 }
 
+export function collectionVisitStage(status: string, eventTypes: readonly string[]): "TRAVELLING" | "ARRIVED" | null {
+  if (status !== "IN_PROGRESS") return null;
+  const progress = collectionAttemptProgress(eventTypes);
+  if (progress.atDestination) return "ARRIVED";
+  return progress.canRecordArrival ? "TRAVELLING" : null;
+}
+
 export function matchesSpecimenCollectionReplay(
   existing: { jobId: string; specimenType: string; requirementReference: string; collectedByStaffId: string; identityCheckConfirmed: boolean; procedureApprovalId: string; reason: string },
   request: z.infer<typeof sampleCollectSchema>,

@@ -1,3 +1,9 @@
+## 2026-11-04 development checkpoint - Collection visit stage visibility
+
+The authorized collection queue API now derives a visit-stage label from its recorded events. Centre Operations and the phlebotomist route board display `TRAVELLING` or `ARRIVED` while a collection remains `IN_PROGRESS`; unstarted and terminal jobs have no visit-stage label. The existing PostgreSQL route test verifies the API response changes after travel/delay and arrival. No migration or persistent data changed.
+
+Verification: focused policy and PostgreSQL collection/appointment integration tests **45/45 across 3 files**; full default Vitest **832/832 across 201 files**; TypeScript, ESLint, and production build passed (**247 static-generation entries**); `git diff --check` passed with normal line-ending notices. Browser/mobile visual review remains pending. This is a collection queue improvement, not completion of Centre & Staff Operations. Synthetic data only.
+
 ## 2026-11-04 development checkpoint - Escalation source navigation
 
 Escalations linked to a staff task or another operational escalation now deep-link to that exact record and preserve the originating centre filter. Both destination pages continue to recheck access.

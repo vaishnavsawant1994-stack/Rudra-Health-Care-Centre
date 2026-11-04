@@ -122,8 +122,14 @@ describe("personal collection route PostgreSQL integration", () => {
     const delayedJobResponse = await patchJobHandler(new Request(`http://localhost/api/collections/${permittedJob.id}`, { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() }, body: JSON.stringify({ action: "delay", expectedVersion: 3, reason: "Synthetic traffic delay", estimatedArrivalAt: "2099-01-05T05:20:00.000Z" }) }), { params: Promise.resolve({ id: permittedJob.id }) });
     expect(delayedJobResponse.status).toBe(200);
     expect(await delayedJobResponse.json()).toMatchObject({ job: { status: "IN_PROGRESS", versionNumber: 4 } });
+    const travellingQueueResponse = await getHandler(new Request("http://localhost/api/collections?assignedToMe=1&date=2099-01-05&pageSize=100"));
+    expect((await travellingQueueResponse.json()).jobs[0]).toMatchObject({ status: "IN_PROGRESS", visitStage: "TRAVELLING" });
+    const arrivedResponse = await patchJobHandler(new Request(`http://localhost/api/collections/${permittedJob.id}`, { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() }, body: JSON.stringify({ action: "arrive", expectedVersion: 4, reason: "Synthetic field worker arrival" }) }), { params: Promise.resolve({ id: permittedJob.id }) });
+    expect(arrivedResponse.status).toBe(200);
+    const arrivedQueueResponse = await getHandler(new Request("http://localhost/api/collections?assignedToMe=1&date=2099-01-05&pageSize=100"));
+    expect((await arrivedQueueResponse.json()).jobs[0]).toMatchObject({ status: "IN_PROGRESS", visitStage: "ARRIVED" });
     const delayEvent = await pool!.query("SELECT event_type FROM collection_job_events WHERE job_id=$1 ORDER BY recorded_at", [permittedJob.id]);
-    expect(delayEvent.rows.map((row) => row.event_type)).toEqual(["ASSIGNED", "ASSIGNMENT_ACCEPTED", "TRAVEL_STARTED", "VISIT_DELAYED"]);
+    expect(delayEvent.rows.map((row) => row.event_type)).toEqual(["ASSIGNED", "ASSIGNMENT_ACCEPTED", "TRAVEL_STARTED", "VISIT_DELAYED", "ARRIVED"]);
 
     const declinableJob = await insertJob(centreId, fieldStaffId, "DECLINE", "2099-01-05T07:00:00.000Z");
     const requestBody = { action: "decline", expectedVersion: 1, reason: "Synthetic schedule conflict" };

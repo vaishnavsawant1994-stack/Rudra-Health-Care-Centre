@@ -12,6 +12,7 @@ type RouteJob = {
   patientLastName: string;
   visitType: string;
   status: string;
+  visitStage?: "TRAVELLING" | "ARRIVED" | null;
   scheduledStart: string;
   scheduledEnd: string;
   centreTimeZone: string;
@@ -65,7 +66,7 @@ export function FieldRouteBoard() {
       {message ? <p role="status" aria-live="polite">{message}</p> : <ol className="field-route-list">{jobs.map((job) => <li className="admin-card" key={job.id}>
         <p><strong>{jobTime(job)}</strong> · {job.visitType.replaceAll("_", " ")}</p>
         <h3>{job.patientName} {job.patientLastName}</h3>
-        <p>{job.jobNumber} · {job.status.replaceAll("_", " ")}</p>
+        <p>{job.jobNumber} · {job.status.replaceAll("_", " ")}{job.visitStage ? ` · ${job.visitStage.replaceAll("_", " ")}` : ""}</p>
         <Link className="button-link" href={`/collections/${job.id}`}>Open visit details and authorized directions</Link>
       </li>)}</ol>}
     </section>

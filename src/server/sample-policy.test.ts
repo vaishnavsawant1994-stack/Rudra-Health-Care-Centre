@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assignedHandoverCentreScope, collectionAttemptProgress, collectionJobActionSchema, isAssignedCollector, matchesSpecimenCollectionReplay, sampleCollectSchema, sampleDirectoryStatusFilter, sampleDirectoryStatuses, sampleHandoverSubmitSchema } from "./sample-policy";
+import { assignedHandoverCentreScope, collectionAttemptProgress, collectionJobActionSchema, collectionVisitStage, isAssignedCollector, matchesSpecimenCollectionReplay, sampleCollectSchema, sampleDirectoryStatusFilter, sampleDirectoryStatuses, sampleHandoverSubmitSchema } from "./sample-policy";
 
 describe("collection and sample policy", () => {
   it("requires one arrival per travel attempt and a recorded arrival before visit outcomes", () => {
@@ -8,6 +8,13 @@ describe("collection and sample policy", () => {
     expect(collectionAttemptProgress(["TRAVEL_STARTED", "VISIT_DELAYED", "ARRIVED"])).toMatchObject({ canRecordArrival: false, canRecordDelay: false, atDestination: true, canRecordAttemptOutcome: true });
     expect(collectionAttemptProgress(["VISIT_STARTED", "ARRIVED", "ATTEMPT_FAILED"])).toMatchObject({ canRecordArrival: false, atDestination: false, canRecordAttemptOutcome: false });
     expect(collectionAttemptProgress(["VISIT_STARTED", "ARRIVED", "ATTEMPT_FAILED", "TRAVEL_STARTED"])).toMatchObject({ canRecordArrival: true, atDestination: false, canRecordAttemptOutcome: false });
+  });
+  it("derives queue visit stage from events without changing authoritative job status", () => {
+    expect(collectionVisitStage("ASSIGNED", ["ASSIGNED"])).toBeNull();
+    expect(collectionVisitStage("IN_PROGRESS", ["TRAVEL_STARTED", "VISIT_DELAYED"])).toBe("TRAVELLING");
+    expect(collectionVisitStage("IN_PROGRESS", ["VISIT_STARTED", "ARRIVED"])).toBe("ARRIVED");
+    expect(collectionVisitStage("IN_PROGRESS", [])).toBeNull();
+    expect(collectionVisitStage("COLLECTED", ["TRAVEL_STARTED", "ARRIVED"])).toBeNull();
   });
   it("limits field actions to the assigned collector or an authorized scheduler", () => {
     expect(isAssignedCollector("staff-a", "staff-a", [], "centre-a")).toBe(true);

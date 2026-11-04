@@ -1,3 +1,9 @@
+## 2026-11-04 checkpoint - Collection visit stage visibility
+
+- Collection queue API now derives the visit stage from authoritative job events and returns it only for jobs in the caller's authorized collection queue. The Centre Operations and Phlebotomist route-board views show `TRAVELLING` or `ARRIVED` while the collection job remains `IN_PROGRESS`; terminal and unstarted jobs have no visit stage. No migration or persistent data changed.
+- Verification: focused policy and PostgreSQL route integration tests **45/45** across 3 files; full default Vitest **832/832 across 201 files**; TypeScript, ESLint, and production build passed (**247 static-generation entries**); `git diff --check` passed with normal line-ending notices. No browser visual acceptance was performed. No migration or persistent data changed.
+- This improves visibility of an existing collection workflow only. Centre & Staff Operations and the 178-screen backlog remain incomplete. Live role/MFA and browser acceptance, key recovery/rotation, malware scanner qualification, external provider approval and production gates remain open. Synthetic data only.
+
 ## 2026-11-04 checkpoint - Escalation links to task and escalation source records
 
 - Fixed source navigation for escalations linked to a staff task or another operational escalation. The source now opens the specific task/escalation ID and preserves the originating centre filter using query parameters; the destination routes continue to enforce current authorization. This replaces a generic `/tasks` destination and adds the missing escalation-source destination.
