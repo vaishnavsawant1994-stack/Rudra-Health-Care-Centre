@@ -83,20 +83,31 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         return { ...updated, replayed: false };
       }
       let eventType: string; let nextStatus = job.status;
-      if (parsed.data.action === "start") { if (job.status !== "ASSIGNED") throw new Error("invalid_transition"); eventType = "VISIT_STARTED"; nextStatus = "IN_PROGRESS"; }
+      if (parsed.data.action === "accept") {
+        if (job.status !== "ASSIGNED" || job.assignedStaffId !== access.staff.staffUserId) throw new Error("invalid_transition");
+        const [latestAssignmentEvent] = await tx.select({ eventType: collectionJobEvents.eventType }).from(collectionJobEvents).where(and(eq(collectionJobEvents.jobId, id), eq(collectionJobEvents.organizationId, job.organizationId), inArray(collectionJobEvents.eventType, ["ASSIGNED", "REASSIGNED", "ASSIGNMENT_DECLINED", "ASSIGNMENT_ACCEPTED"]))).orderBy(sql`${collectionJobEvents.recordedAt} DESC, ${collectionJobEvents.id} DESC`).limit(1);
+        if (!latestAssignmentEvent || !["ASSIGNED", "REASSIGNED"].includes(latestAssignmentEvent.eventType)) throw new Error("invalid_transition");
+        eventType = "ASSIGNMENT_ACCEPTED";
+      }
+      else if (parsed.data.action === "start") {
+        if (job.status !== "ASSIGNED" || job.assignedStaffId !== access.staff.staffUserId) throw new Error("invalid_transition");
+        const [latestAssignmentEvent] = await tx.select({ eventType: collectionJobEvents.eventType, actorStaffId: collectionJobEvents.actorStaffId }).from(collectionJobEvents).where(and(eq(collectionJobEvents.jobId, id), eq(collectionJobEvents.organizationId, job.organizationId), inArray(collectionJobEvents.eventType, ["ASSIGNED", "REASSIGNED", "ASSIGNMENT_DECLINED", "ASSIGNMENT_ACCEPTED"]))).orderBy(sql`${collectionJobEvents.recordedAt} DESC, ${collectionJobEvents.id} DESC`).limit(1);
+        if (latestAssignmentEvent?.eventType !== "ASSIGNMENT_ACCEPTED" || latestAssignmentEvent.actorStaffId !== access.staff.staffUserId) throw new Error("assignment_acceptance_required");
+        eventType = "VISIT_STARTED"; nextStatus = "IN_PROGRESS";
+      }
       else if (parsed.data.action === "complete") { if (job.status !== "IN_PROGRESS") throw new Error("invalid_transition"); const [sample] = await tx.select({ id: specimensTable.id }).from(specimensTable).where(and(eq(specimensTable.jobId, id), eq(specimensTable.organizationId, job.organizationId), eq(specimensTable.centreId, job.centreId))).limit(1); if (!sample) throw new Error("specimen_record_required"); eventType = "COLLECTION_RECORDED"; nextStatus = "COLLECTED"; }
       else if (parsed.data.action === "arrive") { if (job.status !== "IN_PROGRESS") throw new Error("invalid_transition"); eventType = "ARRIVED"; }
       else if (parsed.data.action === "delay") { if (job.status !== "IN_PROGRESS") throw new Error("invalid_transition"); eventType = "VISIT_DELAYED"; }
       else if (parsed.data.action === "unsuccessful") { if (job.status !== "IN_PROGRESS") throw new Error("invalid_transition"); eventType = "ATTEMPT_FAILED"; nextStatus = "UNSUCCESSFUL"; }
       else { if (["COLLECTED", "CANCELLED"].includes(job.status)) throw new Error("job_closed"); eventType = "CANCELLED"; nextStatus = "CANCELLED"; }
       const updated = await tx.update(collectionJobs).set({ status: nextStatus, versionNumber: job.versionNumber + 1, updatedAt: new Date() }).where(and(eq(collectionJobs.id, id), eq(collectionJobs.versionNumber, job.versionNumber))).returning({ id: collectionJobs.id, status: collectionJobs.status, versionNumber: collectionJobs.versionNumber });
-      const eventId=randomUUID();const evidenceReference=parsed.data.action === "arrive" ? parsed.data.evidenceReference : null;const estimatedArrivalAt=parsed.data.action === "delay" ? parsed.data.estimatedArrivalAt : undefined;await tx.insert(collectionJobEvents).values({ id:eventId,organizationId: job.organizationId, centreId: job.centreId, jobId: id, eventType, source: "STAFF",privateDataCiphertext:encryptOperationalData({reason:parsed.data.reason,evidenceReference,...(estimatedArrivalAt ? { estimatedArrivalAt } : {})},operationalContext({organizationId:job.organizationId,centreId:job.centreId,recordId:eventId},"collection-job-event")), actorStaffId: access.staff.staffUserId });
+      const eventId=randomUUID();const evidenceReference=parsed.data.action === "arrive" ? parsed.data.evidenceReference : null;const estimatedArrivalAt=parsed.data.action === "delay" ? parsed.data.estimatedArrivalAt : undefined;await tx.insert(collectionJobEvents).values({ id:eventId,organizationId: job.organizationId, centreId: job.centreId, jobId: id, eventType, source: "STAFF",privateDataCiphertext:encryptOperationalData({reason:parsed.data.reason,evidenceReference,...(estimatedArrivalAt ? { estimatedArrivalAt } : {})},operationalContext({organizationId:job.organizationId,centreId:job.centreId,recordId:eventId},"collection-job-event")), staffId: parsed.data.action === "accept" ? access.staff.staffUserId : null, actorStaffId: access.staff.staffUserId });
       await appendAuditEvent(tx, { organizationId: job.organizationId, centreId: job.centreId, actorStaffId: access.staff.staffUserId, action: `collection_job.${parsed.data.action}`, entityType: "collection_job", entityId: id, details: { status: nextStatus, mutationIdempotencyKey, mutationRequestHash } }); return { ...updated[0], replayed: false };
     });
     return Response.json({ job: result, replayed: result.replayed });
   } catch (error) {
-    const code = error instanceof Error ? error.message : ""; const known = ["not_found", "version_conflict", "job_closed", "invalid_transition", "collector_not_authorized", "staff_schedule_conflict", "specimen_record_required", "idempotency_conflict"];
-    if (known.includes(code)) return Response.json({ error: code }, { status: code === "not_found" ? 404 : code === "version_conflict" || code === "staff_schedule_conflict" || code === "idempotency_conflict" ? 409 : 400 });
+    const code = error instanceof Error ? error.message : ""; const known = ["not_found", "version_conflict", "job_closed", "invalid_transition", "assignment_acceptance_required", "collector_not_authorized", "staff_schedule_conflict", "specimen_record_required", "idempotency_conflict"];
+    if (known.includes(code)) return Response.json({ error: code }, { status: code === "not_found" ? 404 : code === "version_conflict" || code === "staff_schedule_conflict" || code === "idempotency_conflict" || code === "assignment_acceptance_required" ? 409 : 400 });
     return Response.json({ error: "collection_operation_unavailable" }, { status: 409 });
   }
 }
