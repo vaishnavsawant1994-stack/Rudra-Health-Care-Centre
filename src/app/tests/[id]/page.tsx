@@ -1,10 +1,9 @@
-import type { Metadata } from "next";
-import { Suspense } from "react";
-import { PageTitle } from "@/components/ui/page-title";
+import { RudraServiceDetailPage } from "@/components/public/rudra-reference-pages";
 import { PublicCatalogueDetail } from "@/components/catalogue/public-catalogue-detail";
 import { getPublicCatalogueItem } from "@/server/public-catalogue";
+import { Suspense } from "react";
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const item = await getPublicCatalogueItem(id);
@@ -17,9 +16,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 async function TestDetailsContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return <><PageTitle eyebrow="Verified catalogue" title="Test details" description="Current published details are loaded from Rudra’s verified catalogue."/><PublicCatalogueDetail id={id} serviceType="TEST"/></>;
+  if (["cbc", "hba1c", "thyroid", "lft", "kft", "lipid"].includes(id)) return <RudraServiceDetailPage type="TEST" id={id} />;
+  return <div className="inner-page"><PublicCatalogueDetail id={id} serviceType="TEST"/></div>;
 }
 
 export default function TestDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-  return <div className="inner-page"><Suspense fallback={<p role="status">Loading catalogue details…</p>}><TestDetailsContent params={params}/></Suspense></div>;
+  return <Suspense fallback={<p role="status">Loading diagnostic test details…</p>}><TestDetailsContent params={params}/></Suspense>;
 }

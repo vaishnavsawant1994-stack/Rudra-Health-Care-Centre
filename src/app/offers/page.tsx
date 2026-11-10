@@ -1,0 +1,9 @@
+import { PublicCatalogueDirectory } from "@/components/catalogue/public-catalogue-directory";
+import { PublicContentSections } from "@/components/website/public-content-override";
+import Link from "next/link";
+
+export const metadata = { title: "Published packages | Rudra Health Care Centre", description: "Browse current, verified package catalogue entries published for Rudra centres." };
+
+export default function OffersPage() {
+  return <main className="ref-offers-page"><PublicContentSections slug="packages" showTitle={false}/><section className="ref-offers-hero"><div><span className="eyebrow">PACKAGES & CURRENT CATALOGUE</span><h1>Explore published diagnostic packages</h1><p>Only current, source-reviewed package entries for participating centres are shown. This page does not create promotional discounts or guarantee availability.</p><div className="ref-actions"><a className="button button-primary" href="#verified-package-list">Browse packages</a><Link className="button button-secondary" href="/home-collection">Home collection information</Link></div></div><div className="ref-offers-art" role="img" aria-label="Illustrative family wellness image"/></section><section className="ref-offers-disclosure"><strong>Clear pricing</strong><span>Prices shown in the directory are the verified catalogue values for that centre and effective date. Rudra does not add an unapproved diagnostic markup; any separate home-visit service charge must be confirmed by the centre.</span></section><section id="verified-package-list" className="ref-offers-directory"><div><span className="eyebrow">LIVE VERIFIED CATALOGUE</span><h2>Packages currently published by Rudra centres</h2><p>Each result shows the centre that published the service and its effective verified price. A listing is not a booking confirmation or offer redemption.</p></div><PublicCatalogueDirectory serviceType="PACKAGE"/></section></main>;
+}

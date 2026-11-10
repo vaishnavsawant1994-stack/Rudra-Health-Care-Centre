@@ -1,10 +1,11 @@
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CollectionOperations } from "@/components/samples/sample-workbench";
 import { Suspense } from "react";
+import { FieldWorkflowNav } from "@/components/samples/field-workflow-nav";
 
 async function CollectionContent({ searchParams, grants }: { searchParams: Promise<{ centreId?: string }>; grants: NonNullable<Parameters<typeof CollectionOperations>[0]["grants"]> }) {
   const params = await searchParams;
-  return <CollectionOperations grants={grants} initialCentreId={params.centreId} />;
+  return <><FieldWorkflowNav current="F002"/><CollectionOperations grants={grants} initialCentreId={params.centreId} /></>;
 }
 
 export default function CollectionsPage({ searchParams }: { searchParams: Promise<{ centreId?: string }> }) {

@@ -1,10 +1,11 @@
 import { AdminShell } from "@/components/admin/admin-shell";
 import { DispatchDesk } from "@/components/samples/sample-workbench";
 import { Suspense } from "react";
+import { SampleWorkflowNav } from "@/components/branch/sample-workflow-nav";
 
 async function DispatchContent({ searchParams, grants }: { searchParams: Promise<{ centreId?: string }>; grants: NonNullable<Parameters<typeof DispatchDesk>[0]["grants"]> }) {
   const params = await searchParams;
-  return <DispatchDesk grants={grants} initialCentreId={params.centreId} />;
+  return <><SampleWorkflowNav current="L005" /><DispatchDesk grants={grants} initialCentreId={params.centreId} /></>;
 }
 
 export default function DispatchPage({ searchParams }: { searchParams: Promise<{ centreId?: string }> }) {

@@ -1,10 +1,11 @@
 import { AdminShell } from "@/components/admin/admin-shell";
 import { SamplesDirectory } from "@/components/samples/sample-workbench";
 import { Suspense } from "react";
+import { SampleWorkflowNav } from "@/components/branch/sample-workflow-nav";
 
 async function ReceivingContent({ searchParams, grants }: { searchParams: Promise<{ centreId?: string }>; grants: NonNullable<Parameters<typeof SamplesDirectory>[0]["grants"]> }) {
   const params = await searchParams;
-  return <SamplesDirectory mode="receiving" grants={grants} initialCentreId={params.centreId} />;
+  return <><SampleWorkflowNav current="L003" /><SamplesDirectory mode="receiving" grants={grants} initialCentreId={params.centreId} /></>;
 }
 
 export default function RudraReceivingPage({ searchParams }: { searchParams: Promise<{ centreId?: string }> }) {

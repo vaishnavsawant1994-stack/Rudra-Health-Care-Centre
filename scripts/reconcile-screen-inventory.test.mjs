@@ -53,7 +53,7 @@ describe("178-screen inventory reconciliation", () => {
     const summary = await readFile(path.join(root, "docs", "SCREEN_IMPLEMENTATION_MATRIX.md"), "utf8");
 
     expect(rows).toHaveLength(178);
-    expect([exactRoutes, missingRoutes, explicitMappings, unresolvedMappings]).toEqual([41, 137, 21, 116]);
+    expect([exactRoutes, missingRoutes, explicitMappings, unresolvedMappings]).toEqual([42, 136, 21, 115]);
     expect(statuses.filter((status) => status.includes("page, module APIs and related tests exist"))).toHaveLength(39);
     expect(statuses.filter((status) => status.includes("explicit grouped-route mapping is source-validated"))).toHaveLength(21);
     expect(statuses.filter((status) => status.includes("mapping unresolved"))).toHaveLength(92);
