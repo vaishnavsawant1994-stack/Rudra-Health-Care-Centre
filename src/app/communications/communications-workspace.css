@@ -1,0 +1,27 @@
+body:has(.rh-comms-reference-root) .site-header,
+body:has(.rh-comms-reference-root) .site-footer {
+  display: none;
+}
+
+body:has(.rh-comms-reference-root) #main-content {
+  min-height: 100vh;
+}
+
+.admin-page:has(.rh-comms-reference-root) {
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-page:has(.rh-comms-reference-root) > .page-container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-page:has(.rh-comms-reference-root) > .page-container > :not(.rh-comms-reference-root) {
+  display: none;
+}

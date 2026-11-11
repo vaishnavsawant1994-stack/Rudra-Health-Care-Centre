@@ -3,6 +3,8 @@ import "./globals.css";
 import "./design-preview/operations-reference-pages.css";
 import "./rudra-reference-pages.css";
 import "./rudra-access-pages.css";
+import "./communications/communications-workspace.css";
+import "./relationships/relationships-workspace.css";
 import { PublicHeader } from "@/components/layout/public-header";
 import { PublicFooter } from "@/components/layout/public-footer";
 
