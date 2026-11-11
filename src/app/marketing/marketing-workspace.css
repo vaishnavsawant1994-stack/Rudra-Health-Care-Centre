@@ -1,0 +1,6 @@
+body:has(.marketing-reference-root) .site-header,
+body:has(.marketing-reference-root) .site-footer { display:none; }
+body:has(.marketing-reference-root) #main-content { min-height:100vh; }
+.admin-page:has(.marketing-reference-root) { width:100%; max-width:none; min-height:100vh; margin:0; padding:0; }
+.admin-page:has(.marketing-reference-root) > .page-container { width:100%; max-width:none; margin:0; padding:0; }
+.admin-page:has(.marketing-reference-root) > .page-container > :not(.marketing-reference-root) { display:none; }
