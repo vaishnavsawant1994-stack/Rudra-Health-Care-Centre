@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { Phase09OperationsReference } from "@/components/marketing/phase09-operations-reference";
 
-const validScreens = new Set(["o001","o002","o003","o004"]);
+const validScreens = new Set(Array.from({ length: 16 }, (_, index) => `o${String(index + 1).padStart(3, "0")}`));
 export default function OwnerOperationsDesignPage({params}:{params:Promise<{screen:string}>}) {
   return <Suspense fallback={<main role="status">Loading centre preview…</main>}><OwnerOperationsDesignContent params={params}/></Suspense>;
 }

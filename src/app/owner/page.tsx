@@ -16,7 +16,7 @@ export default function OwnerPage() {
       const panels = getOwnerDashboardPanels(staff.grants);
       const has = (permission: string) => staff.grants.some((grant) => grant.key === permission);
       return <>
-        <nav className="page-actions" aria-label="Owner design references"><Link className="button button-secondary" href="/owner/design/o001">Open owner & centre dashboard references O001–O004</Link></nav>
+        <nav className="page-actions" aria-label="Owner design references"><Link className="button button-secondary" href="/owner/design/o001">Open owner & centre operations previews O001–O016</Link></nav>
         <AdminDataPanel endpoint="/api/admin/organization" label="Organization status" />
         {panels.includes("operations") && <section className="workspace-operations"><h2>Cross-centre operational queues</h2><CentreOperationsSummary /></section>}
         {panels.includes("staffing") && <section className="workspace-operations"><h2>Staff coverage and workload</h2><RosterWorkbench sessionStaffId={staff.staffUserId} grants={staff.grants} /></section>}
