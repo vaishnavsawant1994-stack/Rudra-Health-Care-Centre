@@ -1,0 +1,6 @@
+body:has(.phase09-operations-reference) .site-header,
+body:has(.phase09-operations-reference) .site-footer { display:none; }
+body:has(.phase09-operations-reference) #main-content { min-height:100vh; }
+.admin-page:has(.phase09-operations-reference) { width:100%; max-width:none; min-height:100vh; margin:0; padding:0; }
+.admin-page:has(.phase09-operations-reference) > .page-container { width:100%; max-width:none; margin:0; padding:0; }
+.admin-page:has(.phase09-operations-reference) > .page-container > :not(.phase09-operations-reference) { display:none; }
