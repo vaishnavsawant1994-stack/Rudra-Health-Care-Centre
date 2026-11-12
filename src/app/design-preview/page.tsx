@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 type PreviewScreen = "package" | "booking" | "review" | "payment" | "confirmation";
 type CollectionMethod = "centre" | "home";
@@ -31,7 +32,7 @@ export default function DesignPreviewPage() {
 
   return <main className="design-preview-page">
     <div className="design-preview-warning" role="note"><strong>DESIGN PREVIEW · SYNTHETIC CONTENT ONLY</strong><span>Sample names, service records, prices, dates, centre details and status screens are fictional. No booking is saved, no availability is checked, no payment is initiated and no patient account is accessed.</span></div>
-    <nav className="design-preview-nav" aria-label="Design preview screens">{screenOrder.map((item, i) => <button className={screen === item ? "is-active" : ""} type="button" key={item} onClick={() => setScreen(item)}>{i + 1}. {item === "confirmation" ? "Confirmation example" : item}</button>)}<a className="demo-secondary" href="/design-preview/references">More reference pages</a></nav>
+    <nav className="design-preview-nav" aria-label="Design preview screens">{screenOrder.map((item, i) => <button className={screen === item ? "is-active" : ""} type="button" key={item} onClick={() => setScreen(item)}>{i + 1}. {item === "confirmation" ? "Confirmation example" : item}</button>)}<Link className="demo-secondary" href="/design-preview/references">More reference pages</Link><Link className="demo-secondary" href="/design-preview/platform/s001">Platform administration · S001–S012</Link></nav>
 
     {screen === "package" && <>
       <div className="demo-breadcrumb">Home / Packages / Full Body Checkup Package <span>DEMO ITEM</span></div>
