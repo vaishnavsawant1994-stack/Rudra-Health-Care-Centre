@@ -189,6 +189,30 @@ describe("public enquiry PostgreSQL integration", () => {
     expect((await pool.query("SELECT id FROM public_enquiries WHERE organization_id=$1 AND idempotency_key=$2", [organizationId, staleKey])).rows).toHaveLength(0);
   });
 
+  it("stores multiple canonical service snapshots and a requested home fee in the encrypted staff-review payload", async () => {
+    const items = [
+      { id: randomUUID(), centreId, version: 2, serviceType: "TEST" as const, serviceCode: "SYN-TEST-02", displayName: "Synthetic Blood Panel", priceAmount: "250.00", currency: "INR" },
+      { id: randomUUID(), centreId, version: 3, serviceType: "PACKAGE" as const, serviceCode: "SYN-PKG-03", displayName: "Synthetic Wellness Package", priceAmount: "900.00", currency: "INR" },
+    ];
+    mocks.getPublicCatalogueItem.mockImplementation(async (id: string) => items.find((item) => item.id === id) ?? null);
+    const key = randomUUID();
+    const submitted = await post(submit(key, "+919876543238", centreId, {
+      requestKind: "BOOKING_REQUEST", category: "TEST", requestedCatalogueItems: items.map(({ id, version }) => ({ id, version })),
+      preferredDate: "2027-02-02", visitType: "HOME_COLLECTION", requestedHomeCharge: "99",
+      addressLine1: "10 Synthetic Road", city: "Synthetic City", state: "Test State", postalCode: "123456",
+    }));
+    expect(submitted.status).toBe(202);
+    const { reference } = await submitted.json() as { reference: string };
+    const listed = await get(new Request(`http://localhost/api/public/enquiries?centreId=${centreId}`));
+    const body = await listed.json() as { enquiries: Array<PublicEnquiryPayload & { reference: string }> };
+    const enquiry = body.enquiries.find((entry) => entry.reference === reference);
+    expect(enquiry?.requestedCatalogueItems).toMatchObject(items.map(({ id, version, serviceType, serviceCode, displayName, priceAmount, currency }) => ({ id, version, serviceType, serviceCode, displayName, priceAmount, currency })));
+    expect(enquiry).toMatchObject({ requestedHomeChargeChoice: "99", requestedHomeChargeRupees: 99, visitType: "HOME_COLLECTION", preferredDate: "2027-02-02" });
+    const [stored] = (await pool.query("SELECT private_data_ciphertext FROM public_enquiries WHERE enquiry_number=$1", [reference])).rows;
+    expect(stored.private_data_ciphertext).not.toContain("Synthetic Blood Panel");
+    expect(stored.private_data_ciphertext).not.toContain("10 Synthetic Road");
+  });
+
   it("encrypts public intake, replays idempotently, converts transactionally, and leaves contact permission pending", async () => {
     const { encryptOperationalData, operationalContext } = await import("@/server/operational-crypto");
     const campaignId = randomUUID();

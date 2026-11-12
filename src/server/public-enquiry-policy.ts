@@ -15,6 +15,8 @@ export const publicEnquiryCreateSchema = z.object({
   requestedService: z.string().trim().max(160).optional().or(z.literal("")),
   requestedCatalogueItemId: z.uuid().optional(),
   requestedCatalogueVersion: z.number().int().positive().optional(),
+  requestedCatalogueItems: z.array(z.object({ id: z.uuid(), version: z.number().int().positive() })).min(1).max(20).optional(),
+  requestedHomeCharge: z.enum(["75", "99", "150"]).optional(),
   campaignAttribution: z.object({ source: campaignLabel.optional(), medium: campaignLabel.optional(), campaign: campaignLabel.optional() }).optional(),
   preferredDate: z.iso.date().optional().or(z.literal("")), preferredTimeWindow: z.string().trim().max(120).optional().or(z.literal("")),
   visitType: z.enum(["CENTRE", "HOME_COLLECTION"]).optional(),
@@ -23,8 +25,11 @@ export const publicEnquiryCreateSchema = z.object({
   message: z.string().trim().min(5).max(1200), responsePermission: z.boolean(), website: z.string().max(200).optional(),
 }).refine((value) => Boolean(value.phone || value.email), { message: "A phone number or email is required." })
   .refine((value) => Boolean(value.requestedCatalogueItemId) === Boolean(value.requestedCatalogueVersion), { message: "A selected catalogue item and version must be supplied together." })
+  .refine((value) => !(value.requestedCatalogueItems && value.requestedCatalogueItemId), { message: "Use either the current multi-item field or the legacy single-item fields." })
+  .refine((value) => !value.requestedCatalogueItems || new Set(value.requestedCatalogueItems.map((item) => item.id)).size === value.requestedCatalogueItems.length, { message: "A catalogue item cannot be selected more than once." })
   .refine((value) => value.requestKind !== "BOOKING_REQUEST" || Boolean(value.preferredDate), { message: "A preferred date is required for a booking request." })
-  .refine((value) => value.visitType !== "HOME_COLLECTION" || Boolean(value.addressLine1 && value.city && value.state && value.postalCode), { message: "A complete address is required for home collection." });
+  .refine((value) => value.visitType !== "HOME_COLLECTION" || Boolean(value.addressLine1 && value.city && value.state && value.postalCode), { message: "A complete address is required for home collection." })
+  .refine((value) => value.visitType === "HOME_COLLECTION" || !value.requestedHomeCharge, { message: "A home collection fee can only be requested for home collection." });
 
 export const publicEnquiryReviewSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("CONVERT_TO_LEAD"), expectedVersion: z.number().int().positive(), assignedStaffId: z.uuid() }),
@@ -35,6 +40,8 @@ export const publicEnquiryReviewSchema = z.discriminatedUnion("action", [
 export type PublicEnquiryPayload = {
   firstName: string; lastName: string; organizationName?: string | null; phone: string | null; email: string | null; category: string; requestTopic: "GENERAL" | "CORPORATE" | "DOCTOR" | "PARTNER"; message: string;
   requestKind: "INQUIRY" | "BOOKING_REQUEST"; requestedService: string | null; requestedCatalogueItemId?: string | null; requestedCatalogueVersion?: number | null; preferredDate: string | null; preferredTimeWindow: string | null;
+  requestedCatalogueItems?: Array<{ id: string; version: number; serviceType: "TEST" | "PACKAGE"; serviceCode: string; displayName: string; priceAmount: string; currency: string }> | null;
+  requestedHomeChargeChoice?: "75" | "99" | "150" | null; requestedHomeChargeRupees?: number | null;
   visitType: "CENTRE" | "HOME_COLLECTION" | null; collectionAddress: { line1: string; line2?: string; city: string; state: string; postalCode: string } | null;
   responsePermission: boolean; responsePermissionTextVersion: "PUBLIC_ENQUIRY_RESPONSE_V1"; submittedAt: string; reviewReason?: string;
   campaignAttribution?: { source?: string; medium?: string; campaign?: string } | null;

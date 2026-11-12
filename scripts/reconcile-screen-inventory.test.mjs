@@ -32,14 +32,14 @@ describe("178-screen inventory reconciliation", () => {
     header = parseCsvRow(lines[0]);
   }, 20_000);
 
-  it("validates W008 as an embedded review state without treating it as a separate route", async () => {
+  it("validates W008 as the routed review step without treating it as appointment confirmation", async () => {
     const row = parseCsvRow(lines.find((line) => line.startsWith('"W008",')));
     expect(lines).toHaveLength(179);
-    expect(row[header.indexOf("Exact source route")]).toBe("No exact target route file found");
-    expect(row[header.indexOf("Explicit grouped screen mapping")]).toContain("/book (src/app/book/page.tsx)");
-    expect(row[header.indexOf("Explicit grouped screen mapping")]).toContain("not a separate route");
+    expect(row[header.indexOf("Exact source route")]).toContain("/book/review (src/app/book/review/page.tsx)");
+    expect(row[header.indexOf("Explicit grouped screen mapping")]).toContain("/book/review (src/app/book/review/page.tsx)");
+    expect(row[header.indexOf("Explicit grouped screen mapping")]).toContain("staff-reviewed enquiry");
     expect(row[header.indexOf("Implementation status (evidence-based)")]).toContain("explicit grouped-route mapping is source-validated");
-    expect(row[header.indexOf("Evidence limitations")]).toContain("does not prove every W008 requirement");
+    expect(row[header.indexOf("Evidence limitations")]).toContain("not an appointment");
   });
 
   it("keeps the human-readable summary aligned with generated route and status counts", async () => {
@@ -53,14 +53,14 @@ describe("178-screen inventory reconciliation", () => {
     const summary = await readFile(path.join(root, "docs", "SCREEN_IMPLEMENTATION_MATRIX.md"), "utf8");
 
     expect(rows).toHaveLength(178);
-    expect([exactRoutes, missingRoutes, explicitMappings, unresolvedMappings]).toEqual([42, 136, 21, 115]);
+    expect([exactRoutes, missingRoutes, explicitMappings, unresolvedMappings]).toEqual([54, 124, 22, 102]);
     expect(statuses.filter((status) => status.includes("page, module APIs and related tests exist"))).toHaveLength(39);
-    expect(statuses.filter((status) => status.includes("explicit grouped-route mapping is source-validated"))).toHaveLength(21);
+    expect(statuses.filter((status) => status.includes("explicit grouped-route mapping is source-validated"))).toHaveLength(22);
     expect(statuses.filter((status) => status.includes("mapping unresolved"))).toHaveLength(92);
-    expect(statuses.filter((status) => status.includes("Blocked by external decision or integration"))).toHaveLength(26);
-    expect(summary).toContain("**41** IDs have an exact page file");
-    expect(summary).toContain("**137** IDs have no exact page");
-    expect(summary).toContain("**21** have explicit source-validated mappings");
+    expect(statuses.filter((status) => status.includes("Blocked by external decision or integration"))).toHaveLength(25);
+    expect(summary).toContain("**54** IDs have an exact page file");
+    expect(summary).toContain("**124** IDs have no exact page");
+    expect(summary).toContain("**22** have explicit source-validated mappings");
     expect(summary).toContain("**39 partially implemented with page/API/test candidates**");
     expect(summary).toContain("**92 partially implemented with source/action mapping unresolved**");
   });

@@ -156,12 +156,20 @@ const explicitGroupedMappings = {
     limitation: "The mapping proves the direct encrypted relationship profile and links to existing CRM/appointment activity; it does not implement corporate camps, employee scheduling, contracts, or every C008 requirement.",
   },
   W008: {
-    route: "/book",
-    source: "src/components/leads/public-enquiry-workbench.tsx",
-    pageMarker: "<PublicEnquiryForm mode=\"booking\" />",
-    sourceMarkers: ["id=\"booking-review-title\"", "Edit request", "Send request for staff review"],
-    note: "Booking review is an in-form state in /book; it is not a separate route and does not confirm or reserve an appointment.",
-    limitation: "The explicit mapping proves the review state is embedded in the listed page/component; it does not prove every W008 requirement, confirmation, slot reservation, pricing, or appointment creation.",
+    route: "/book/review",
+    source: "src/components/public/rudra-booking-flow.tsx",
+    pageMarker: "<RudraBookingFlow step=\"review\" />",
+    sourceMarkers: ["Send request for staff review", "router.push(\"/book/confirmation\")", "Payment unavailable"],
+    note: "The review route preserves the in-memory public request draft and submits it as a staff-reviewed enquiry.",
+    limitation: "An accepted enquiry is not an appointment, reserved slot, authorized charge, payment, or confirmed booking.",
+  },
+  W010: {
+    route: "/book/confirmation",
+    source: "src/components/public/rudra-booking-flow.tsx",
+    pageMarker: "<RudraBookingFlow step=\"confirmation\" />",
+    sourceMarkers: ["Request received for review", "This is an enquiry receipt, not an appointment confirmation."],
+    note: "The route shows the accepted public-enquiry reference after the API returns success; it is not a booking-success confirmation.",
+    limitation: "The specification's /booking/success/[id] route and genuine appointment completion are not implemented; direct loads or reloads cannot recover the in-memory receipt.",
   },
   F012: {
     route: "/field/today",
@@ -319,12 +327,12 @@ for (const screen of rows) {
   else if (["W023", "W024"].includes(screen.id)) blocker = "Health content requires approved clinical review and source material.";
   else if (screen.id === "W025") blocker = "Promotions require approved pricing, terms and eligibility; none inferred.";
   else if (screen.id === "W026") blocker = "Legal/privacy/accessibility policy text requires Owner/legal approval.";
-  else if (["W009", "W010"].includes(screen.id)) blocker = "Live checkout/payment provider and verified-patient delivery are not configured.";
+  else if (screen.id === "W009") blocker = "Live checkout/payment provider and verified-patient delivery are not configured; payment remains unavailable.";
   else if (["A002", "A003", "A004", "A005"].includes(screen.id)) blocker = "Real communications providers and consent/policy approvals are not configured.";
   else if (key === "M") blocker = "Live platform credentials, publication authorization and ad-spend approval are absent.";
   const pageRef = screen.id === "W015" ? "No public report-entry route; /reports currently serves a staff-protected workspace (not equivalent)."
     : page ? `${routeForFile(page)} (${rel(page)})` : "No exact target route file found";
-  const implementation = key === "P" || ["W014", "W015", "W016", "W017", "W023", "W024", "W025", "W026", "W009", "W010"].includes(screen.id)
+  const implementation = key === "P" || ["W014", "W015", "W016", "W017", "W023", "W024", "W025", "W026", "W009"].includes(screen.id)
     ? "4. Blocked by external decision or integration; see blocker field."
     : groupedMapping
       ? "2. Partially implemented: explicit grouped-route mapping is source-validated; individual acceptance requirements remain open."

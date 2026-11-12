@@ -34,24 +34,30 @@ export async function POST(request: Request) {
   try {
     const enquiryCentres = await listPublicEnquiryCentres();
     if (!enquiryCentres.some((centre) => centre.id === parsed.data.centreId)) return Response.json({ error: "centre_unavailable" }, { status: 400 });
-    let selectedService: Awaited<ReturnType<typeof getPublicCatalogueItem>> = null;
-    if (parsed.data.requestedCatalogueItemId) {
-      selectedService = await getPublicCatalogueItem(parsed.data.requestedCatalogueItemId);
-      if (!selectedService || selectedService.centreId !== parsed.data.centreId || selectedService.version !== parsed.data.requestedCatalogueVersion) {
-        return Response.json({ error: "catalogue_selection_unavailable" }, { status: 400 });
-      }
+    const requestedItems = parsed.data.requestedCatalogueItems ?? (parsed.data.requestedCatalogueItemId
+      ? [{ id: parsed.data.requestedCatalogueItemId, version: parsed.data.requestedCatalogueVersion! }]
+      : []);
+    const selectedServices = await Promise.all(requestedItems.map((item) => getPublicCatalogueItem(item.id)));
+    if (selectedServices.some((service, index) => !service || service.centreId !== parsed.data.centreId || service.version !== requestedItems[index].version)) {
+      return Response.json({ error: "catalogue_selection_unavailable" }, { status: 400 });
     }
     const [scope] = await getDb().select({ organizationId: centres.organizationId }).from(centres).innerJoin(organizations, eq(organizations.id, centres.organizationId)).where(and(eq(centres.id, parsed.data.centreId), eq(centres.status, "ACTIVE"), eq(organizations.status, "ACTIVE"))).limit(1);
     if (!scope) return Response.json({ error: "centre_unavailable" }, { status: 400 });
+    const selectedCategory = selectedServices.length
+      ? selectedServices.every((service) => service!.serviceType === selectedServices[0]!.serviceType) ? selectedServices[0]!.serviceType : "OTHER"
+      : parsed.data.category;
     const payload: PublicEnquiryPayload = {
       firstName: parsed.data.firstName, lastName: parsed.data.lastName, organizationName: parsed.data.organizationName?.trim() || null,
       phone: parsed.data.phone?.trim().replace(/[ ()-]/g, "") || null,
       email: parsed.data.email?.trim().toLowerCase() || null,
-      category: parsed.data.category, requestTopic: parsed.data.requestTopic, message: parsed.data.message,
+      category: selectedCategory, requestTopic: parsed.data.requestTopic, message: parsed.data.message,
       requestKind: parsed.data.requestKind,
-      requestedService: selectedService ? `${selectedService.displayName} (${selectedService.serviceCode})` : parsed.data.requestedService || null,
-      requestedCatalogueItemId: selectedService?.id ?? null,
-      requestedCatalogueVersion: selectedService?.version ?? null,
+      requestedService: selectedServices.length ? selectedServices.map((service) => `${service!.displayName} (${service!.serviceCode})`).join(", ").slice(0, 160) : parsed.data.requestedService || null,
+      requestedCatalogueItemId: selectedServices[0]?.id ?? null,
+      requestedCatalogueVersion: selectedServices[0]?.version ?? null,
+      requestedCatalogueItems: selectedServices.length ? selectedServices.map((service) => ({ id: service!.id, version: service!.version, serviceType: service!.serviceType, serviceCode: service!.serviceCode, displayName: service!.displayName, priceAmount: service!.priceAmount, currency: service!.currency })) : null,
+      requestedHomeChargeChoice: parsed.data.visitType === "HOME_COLLECTION" ? parsed.data.requestedHomeCharge ?? null : null,
+      requestedHomeChargeRupees: parsed.data.visitType === "HOME_COLLECTION" && parsed.data.requestedHomeCharge ? Number(parsed.data.requestedHomeCharge) : null,
       campaignAttribution: parsed.data.campaignAttribution ?? null,
       preferredDate: parsed.data.preferredDate || null,
       preferredTimeWindow: parsed.data.preferredTimeWindow || null,
@@ -257,7 +263,7 @@ export async function PATCH(request: Request) {
       }).returning({ id: leads.id, leadNumber: leads.leadNumber });
       const privateLead: LeadPrivateData = { firstName: payload.firstName, lastName: payload.lastName, phone, email, interestedService: payload.requestedService, campaign: formatPublicCampaignAttribution(payload.campaignAttribution), contactEvidenceReference: null, marketingEvidenceReference: null, lostReason: null };
       await saveLeadPrivateData(tx, { organizationId: row.organizationId, centreId: row.centreId, recordId: leadId }, privateLead);
-      await addLeadActivity(tx, { organizationId: row.organizationId, centreId: row.centreId, leadId, actorStaffId: access.staff.staffUserId, activityType: "NOTE", body: payload.message, metadata: { source: "PUBLIC_ENQUIRY", requestTopic: payload.requestTopic, enquiryCategory: payload.category, organizationName: payload.organizationName ?? null, requestKind: payload.requestKind, requestedService: payload.requestedService, requestedCatalogueItemId: payload.requestedCatalogueItemId ?? null, requestedCatalogueVersion: payload.requestedCatalogueVersion ?? null, preferredDate: payload.preferredDate, preferredTimeWindow: payload.preferredTimeWindow, visitType: payload.visitType, collectionAddress: payload.collectionAddress, responsePermission: payload.responsePermission, responsePermissionTextVersion: payload.responsePermissionTextVersion, submittedAt: payload.submittedAt } });
+      await addLeadActivity(tx, { organizationId: row.organizationId, centreId: row.centreId, leadId, actorStaffId: access.staff.staffUserId, activityType: "NOTE", body: payload.message, metadata: { source: "PUBLIC_ENQUIRY", requestTopic: payload.requestTopic, enquiryCategory: payload.category, organizationName: payload.organizationName ?? null, requestKind: payload.requestKind, requestedService: payload.requestedService, requestedCatalogueItemId: payload.requestedCatalogueItemId ?? null, requestedCatalogueVersion: payload.requestedCatalogueVersion ?? null, requestedCatalogueItems: payload.requestedCatalogueItems ?? null, requestedHomeChargeChoice: payload.requestedHomeChargeChoice ?? null, requestedHomeChargeRupees: payload.requestedHomeChargeRupees ?? null, preferredDate: payload.preferredDate, preferredTimeWindow: payload.preferredTimeWindow, visitType: payload.visitType, collectionAddress: payload.collectionAddress, responsePermission: payload.responsePermission, responsePermissionTextVersion: payload.responsePermissionTextVersion, submittedAt: payload.submittedAt } });
       await tx.update(publicEnquiries).set({ status: "CONVERTED_TO_LEAD", reviewedByStaffId: access.staff.staffUserId, reviewedAt: new Date(), resultingLeadId: lead.id, versionNumber: row.versionNumber + 1 }).where(eq(publicEnquiries.id, row.id));
       await tx.insert(publicEnquiryEvents).values({ id: eventId, organizationId: row.organizationId, centreId: row.centreId, enquiryId: row.id, eventType: "CONVERTED_TO_LEAD", privateDataCiphertext: encryptLeadValue("activity", { leadId: lead.id }, { organizationId: row.organizationId, centreId: row.centreId, recordId: eventId }), actorStaffId: access.staff.staffUserId });
       await appendAuditEvent(tx, { organizationId: row.organizationId, centreId: row.centreId, actorStaffId: access.staff.staffUserId, action: "public_enquiry.converted_to_lead", entityType: "lead", entityId: lead.id, details: { source: "WEBSITE", status: "NEW" } });

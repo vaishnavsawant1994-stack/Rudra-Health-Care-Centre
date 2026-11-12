@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ getApiAccess: vi.fn(), getDb: vi.fn(), appendAuditEvent: vi.fn(), listPublicCatalogueCentres: vi.fn(), getPublicCatalogueItem: vi.fn() }));
+const mocks = vi.hoisted(() => ({ getApiAccess: vi.fn(), getDb: vi.fn(), appendAuditEvent: vi.fn(), listPublicCatalogueCentres: vi.fn(), listPublicEnquiryCentres: vi.fn(), getPublicCatalogueItem: vi.fn() }));
 vi.mock("@/server/access", () => ({ getApiAccess: mocks.getApiAccess }));
 vi.mock("@/db/client", () => ({ getDb: mocks.getDb }));
 vi.mock("@/server/audit", () => ({ appendAuditEvent: mocks.appendAuditEvent }));
 vi.mock("@/server/public-catalogue", () => ({ listPublicCatalogueCentres: mocks.listPublicCatalogueCentres, getPublicCatalogueItem: mocks.getPublicCatalogueItem }));
+vi.mock("@/server/public-enquiry-centres", () => ({ listPublicEnquiryCentres: mocks.listPublicEnquiryCentres }));
 
 import { GET, POST, PATCH } from "./route";
 
@@ -13,6 +14,8 @@ const validBody = { centreId, firstName: "Synthetic", lastName: "Enquirer", phon
 
 describe("public enquiry intake boundaries", () => {
   beforeEach(() => vi.clearAllMocks());
+
+  beforeEach(() => mocks.listPublicEnquiryCentres.mockResolvedValue([{ id: centreId, code: "SYN", name: "Synthetic Centre" }]));
 
   it("rejects a cross-origin intake before reading centre data", async () => {
     const response = await POST(new Request("http://localhost/api/public/enquiries", { method: "POST", headers: { origin: "https://attacker.invalid", "content-type": "application/json", "idempotency-key": "e7a8b594-0c9b-4b71-a8e1-b7c2683a4a34" }, body: JSON.stringify(validBody) }));
@@ -37,6 +40,16 @@ describe("public enquiry intake boundaries", () => {
     const response = await POST(new Request("http://localhost/api/public/enquiries", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": "e7a8b594-0c9b-4b71-a8e1-b7c2683a4a34" }, body: JSON.stringify({ ...validBody, requestedCatalogueItemId: centreId }) }));
     expect(response.status).toBe(400);
     expect(mocks.getPublicCatalogueItem).not.toHaveBeenCalled();
+  });
+
+  it("rejects a stale published catalogue version before persistence", async () => {
+    const itemId = "2bd8f68d-b238-4ca4-959e-d6b97130d53e";
+    mocks.listPublicCatalogueCentres.mockResolvedValue([{ id: centreId, code: "SYN", name: "Synthetic Centre" }]);
+    mocks.getPublicCatalogueItem.mockResolvedValue({ id: itemId, centreId, version: 5, serviceType: "TEST", serviceCode: "SYN-01", displayName: "Synthetic test", priceAmount: "100", currency: "INR" });
+    const response = await POST(new Request("http://localhost/api/public/enquiries", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": "e7a8b594-0c9b-4b71-a8e1-b7c2683a4a34" }, body: JSON.stringify({ ...validBody, category: "TEST", requestKind: "BOOKING_REQUEST", requestedCatalogueItems: [{ id: itemId, version: 4 }], preferredDate: "2027-02-02" }) }));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "catalogue_selection_unavailable" });
+    expect(mocks.getDb).not.toHaveBeenCalled();
   });
 
   it("silently accepts honeypot submissions without persisting them", async () => {

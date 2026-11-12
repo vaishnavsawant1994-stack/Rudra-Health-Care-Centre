@@ -71,3 +71,30 @@ describe("public enquiry idempotency fingerprints", () => {
     expect(verifyPublicEnquiryFingerprint({ ...value, message: "Changed" }, legacy, context)).toBe(false);
   });
 });
+
+describe("public booking enquiry input", () => {
+  const firstItem = "e7a8b594-0c9b-4b71-a8e1-b7c2683a4a34";
+  const secondItem = "2bd8f68d-b238-4ca4-959e-d6b97130d53e";
+  const base = {
+    centreId: "8a5cc8fc-a883-4b19-b419-4cbb3f078fc2", firstName: "Synthetic", lastName: "Requester",
+    phone: "+919876543210", category: "TEST", requestKind: "BOOKING_REQUEST",
+    requestedCatalogueItems: [{ id: firstItem, version: 3 }, { id: secondItem, version: 2 }],
+    preferredDate: "2027-02-02", visitType: "CENTRE", message: "Synthetic service request.", responsePermission: false,
+  };
+
+  it("accepts several versioned catalogue selections and rejects incomplete or duplicate input", () => {
+    expect(publicEnquiryCreateSchema.safeParse(base).success).toBe(true);
+    expect(publicEnquiryCreateSchema.safeParse({ ...base, phone: "", email: "" }).success).toBe(false);
+    expect(publicEnquiryCreateSchema.safeParse({ ...base, preferredDate: "" }).success).toBe(false);
+    expect(publicEnquiryCreateSchema.safeParse({ ...base, requestedCatalogueItems: [{ id: firstItem, version: 1 }, { id: firstItem, version: 1 }] }).success).toBe(false);
+    expect(publicEnquiryCreateSchema.safeParse({ ...base, requestedCatalogueItems: [{ id: firstItem, version: 0 }] }).success).toBe(false);
+  });
+
+  it("requires a complete home address and an allowed, explicitly unconfirmed requested fee", () => {
+    const home = { ...base, visitType: "HOME_COLLECTION", requestedHomeCharge: "99" };
+    expect(publicEnquiryCreateSchema.safeParse({ ...home, addressLine1: "10 Synthetic Road", city: "Test City", state: "Test State", postalCode: "123456" }).success).toBe(true);
+    expect(publicEnquiryCreateSchema.safeParse({ ...home, requestedHomeCharge: "200", addressLine1: "10 Synthetic Road", city: "Test City", state: "Test State", postalCode: "123456" }).success).toBe(false);
+    expect(publicEnquiryCreateSchema.safeParse({ ...home, requestedHomeCharge: undefined, addressLine1: "10 Synthetic Road", city: "Test City", state: "Test State", postalCode: "123456" }).success).toBe(true);
+    expect(publicEnquiryCreateSchema.safeParse({ ...base, requestedHomeCharge: "75" }).success).toBe(false);
+  });
+});
