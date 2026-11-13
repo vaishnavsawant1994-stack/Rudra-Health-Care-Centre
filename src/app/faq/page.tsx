@@ -10,7 +10,7 @@ export async function generateMetadata() {
 
 const defaultQuestions: PublicFaqItem[] = [
   { question: "Are listed prices current?", answer: "The public catalogue shows only an explicitly published, source-verified price whose effective dates include today. Rudra home-collection charges, if applicable, are separate.", topic: "Services" },
-  { question: "Does this site confirm an appointment?", answer: "No. Online booking is not active. A service listing or visit to the booking page does not create or confirm an appointment.", topic: "Booking" },
+  { question: "Does a booking request confirm an appointment?", answer: "No. The public form sends an enquiry for centre staff to review. It does not create an appointment, reserve a slot, confirm a fee or start payment.", topic: "Booking" },
   { question: "Can I view a report or patient record here?", answer: "Patient accounts and patient-facing report delivery are not active on this site. Staff access uses separate protected sign-in.", topic: "Privacy" },
   { question: "Does a family relationship give another person access to a report?", answer: "No. Family relationships do not grant medical-record access. Access requires a separate verified authorization.", topic: "Privacy" },
   { question: "How do I confirm collection coverage or preparation?", answer: "Check published service information, then confirm centre-specific availability and instructions directly with Rudra before acting. This site does not determine clinical preparation or specimen handling requirements.", topic: "Home collection" },

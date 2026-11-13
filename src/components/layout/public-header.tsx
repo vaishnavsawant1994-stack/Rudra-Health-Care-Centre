@@ -6,7 +6,7 @@ import { useState } from "react";
 const links = [
   ["Home", "/"], ["Tests", "/tests"], ["Packages", "/packages"],
   ["Home Collection", "/home-collection"], ["Find Centres", "/centres"],
-  ["Reports", "/report-access"], ["Health Info", "/health-info"], ["Contact", "/contact"],
+  ["Track request", "/track"], ["Report access", "/report-access"], ["Health guides", "/health-guides"], ["Contact", "/contact"],
 ] as const;
 
 export function PublicHeader() {
@@ -20,7 +20,7 @@ export function PublicHeader() {
     <nav id="primary-navigation" className={`primary-nav${open ? " is-open" : ""}`} aria-label="Main navigation" onKeyDown={(event) => { if (event.key === "Escape") setOpen(false); }}>
       {links.map(([label, href]) => <Link key={href} href={href} onClick={() => setOpen(false)}>{label}</Link>)}
       <Link className="nav-search" href="/tests" aria-label="Search tests and packages" onClick={() => setOpen(false)}>⌕</Link>
-      <Link className="nav-account" href="/login" onClick={() => setOpen(false)}>♙ &nbsp;Login / Register</Link>
+      <Link className="nav-account" href="/login" onClick={() => setOpen(false)}>♙ &nbsp;Patient access</Link>
       <Link className="nav-book" href="/book" onClick={() => setOpen(false)}>▦ &nbsp;Book Now</Link>
     </nav>
   </div></header>;

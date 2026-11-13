@@ -16,7 +16,7 @@ export const publicEnquiryCreateSchema = z.object({
   requestedCatalogueItemId: z.uuid().optional(),
   requestedCatalogueVersion: z.number().int().positive().optional(),
   requestedCatalogueItems: z.array(z.object({ id: z.uuid(), version: z.number().int().positive() })).min(1).max(20).optional(),
-  requestedHomeCharge: z.enum(["75", "99", "150"]).optional(),
+  requestedHomeCharge: z.enum(["0", "75", "99", "150"]).optional(),
   campaignAttribution: z.object({ source: campaignLabel.optional(), medium: campaignLabel.optional(), campaign: campaignLabel.optional() }).optional(),
   preferredDate: z.iso.date().optional().or(z.literal("")), preferredTimeWindow: z.string().trim().max(120).optional().or(z.literal("")),
   visitType: z.enum(["CENTRE", "HOME_COLLECTION"]).optional(),
@@ -41,7 +41,7 @@ export type PublicEnquiryPayload = {
   firstName: string; lastName: string; organizationName?: string | null; phone: string | null; email: string | null; category: string; requestTopic: "GENERAL" | "CORPORATE" | "DOCTOR" | "PARTNER"; message: string;
   requestKind: "INQUIRY" | "BOOKING_REQUEST"; requestedService: string | null; requestedCatalogueItemId?: string | null; requestedCatalogueVersion?: number | null; preferredDate: string | null; preferredTimeWindow: string | null;
   requestedCatalogueItems?: Array<{ id: string; version: number; serviceType: "TEST" | "PACKAGE"; serviceCode: string; displayName: string; priceAmount: string; currency: string }> | null;
-  requestedHomeChargeChoice?: "75" | "99" | "150" | null; requestedHomeChargeRupees?: number | null;
+  requestedHomeChargeChoice?: "0" | "75" | "99" | "150" | null; requestedHomeChargeRupees?: number | null;
   visitType: "CENTRE" | "HOME_COLLECTION" | null; collectionAddress: { line1: string; line2?: string; city: string; state: string; postalCode: string } | null;
   responsePermission: boolean; responsePermissionTextVersion: "PUBLIC_ENQUIRY_RESPONSE_V1"; submittedAt: string; reviewReason?: string;
   campaignAttribution?: { source?: string; medium?: string; campaign?: string } | null;

@@ -1,21 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
+import PackageDetailsPage from "./page";
 
-const getPublicCatalogueItem = vi.hoisted(() => vi.fn());
-vi.mock("@/server/public-catalogue", () => ({ getPublicCatalogueItem }));
-
-import { generateMetadata } from "./page";
-
-describe("public package detail metadata", () => {
-  it("uses a currently verified package projection", async () => {
-    getPublicCatalogueItem.mockResolvedValue({ serviceType: "PACKAGE", displayName: "Synthetic Wellness Panel", centreName: "Main Centre" });
-    const metadata = await generateMetadata({ params: Promise.resolve({ id: "synthetic-id" }) });
-    expect(metadata.title).toBe("Synthetic Wellness Panel | Diagnostic package");
-    expect(metadata.description).toContain("Main Centre");
-  });
-
-  it("fails closed when the catalogue lookup is unavailable", async () => {
-    getPublicCatalogueItem.mockRejectedValue(new Error("synthetic database unavailable"));
-    const metadata = await generateMetadata({ params: Promise.resolve({ id: "synthetic-id" }) });
-    expect(metadata.robots).toEqual({ index: false, follow: false });
+describe("published package detail route", () => {
+  it("never substitutes a demo package when a public catalogue item is unavailable", async () => {
+    const page = await PackageDetailsPage({ params: Promise.resolve({ id: "full-body" }) });
+    const markup = renderToStaticMarkup(page);
+    expect(markup).toContain("Loading verified service details");
+    expect(markup).not.toContain("Full Body Checkup");
+    expect(markup).not.toContain("₹ 1,999");
   });
 });

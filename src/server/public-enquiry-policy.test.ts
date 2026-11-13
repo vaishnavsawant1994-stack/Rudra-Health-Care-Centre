@@ -93,6 +93,7 @@ describe("public booking enquiry input", () => {
   it("requires a complete home address and an allowed, explicitly unconfirmed requested fee", () => {
     const home = { ...base, visitType: "HOME_COLLECTION", requestedHomeCharge: "99" };
     expect(publicEnquiryCreateSchema.safeParse({ ...home, addressLine1: "10 Synthetic Road", city: "Test City", state: "Test State", postalCode: "123456" }).success).toBe(true);
+    expect(publicEnquiryCreateSchema.safeParse({ ...home, requestedHomeCharge: "0", addressLine1: "10 Synthetic Road", city: "Test City", state: "Test State", postalCode: "123456" }).success).toBe(true);
     expect(publicEnquiryCreateSchema.safeParse({ ...home, requestedHomeCharge: "200", addressLine1: "10 Synthetic Road", city: "Test City", state: "Test State", postalCode: "123456" }).success).toBe(false);
     expect(publicEnquiryCreateSchema.safeParse({ ...home, requestedHomeCharge: undefined, addressLine1: "10 Synthetic Road", city: "Test City", state: "Test State", postalCode: "123456" }).success).toBe(true);
     expect(publicEnquiryCreateSchema.safeParse({ ...base, requestedHomeCharge: "75" }).success).toBe(false);

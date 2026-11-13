@@ -346,16 +346,18 @@ describe("public enquiry PostgreSQL integration", () => {
   it("carries a selected catalogue snapshot into the CRM booking history while restricting collection addresses", async () => {
     const key = randomUUID();
     const catalogueItemId = randomUUID();
+    const secondCatalogueItemId = randomUUID();
     mocks.getPublicCatalogueItem.mockResolvedValueOnce({ id: catalogueItemId, centreId, centreName: "Synthetic web centre", serviceType: "TEST", serviceCode: "SYN-TEST-01", version: 3, displayName: "Synthetic complete blood count", specimenRequirements: null, preparationInstructions: null, priceAmount: "250.00", currency: "INR", effectiveFrom: "2026-01-01", effectiveUntil: null });
-    const response = await post(submit(key, "+919876543219", centreId, { requestKind: "BOOKING_REQUEST", category: "HOME_COLLECTION", requestedCatalogueItemId: catalogueItemId, requestedCatalogueVersion: 3, preferredDate: "2027-01-20", preferredTimeWindow: "Morning", visitType: "HOME_COLLECTION", addressLine1: "123 Synthetic Road", addressLine2: "Unit 4", city: "Sample City", state: "Test State", postalCode: "400001" }));
+    mocks.getPublicCatalogueItem.mockResolvedValueOnce({ id: secondCatalogueItemId, centreId, centreName: "Synthetic web centre", serviceType: "PACKAGE", serviceCode: "SYN-PKG-02", version: 2, displayName: "Synthetic wellness package", specimenRequirements: null, preparationInstructions: null, priceAmount: "500.00", currency: "INR", effectiveFrom: "2026-01-01", effectiveUntil: null });
+    const response = await post(submit(key, "+919876543219", centreId, { requestKind: "BOOKING_REQUEST", category: "HOME_COLLECTION", requestedCatalogueItems: [{ id: catalogueItemId, version: 3 }, { id: secondCatalogueItemId, version: 2 }], requestedHomeCharge: "0", preferredDate: "2027-01-20", preferredTimeWindow: "Morning", visitType: "HOME_COLLECTION", addressLine1: "123 Synthetic Road", addressLine2: "Unit 4", city: "Sample City", state: "Test State", postalCode: "400001" }));
     expect(response.status).toBe(202);
     const reference = (await response.json() as { reference: string }).reference;
     const [stored] = (await pool.query("SELECT id,private_data_ciphertext FROM public_enquiries WHERE enquiry_number=$1", [reference])).rows;
     expect(stored.private_data_ciphertext).not.toContain("123 Synthetic Road");
     const listedResponse = await get(new Request(`http://localhost/api/public/enquiries?centreId=${centreId}`));
-    const listed = await listedResponse.json() as { enquiries: Array<{ id: string; version: number; requestKind: string; preferredDate: string; visitType: string; collectionAddress: { line1: string } }> };
+    const listed = await listedResponse.json() as { enquiries: Array<{ id: string; version: number; requestKind: string; preferredDate: string; visitType: string; collectionAddress: { line1: string }; requestedCatalogueItems: Array<{ id: string; version: number; displayName: string }>; requestedHomeChargeChoice: string; requestedHomeChargeRupees: number }> };
     const request = listed.enquiries.find((row) => row.id === stored.id)!;
-    expect(request).toMatchObject({ requestKind: "BOOKING_REQUEST", preferredDate: "2027-01-20", visitType: "HOME_COLLECTION", collectionAddress: { line1: "123 Synthetic Road" } });
+    expect(request).toMatchObject({ requestKind: "BOOKING_REQUEST", preferredDate: "2027-01-20", visitType: "HOME_COLLECTION", collectionAddress: { line1: "123 Synthetic Road" }, requestedCatalogueItems: [{ id: catalogueItemId, version: 3, displayName: "Synthetic complete blood count" }, { id: secondCatalogueItemId, version: 2, displayName: "Synthetic wellness package" }], requestedHomeChargeChoice: "0", requestedHomeChargeRupees: 0 });
     const converted = await patch(new Request("http://localhost/api/public/enquiries", { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json" }, body: JSON.stringify({ id: request.id, action: "CONVERT_TO_LEAD", expectedVersion: request.version, assignedStaffId: staffUserId }) }));
     expect(converted.status).toBe(200);
     const leadId = (await converted.json() as { leadId: string }).leadId;
@@ -368,8 +370,9 @@ describe("public enquiry PostgreSQL integration", () => {
     expect(detail.status).toBe(200);
     const detailBody = await detail.json() as { activity: Array<{ metadata: Record<string, unknown> }> };
     const booking = detailBody.activity.find((entry) => entry.metadata.requestKind === "BOOKING_REQUEST");
-    expect(booking?.metadata).toMatchObject({ requestedCatalogueItemId: catalogueItemId, requestedCatalogueVersion: 3, preferredDate: "2027-01-20", preferredTimeWindow: "Morning", visitType: "HOME_COLLECTION" });
+    expect(booking?.metadata).toMatchObject({ requestedCatalogueItemId: catalogueItemId, requestedCatalogueVersion: 3, requestedCatalogueItems: [{ id: catalogueItemId, version: 3, displayName: "Synthetic complete blood count" }, { id: secondCatalogueItemId, version: 2, displayName: "Synthetic wellness package" }], requestedHomeChargeChoice: "0", requestedHomeChargeRupees: 0, preferredDate: "2027-01-20", preferredTimeWindow: "Morning", visitType: "HOME_COLLECTION" });
     expect(booking?.metadata).not.toHaveProperty("collectionAddress");
+    expect((await pool.query("SELECT event_type FROM public_enquiry_events WHERE enquiry_id=$1 ORDER BY recorded_at,id", [request.id])).rows.map((row) => row.event_type)).toEqual(["SUBMITTED", "CONVERTED_TO_LEAD"]);
     grants = [...grants, "appointments.read"];
     const authorizedDetail = await getLead(new Request("http://localhost/api/leads/" + leadId), { params: Promise.resolve({ id: leadId }) });
     const authorizedBody = await authorizedDetail.json() as { activity: Array<{ metadata: Record<string, unknown> }> };

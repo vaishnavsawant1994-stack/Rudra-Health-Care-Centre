@@ -5,6 +5,8 @@ import { z } from "zod";
 import { PublicCentreDetails } from "@/components/centres/public-centre-details";
 import { listPublicCentres } from "@/server/public-enquiry-centres";
 
+export const instant = false;
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   try {
     const { id } = await params;

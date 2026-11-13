@@ -15,12 +15,14 @@ export function PublicCatalogueDirectory({ serviceType }: { serviceType: "TEST" 
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [compareItems, setCompareItems] = useState<PublicItem[]>([]);
   const [state, setState] = useState("Loading currently published services…");
   const requestSequence = useRef(0);
 
   const load = useCallback(async (pageNumber = 1, append = false) => {
     const requestId = ++requestSequence.current;
     setState("Loading currently published services…");
+    if (!append) setItems([]);
     try {
       const params = new URLSearchParams({ serviceType, page: String(pageNumber), pageSize: "24" });
       if (centreId) params.set("centreId", centreId);
@@ -55,8 +57,14 @@ export function PublicCatalogueDirectory({ serviceType }: { serviceType: "TEST" 
   useEffect(() => { void Promise.resolve().then(() => load()); }, [load]);
   useEffect(() => () => { requestSequence.current += 1; }, []);
   function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setAppliedQuery(query.trim()); }
+  function toggleCompare(item: PublicItem) {
+    setCompareItems((current) => current.some((entry) => entry.id === item.id)
+      ? current.filter((entry) => entry.id !== item.id)
+      : current.length < 3 ? [...current, item] : current);
+  }
 
-  return <section className="public-catalogue ref-catalogue" aria-label={serviceType === "TEST" ? "Diagnostic tests" : "Diagnostic packages"}>
+  const loading = state.startsWith("Loading") || loadingMore;
+  return <section className="public-catalogue ref-catalogue" aria-label={serviceType === "TEST" ? "Diagnostic tests" : "Diagnostic packages"} aria-busy={loading}>
     <div className="ref-catalogue-banner"><div><span className="eyebrow">Rudra Health Care Centre</span><h1>{serviceType === "TEST" ? "Diagnostic Tests" : "Health Checkup Packages"}</h1><p>{serviceType === "TEST" ? "Explore published diagnostic test details and review centre-specific information." : "Browse published diagnostic packages and their current verified details."}</p><div className="ref-hero-points"><span>Current published records</span><span>Centre-specific details</span><span>Effective catalogue prices</span></div></div><div className={`ref-catalogue-art ${serviceType === "TEST" ? "is-test" : "is-package"}`} aria-hidden="true"/></div>
     <div className="ref-catalogue-layout">
       <aside className="ref-catalogue-aside"><h2>Browse</h2><Link href="/tests" aria-current={serviceType === "TEST" ? "page" : undefined}>Diagnostic tests</Link><Link href="/packages" aria-current={serviceType === "PACKAGE" ? "page" : undefined}>Health packages</Link><Link href="/centres">Choose a centre</Link><div><strong>Pricing information</strong><p>Prices shown in results come from the currently published catalogue record for that centre. Home-collection charges, if any, are separate.</p></div></aside>
@@ -64,16 +72,19 @@ export function PublicCatalogueDirectory({ serviceType }: { serviceType: "TEST" 
         <form className="public-catalogue-controls" onSubmit={submit}>
           <label>Centre<select value={centreId} onChange={(event) => setCentreId(event.target.value)}><option value="">All available centres</option>{centres.map((centre) => <option key={centre.id} value={centre.id}>{centre.name}</option>)}</select></label>
           <label>Search services<input value={query} onChange={(event) => setQuery(event.target.value)} maxLength={80} placeholder="Search by name or service code" /></label>
-          <button className="button button-primary" type="submit">Search</button>
+          <button className="button button-primary" type="submit" disabled={loading}>Search</button>
         </form>
         <div className="ref-results-head"><h2>{items.length ? `${items.length}${hasMore ? "+" : ""} published ${serviceType === "TEST" ? "tests" : "packages"}` : "Published services"}</h2><span>Verified and in effect for the selected centre</span></div>
         {state && <p role="status" className="ref-inline-state">{state}</p>}
+        {(state.includes("temporarily unavailable") || state.includes("could not be loaded")) && <button type="button" className="button button-secondary" onClick={() => void load()} disabled={loading}>Retry catalogue</button>}
+        {serviceType === "PACKAGE" && <p className="public-catalogue-note">Compare up to three published package entries. Demographic filters are not shown because approved demographic variant metadata is not available.</p>}
+        {serviceType === "PACKAGE" && compareItems.length > 0 && <section className="ref-directory-compare" aria-label="Package comparison"><h3>Package comparison ({compareItems.length}/3)</h3><div className="ref-directory-grid">{compareItems.map((item) => <article key={item.id}><h4>{item.displayName}</h4><p>{item.centreName}</p><p>{item.serviceCode} · Version {item.version}</p><strong>{item.currency === "INR" ? "₹" : `${item.currency} `}{item.priceAmount}</strong><button className="button button-secondary" type="button" onClick={() => toggleCompare(item)}>Remove from comparison</button></article>)}</div></section>}
         {items.length > 0 && <div className="ref-directory-grid">{items.map((item, index) => <article className="ref-directory-card" key={item.id}>
           <div className={`ref-directory-art art-${index % 5} ${serviceType === "TEST" ? "is-test" : "is-package"}`} aria-hidden="true"/>
           <div className="ref-directory-body"><small>{item.serviceCode} · {item.centreName}</small><h3>{item.displayName}</h3>
             {item.specimenRequirements && <p><b>Specimen</b> {item.specimenRequirements}</p>}{item.preparationInstructions && <p><b>Preparation</b> {item.preparationInstructions}</p>}
             <strong className="ref-price">{item.currency === "INR" ? "₹" : `${item.currency} `}{item.priceAmount}</strong><small>Verified price · effective {item.effectiveFrom}{item.effectiveUntil ? ` through ${item.effectiveUntil}` : ""}</small>
-            <div className="ref-actions"><Link className="button button-secondary" href={`/${serviceType === "TEST" ? "tests" : "packages"}/${encodeURIComponent(item.id)}`}>View details</Link><Link className="button button-primary" href={`/book?centreId=${encodeURIComponent(item.centreId)}&catalogueItemId=${encodeURIComponent(item.id)}&catalogueVersion=${item.version}&service=${encodeURIComponent(`${item.displayName} (${item.serviceCode})`)}`}>Request this service</Link></div>
+            <div className="ref-actions"><Link className="button button-secondary" href={`/${serviceType === "TEST" ? "tests" : "packages"}/${encodeURIComponent(item.id)}`}>View details</Link><Link className="button button-primary" href={`/book?centreId=${encodeURIComponent(item.centreId)}&catalogueItemId=${encodeURIComponent(item.id)}&catalogueVersion=${item.version}&service=${encodeURIComponent(`${item.displayName} (${item.serviceCode})`)}`}>Request this service</Link>{serviceType === "PACKAGE" && <button className="button button-secondary" type="button" aria-pressed={compareItems.some((entry) => entry.id === item.id)} onClick={() => toggleCompare(item)} disabled={!compareItems.some((entry) => entry.id === item.id) && compareItems.length >= 3}>{compareItems.some((entry) => entry.id === item.id) ? "Remove comparison" : "Compare package"}</button>}</div>
           </div>
         </article>)}</div>}
         {hasMore && <button type="button" className="button button-secondary" disabled={loadingMore} onClick={() => void load(page + 1, true)}>{loadingMore ? "Loading more services…" : "Load more services"}</button>}

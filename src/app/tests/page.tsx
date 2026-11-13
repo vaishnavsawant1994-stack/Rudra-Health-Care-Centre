@@ -1,7 +1,7 @@
-import { RudraCataloguePage } from "@/components/public/rudra-reference-pages";
+import { PublicCatalogueDirectory } from "@/components/catalogue/public-catalogue-directory";
 
 export const metadata = { title: "Diagnostic Tests" };
 
 export default function TestsPage() {
-  return <RudraCataloguePage type="TEST" />;
+  return <main className="inner-page"><PublicCatalogueDirectory serviceType="TEST" /></main>;
 }
