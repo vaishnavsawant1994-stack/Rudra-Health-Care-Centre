@@ -218,6 +218,10 @@ function routeCandidates(route) {
   return [...new Set(alternatives)];
 }
 
+function normalizeDynamicRoute(route) {
+  return route.replace(/\[[^\]]+\]/g, "[]");
+}
+
 const allFiles = await walk(path.join(root, "src"));
 const appPages = allFiles.filter((file) => /(?:^|\\)page\.tsx?$/.test(file) && file.includes(`${path.sep}app${path.sep}`));
 const apiRoutes = allFiles.filter((file) => /(?:^|\\)route\.ts$/.test(file) && file.includes(`${path.sep}app${path.sep}api${path.sep}`));
@@ -230,6 +234,7 @@ function routeForFile(file, marker = `${path.sep}app${path.sep}`) {
 }
 
 const pageByRoute = new Map(appPages.map((file) => [routeForFile(file), file]));
+const pageByDynamicRoute = new Map(appPages.map((file) => [normalizeDynamicRoute(routeForFile(file)), file]));
 const apiByPath = new Map(apiRoutes.map((file) => [`/api${routeForFile(file, `${path.sep}app${path.sep}api${path.sep}`)}`, file]));
 const spec = await readFile(specPath, "utf8");
 const lines = spec.split(/\r?\n/);
@@ -252,7 +257,7 @@ const header = ["ID", "Experience group", "Target screen", "Target route", "Acce
 const output = [header.map(csv).join(",")];
 for (const screen of rows) {
   const candidates = routeCandidates(screen.route);
-  const page = candidates.map((candidate) => pageByRoute.get(candidate)).find(Boolean);
+  const page = candidates.map((candidate) => pageByRoute.get(candidate) ?? pageByDynamicRoute.get(normalizeDynamicRoute(candidate))).find(Boolean);
   const groupedMapping = explicitGroupedMappings[screen.id];
   let groupedMappingDescription = "";
   if (groupedMapping) {

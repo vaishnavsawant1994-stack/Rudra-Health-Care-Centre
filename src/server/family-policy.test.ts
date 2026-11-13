@@ -16,9 +16,12 @@ describe("family relationship and explicit sharing policy", () => {
 
   it("requires verified evidence, matching named people, allowed data and an effective window", () => {
     expect(familyGrantAllows(activeGrant, { patientId: "patient-a", granteePatientId: "patient-b", dataType: "APPOINTMENTS", at: future })).toBe(true);
+    expect(familyGrantAllows(activeGrant, { patientId: "patient-other", granteePatientId: "patient-b", dataType: "APPOINTMENTS", at: future })).toBe(false);
+    expect(familyGrantAllows(activeGrant, { patientId: "patient-a", granteePatientId: "patient-other", dataType: "APPOINTMENTS", at: future })).toBe(false);
     expect(familyGrantAllows(activeGrant, { patientId: "patient-a", granteePatientId: "patient-b", dataType: "REPORTS", at: future })).toBe(false);
     expect(familyGrantAllows({ ...activeGrant, evidenceReference: null }, { patientId: "patient-a", granteePatientId: "patient-b", dataType: "APPOINTMENTS", at: future })).toBe(false);
     expect(familyGrantAllows({ ...activeGrant, expiresAt: new Date("2026-10-30T00:00:00.000Z") }, { patientId: "patient-a", granteePatientId: "patient-b", dataType: "APPOINTMENTS", at: future })).toBe(false);
+    expect(familyGrantAllows({ ...activeGrant, effectiveAt: new Date("2026-11-02T00:00:00.000Z") }, { patientId: "patient-a", granteePatientId: "patient-b", dataType: "APPOINTMENTS", at: future })).toBe(false);
     expect(familyGrantAllows({ ...activeGrant, revokedAt: new Date("2026-10-29T00:00:00.000Z") }, { patientId: "patient-a", granteePatientId: "patient-b", dataType: "APPOINTMENTS", at: future })).toBe(false);
   });
 

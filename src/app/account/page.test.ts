@@ -8,9 +8,11 @@ describe("patient account identity-proofing gate", () => {
     const html = renderToStaticMarkup(createElement(AccountPage));
 
     expect(metadata.robots).toEqual({ index: false, follow: false });
-    expect(html).toContain("Patient accounts are disabled");
-    expect(html).toContain("no patient sign-in, registration, demo account or patient information");
-    expect(html).toContain("A family relationship alone will never provide access");
-    expect(html).not.toMatch(/<form\b|<input\b|type="password"/i);
+    expect(html).toContain("Patient access unavailable");
+    expect(html).toContain("Patient sign-in and protected patient data are disabled");
+    expect(html).toContain("P001");
+    expect(html).toContain("Show synthetic example");
+    expect(html).not.toContain("name=");
+    expect(html).not.toMatch(/<form\b|<input\b|type="password"|patient-contact-secret/i);
   });
 });

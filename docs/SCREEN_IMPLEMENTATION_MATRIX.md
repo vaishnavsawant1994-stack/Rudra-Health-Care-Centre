@@ -12,8 +12,8 @@ node scripts/reconcile-screen-inventory.mjs
 ## Current source reconciliation
 
 - Parsed **178/178** screen IDs from the proposal.
-- **59** IDs have an exact page file at the proposed route. This is route evidence only; it does not establish functional completion. The staff-protected `/reports` page is not treated as the public W015 route.
-- **119** IDs have no exact page at the proposed URL. **22** have explicit source-validated mappings to grouped or canonical routes; **97** proposed routes still need an explicit screen-to-source/action mapping. The matrix lists candidate module routes, APIs and tests, which must not be mistaken for screen-specific evidence.
+- **65** IDs have a page file whose route matches the proposed route shape (dynamic parameter names may differ). This is route evidence only; it does not establish functional completion. The staff-protected `/reports` page is not treated as the public W015 route.
+- **113** IDs have no exact route-shape match. **21** of those have explicit source-validated grouped mappings, and one additional explicit mapping is already covered by an exact route match; **91** lack both an exact route match and an explicit mapping. Separately, **92** screens remain in the generator's source/action-mapping-unresolved classification. These route/mapping counts and implementation classifications are different evidence measures. Candidate module APIs/tests are not screen-specific proof.
 - Current evidence-based classifications are **39 partially implemented with page/API/test candidates**, **22 partially implemented with explicit source-validated mappings**, **92 partially implemented with source/action mapping unresolved**, and **25 blocked by an identity-proofing, policy or external dependency**. These total 178 and are the generator's mutually exclusive labels, not a measure of completed functionality.
 - No screen is marked fully implemented or “implementation complete, acceptance pending” by this generator. File presence, route manifests, tests in the same module and candidate API matches are not enough evidence to make that claim.
 
@@ -35,8 +35,12 @@ The user-approved identity-proofing decision is to keep patient portal accounts 
 
 ## Next reconciliation work
 
-Resolve the remaining 97 proposed-route mappings against the actual consolidated pages, then inspect every mapped screen's rendered controls, API mutations, database records, permissions and automated test scope. Update classifications only with that evidence. Reconcile any approved scope changes without deleting the original IDs. The 25 blocked rows still require their named identity, policy or external dependency before those capabilities can be enabled.
+Resolve the remaining 92 source/action mappings against the actual consolidated pages, then inspect every mapped screen's rendered controls, API mutations, database records, permissions and automated test scope. Update classifications only with that evidence. Reconcile any approved scope changes without deleting the original IDs. The 25 blocked rows still require their named identity, policy or external dependency before those capabilities can be enabled.
 
 ## Phase 01 checkpoint
 
 The detailed W001–W026 status, per-screen route and evidence, approval gates, automated verification results, and manual acceptance status are recorded in [`PHASE_01_PUBLIC_ACCEPTANCE.md`](PHASE_01_PUBLIC_ACCEPTANCE.md). At the 13 November 2026 checkpoint, 17 screens have partial implementation evidence, 9 remain restricted by approval dependencies, and 0 are fully accepted screen-by-screen. This does not alter the generator's global mapping categories above. Phase 02 prerequisites are documented in [`PHASE_02_PORTAL_READINESS.md`](PHASE_02_PORTAL_READINESS.md).
+
+## Phase 02 checkpoint
+
+P001–P016 now have exact canonical preview routes and a screen-by-screen evidence record in [`PHASE_02_PATIENT_ACCEPTANCE.md`](PHASE_02_PATIENT_ACCEPTANCE.md). All 16 remain no-index and data-free until patient identity, ownership, consent and security gates are approved. The optional synthetic examples make no API calls and write no data. This is preview UI evidence, not live portal functionality or patient acceptance.

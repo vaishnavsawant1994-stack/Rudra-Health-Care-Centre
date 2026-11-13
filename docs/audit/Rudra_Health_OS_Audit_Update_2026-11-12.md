@@ -186,3 +186,30 @@ No screen is marked fully implemented and accepted. Public home-collection area 
 ### Phase 02 preparation
 
 Patient/family portal entry gates and an implementation sequence are documented in `docs/PHASE_02_PORTAL_READINESS.md`. Patient registration, patient authentication and patient report access remain disabled pending the named identity, consent, report-release and security approvals.
+
+## 13 November 2026 checkpoint — Phase 02 P001–P016 safe portal preview
+
+This work continues the existing Phase 02 security boundary. Staff authentication was not reused as patient identity. Patient-facing pages do not call the staff-authorized patient, family, appointment, order, report or finance APIs, and no patient API or database migration was added.
+
+- Added canonical route coverage for P005 `/account/orders/[id]/journey`, P006 `/account/appointments`, P007 `/account/appointments/[id]/change`, P015 `/account/health-documents` and P016 `/account/health-trends`. Existing P001–P004/P008–P014 routes retain their spec IDs/routes; dynamic source parameter names are normalized to the canonical route shape by the inventory generator.
+- P001 `/account` now renders the common patient-portal preview rather than a separate link-only info page. The shared preview includes navigation for all 16 screens, responsive layout, access/privacy notices, empty/restricted states and an opt-in synthetic workflow example.
+- Synthetic examples are static, fictional copy held in page state. They contain no names, patient identifiers, contact details, addresses, invoice amounts, clinical values or document files; make no API requests; write no local/session storage or database; and do not assert Metropolis receipt, processing, collection or report release.
+- P007 has no active mutation; it is disabled without a verified appointment. Patient reports, family grants, profile changes, addresses, support submission, notifications, file upload, payments and trends remain gated.
+- The generated matrix now resolves Next.js dynamic route parameter names by route shape, preserving canonical spec routes and IDs. It records **65** route-shape matches, **113** without an exact match, **22** explicit grouped mappings, and **91** missing both route and explicit mapping. The independent implementation categories remain **39/22/92/25** and are not completion percentages.
+
+### P001–P016 status
+
+All 16 have safe preview/source-route evidence; **0** have enabled patient-data workflows and **0** are accepted. See `docs/PHASE_02_PATIENT_ACCEPTANCE.md` for exact screen names/routes, evidence and remaining gate for each screen. Manual browser, desktop/tablet/mobile, accessibility and approved-reference comparison remain pending for all 16.
+
+### Verification
+
+- Full Vitest: **902 tests passed across 221 files**.
+- ESLint: passed.
+- TypeScript: passed.
+- Next.js production build: passed; **301 static pages** generated.
+- `npm.cmd run db:integration`: passed against the guarded development test database; **98 migrations replayed**, synthetic system/RBAC/encryption/history checks passed. This does not mean patient portal authorization was tested, because no patient endpoint was added.
+- No migration, persistent synthetic patient, real patient/staff data, external-provider connection or deployment was used.
+
+### Outstanding Phase 02 blockers
+
+Identity proofing, patient account linking/authentication/session/MFA/recovery; patient-owned APIs with negative authorization tests; patient/guardian consent and sharing grants; report release and scanner/key-storage qualification; legal issuer/payment policy; address-zone serviceability; communication provider consent; clinical approval of trends; visual/browser/accessibility acceptance. Phase 03 Metropolis synchronization is not enabled and remains manual-first pending contracts, mapping approval and credentials.

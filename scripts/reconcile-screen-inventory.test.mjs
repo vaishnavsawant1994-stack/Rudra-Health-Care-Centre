@@ -53,16 +53,26 @@ describe("178-screen inventory reconciliation", () => {
     const summary = await readFile(path.join(root, "docs", "SCREEN_IMPLEMENTATION_MATRIX.md"), "utf8");
 
     expect(rows).toHaveLength(178);
-    expect([exactRoutes, missingRoutes, explicitMappings, unresolvedMappings]).toEqual([59, 119, 22, 97]);
+    expect([exactRoutes, missingRoutes, explicitMappings, unresolvedMappings]).toEqual([65, 113, 22, 91]);
     expect(statuses.filter((status) => status.includes("page, module APIs and related tests exist"))).toHaveLength(39);
     expect(statuses.filter((status) => status.includes("explicit grouped-route mapping is source-validated"))).toHaveLength(22);
     expect(statuses.filter((status) => status.includes("mapping unresolved"))).toHaveLength(92);
     expect(statuses.filter((status) => status.includes("Blocked by external decision or integration"))).toHaveLength(25);
-    expect(summary).toContain("**59** IDs have an exact page file");
-    expect(summary).toContain("**119** IDs have no exact page");
-    expect(summary).toContain("**22** have explicit source-validated mappings");
+    expect(summary).toContain("**65** IDs have a page file whose route matches the proposed route shape");
+    expect(summary).toContain("**113** IDs have no exact route-shape match");
+    expect(summary).toContain("**21** of those have explicit source-validated grouped mappings");
+    expect(summary).toContain("**91** lack both an exact route match and an explicit mapping");
     expect(summary).toContain("**39 partially implemented with page/API/test candidates**");
     expect(summary).toContain("**92 partially implemented with source/action mapping unresolved**");
+  });
+
+  it("matches Next.js dynamic segment names to the canonical screen route shape", () => {
+    const rowFor = (id) => parseCsvRow(lines.find((line) => line.startsWith(`"${id}",`)));
+    for (const [id, sourceRoute] of [
+      ["P004", "/account/family/[memberId] (src/app/account/family/[memberId]/page.tsx)"],
+      ["P005", "/account/orders/[orderId]/journey (src/app/account/orders/[orderId]/journey/page.tsx)"],
+      ["P007", "/account/appointments/[appointmentId]/change (src/app/account/appointments/[appointmentId]/change/page.tsx)"],
+    ]) expect(rowFor(id)[header.indexOf("Exact source route")]).toBe(sourceRoute);
   });
 
   it("maps support queue and detail screens to the existing encrypted task lifecycle", async () => {
