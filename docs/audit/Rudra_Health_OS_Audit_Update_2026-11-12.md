@@ -149,3 +149,40 @@ Every final acceptance field remains pending. No manual desktop/mobile browser a
 5. Continue Phase 01 with per-screen workflow checks and support/contact error, loading, empty, retry, responsive and accessibility coverage; only then advance to the next development wave.
 
 No security, integration, visual or product acceptance is claimed beyond the exact source/test/build evidence above.
+
+## 13 November 2026 checkpoint — Phase 01 W001–W026 hardening
+
+This checkpoint continues the existing Phase 01 implementation; canonical screen IDs, names and routes are unchanged. The screen-by-screen status and precise limitations are in `docs/PHASE_01_PUBLIC_ACCEPTANCE.md`. The generated 178-screen inventory remains a separate route/implementation evidence source and is not treated as a completion counter.
+
+### Additional implementation in this checkpoint
+
+- W011–W013: published centre addresses now support user-initiated map directions; centre/service loading, retry and stale-result handling were hardened. Published free-text area guidance remains informational and cannot establish postcode coverage, serviceability, capacity, fees or a booking slot.
+- W018–W022: replaced mock CRM “not connected” UI with actual staff-review steps; synthetic integration coverage now exercises doctor and partner enquiry handling, authorized conversion, inactive pending partner state, centre scope, pending customer-contact permission and immutable event history. Staff follow-up assignment uses the existing `tasks.assign` permission and centre-scoped assignee API.
+- W023–W024: marked educational copy pending clinical review and noindex until approved.
+- W025: added the published package catalogue to sitemap and verifies that no unapproved promotion is implied.
+- W026: added explicit local cookie-category preferences. Necessary storage remains required; optional provider integrations are not activated or represented as connected. Legal policy issuer approval is still pending.
+- W007–W010: corrected request/enquiry language in page metadata and review headings. Payment remains unavailable; W010 remains an enquiry acknowledgement, never an appointment/payment/slot confirmation.
+- Added checks for home collection, centre directory/retry, restricted tracking/report/login/register states, offers, cookie preferences, staff task scope and synthetic CRM events.
+
+### Current Phase 01 status
+
+| IDs | Status at 13 Nov 2026 |
+|---|---|
+| W001–W008, W010–W013, W018–W022 | Partial implementation evidence; screen-by-screen browser acceptance pending. |
+| W009, W014–W017, W023–W026 | Restricted/unavailable pending provider, identity, clinical, pricing or legal approval as specified in the Phase 01 register. |
+| All 26 screens | Manual desktop/mobile, keyboard/accessibility and approved-reference visual acceptance pending. |
+
+No screen is marked fully implemented and accepted. Public home-collection area data is staff-published informational text, not a geospatial service. Metropolis remains manual-first. No real patient/staff information, production state, migrations or provider integrations were used or changed.
+
+### Verification
+
+- Full Vitest: **867 tests passed across 219 files**.
+- ESLint: passed.
+- TypeScript: passed.
+- Next.js production build: passed; **296 static pages** generated.
+- `npm.cmd run db:integration`: passed against the guarded development test database; **98 migrations replayed** and synthetic credential/MFA, patient/family/lead/appointment, catalogue/order, collection/sample, financial, reports, encrypted website-content, append-only history, RBAC and audit checks passed.
+- No production deployment was performed. Automated checks do not establish browser, visual, clinical, legal, provider or production acceptance.
+
+### Phase 02 preparation
+
+Patient/family portal entry gates and an implementation sequence are documented in `docs/PHASE_02_PORTAL_READINESS.md`. Patient registration, patient authentication and patient report access remain disabled pending the named identity, consent, report-release and security approvals.

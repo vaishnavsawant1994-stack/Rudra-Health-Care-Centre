@@ -36,3 +36,7 @@ The user-approved identity-proofing decision is to keep patient portal accounts 
 ## Next reconciliation work
 
 Resolve the remaining 97 proposed-route mappings against the actual consolidated pages, then inspect every mapped screen's rendered controls, API mutations, database records, permissions and automated test scope. Update classifications only with that evidence. Reconcile any approved scope changes without deleting the original IDs. The 25 blocked rows still require their named identity, policy or external dependency before those capabilities can be enabled.
+
+## Phase 01 checkpoint
+
+The detailed W001–W026 status, per-screen route and evidence, approval gates, automated verification results, and manual acceptance status are recorded in [`PHASE_01_PUBLIC_ACCEPTANCE.md`](PHASE_01_PUBLIC_ACCEPTANCE.md). At the 13 November 2026 checkpoint, 17 screens have partial implementation evidence, 9 remain restricted by approval dependencies, and 0 are fully accepted screen-by-screen. This does not alter the generator's global mapping categories above. Phase 02 prerequisites are documented in [`PHASE_02_PORTAL_READINESS.md`](PHASE_02_PORTAL_READINESS.md).

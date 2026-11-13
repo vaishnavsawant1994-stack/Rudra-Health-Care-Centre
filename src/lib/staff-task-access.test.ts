@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { canCreateStaffTaskAtCentre, canCreateSupportFollowupAtCentre } from "./staff-task-access";
+import { canAssignSupportFollowupAtCentre, canCreateStaffTaskAtCentre, canCreateSupportFollowupAtCentre } from "./staff-task-access";
 
 describe("support follow-up centre permissions", () => {
+  it("only offers assignee selection with a centre or organization tasks.assign grant", () => {
+    expect(canAssignSupportFollowupAtCentre([{ key: "tasks.assign", centreId: "centre-a" }], "centre-a")).toBe(true);
+    expect(canAssignSupportFollowupAtCentre([{ key: "tasks.assign", centreId: null }], "centre-b")).toBe(true);
+    expect(canAssignSupportFollowupAtCentre([{ key: "tasks.assign", centreId: "centre-a" }], "centre-b")).toBe(false);
+    expect(canAssignSupportFollowupAtCentre([{ key: "tasks.create", centreId: "centre-a" }], "centre-a")).toBe(false);
+  });
+
   it("only offers task creation in a centre covered by a centre or organization grant", () => {
     const centreGrant = [{ key: "tasks.create", centreId: "centre-a" }, { key: "workspace.read", centreId: null }];
     expect(canCreateStaffTaskAtCentre(centreGrant, "centre-a")).toBe(true);

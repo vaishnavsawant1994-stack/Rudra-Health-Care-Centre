@@ -4,6 +4,7 @@ import { PreventiveCheckupsArticle } from "@/components/public/rudra-content-pag
 export const metadata = {
   title: "Preventive checkups: questions to discuss | Rudra Health Care Centre",
   description: "General educational information about preventive screening conversations. Not medical advice or an individual test recommendation.",
+  robots: { index: false, follow: false },
 };
 
 export function generateStaticParams() {

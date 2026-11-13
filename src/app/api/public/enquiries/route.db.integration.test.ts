@@ -343,6 +343,44 @@ describe("public enquiry PostgreSQL integration", () => {
     grants = ["leads.read", "leads.create", "leads.update"];
   });
 
+  it("routes a doctor enquiry into the scoped CRM lead workflow without granting contact consent", async () => {
+    const response = await post(submit(randomUUID(), "+919876543276", centreId, { requestTopic: "DOCTOR", organizationName: "Synthetic Family Practice", responsePermission: false, message: "Please review published test information for our clinic." }));
+    expect(response.status).toBe(202);
+    const reference = (await response.json() as { reference: string }).reference;
+    const listed = await (await get(new Request(`http://localhost/api/public/enquiries?centreId=${centreId}`))).json() as { enquiries: Array<{ id: string; reference: string; requestTopic: string; responsePermission: boolean; version: number }> };
+    const enquiry = listed.enquiries.find((row) => row.reference === reference)!;
+    expect(enquiry).toMatchObject({ requestTopic: "DOCTOR", responsePermission: false, version: 1 });
+    const converted = await patch(new Request("http://localhost/api/public/enquiries", { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json" }, body: JSON.stringify({ id: enquiry.id, action: "CONVERT_TO_LEAD", expectedVersion: enquiry.version, assignedStaffId: staffUserId }) }));
+    expect(converted.status).toBe(200);
+    const { leadId } = await converted.json() as { leadId: string };
+    const [lead] = (await pool.query("SELECT contact_permission,centre_id FROM leads WHERE id=$1", [leadId])).rows as Array<{ contact_permission: string; centre_id: string }>;
+    expect(lead).toMatchObject({ contact_permission: "PENDING", centre_id: centreId });
+    const detail = await getLead(new Request(`http://localhost/api/leads/${leadId}`), { params: Promise.resolve({ id: leadId }) });
+    const detailBody = await detail.json() as { activity: Array<{ metadata: Record<string, unknown> }> };
+    expect(detailBody.activity.find((entry) => entry.metadata.source === "PUBLIC_ENQUIRY")?.metadata.requestTopic).toBe("DOCTOR");
+    expect((await pool.query("SELECT event_type FROM public_enquiry_events WHERE enquiry_id=$1 ORDER BY recorded_at,id", [enquiry.id])).rows.map((row) => row.event_type)).toEqual(["SUBMITTED", "CONVERTED_TO_LEAD"]);
+  });
+
+  it("requires scoped partner approval and keeps a converted partner enquiry inactive", async () => {
+    const response = await post(submit(randomUUID(), "+919876543275", centreId, { requestTopic: "PARTNER", organizationName: "Synthetic Sample Logistics", responsePermission: true, message: "Please review a possible sample logistics relationship." }));
+    expect(response.status).toBe(202);
+    const reference = (await response.json() as { reference: string }).reference;
+    const listed = await (await get(new Request(`http://localhost/api/public/enquiries?centreId=${centreId}`))).json() as { enquiries: Array<{ id: string; reference: string; requestTopic: string; version: number }> };
+    const enquiry = listed.enquiries.find((row) => row.reference === reference)!;
+    const body = JSON.stringify({ id: enquiry.id, action: "CONVERT_TO_RELATIONSHIP", expectedVersion: enquiry.version });
+    const unauthorized = await patch(new Request("http://localhost/api/public/enquiries", { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json" }, body }));
+    expect(unauthorized.status).toBe(403);
+    expect((await pool.query("SELECT id FROM business_relationships WHERE source_public_enquiry_id=$1", [enquiry.id])).rows).toHaveLength(0);
+    grants = [...grants, "partners.manage"];
+    const authorized = await patch(new Request("http://localhost/api/public/enquiries", { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json" }, body }));
+    expect(authorized.status).toBe(200);
+    expect(await authorized.json()).toMatchObject({ status: "CONVERTED_TO_RELATIONSHIP", relationshipType: "PARTNER", active: false });
+    const [relationship] = (await pool.query("SELECT status,category FROM business_relationships WHERE source_public_enquiry_id=$1", [enquiry.id])).rows;
+    expect(relationship).toMatchObject({ status: "INACTIVE", category: "ENQUIRY_PENDING" });
+    expect((await pool.query("SELECT event_type FROM public_enquiry_events WHERE enquiry_id=$1 ORDER BY recorded_at,id", [enquiry.id])).rows.map((row) => row.event_type)).toEqual(["SUBMITTED", "CONVERTED_TO_RELATIONSHIP"]);
+    grants = ["leads.read", "leads.create", "leads.update"];
+  });
+
   it("carries a selected catalogue snapshot into the CRM booking history while restricting collection addresses", async () => {
     const key = randomUUID();
     const catalogueItemId = randomUUID();

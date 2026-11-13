@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import { listPublicCatalogue, listPublicCatalogueCentres } from "@/server/public-catalogue";
 import { publicSiteOrigin } from "@/server/public-site-origin";
 
-const publicPaths = ["/", "/about", "/centres", "/service-areas", "/tests", "/packages", "/home-collection", "/book", "/contact", "/corporate", "/doctors", "/partners", "/faq"];
+const publicPaths = ["/", "/about", "/centres", "/service-areas", "/tests", "/packages", "/offers", "/home-collection", "/book", "/contact", "/corporate", "/doctors", "/partners", "/faq"];
 const MAX_DYNAMIC_URLS = 49_900;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

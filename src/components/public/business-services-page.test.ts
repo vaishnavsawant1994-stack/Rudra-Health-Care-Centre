@@ -24,5 +24,9 @@ describe("public doctor, corporate and partner service pages", () => {
     expect(html).toContain(`data-topic="${topic}"`);
     expect(html).toContain("does not enroll you in marketing or confirm any service");
     expect(html).toContain("Do not submit patient identifiers");
+    expect(html).toContain("Rudra staff review each enquiry");
+    expect(html).toContain("that request before contacting you");
+    expect(html).not.toContain("Illustrative interface preview");
+    expect(html).not.toContain("Enquiry status Not connected");
   });
 });

@@ -27,6 +27,8 @@ describe("public crawler metadata", () => {
     expect(urls).toContain("http://localhost:3000/centres/centre-1");
     expect(urls).toContain("http://localhost:3000/tests/test-1");
     expect(urls).toContain("http://localhost:3000/packages/package-1");
+    expect(urls).toContain("http://localhost:3000/offers");
+    expect(urls).not.toContain("http://localhost:3000/health-guides");
     expect(urls.some((url) => /\/(staff|owner|patients|families|api)(\/|$)/.test(new URL(url).pathname))).toBe(false);
     expect(listPublicCatalogue).toHaveBeenCalledWith({ page: 1, pageSize: 100 });
   });

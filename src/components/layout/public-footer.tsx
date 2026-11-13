@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PublicCookiePreferencesControl } from "@/components/privacy/public-cookie-preferences";
 
 export function PublicFooter() {
   return <footer className="site-footer r-site-footer"><div className="footer-inner ref-footer-inner">
@@ -6,7 +7,7 @@ export function PublicFooter() {
     <nav aria-label="Quick links"><strong>Quick Links</strong><Link href="/">Home</Link><Link href="/tests">Tests</Link><Link href="/packages">Packages</Link><Link href="/home-collection">Home Collection</Link><Link href="/centres">Find Centres</Link><Link href="/offers">Published catalogue prices</Link></nav>
     <nav aria-label="About Rudra"><strong>About Rudra</strong><Link href="/about">About Rudra</Link><Link href="/partner">Partner Enquiries</Link><Link href="/corporate">Corporate Services</Link><Link href="/doctors">For Doctors</Link><Link href="/faq">Frequently asked questions</Link><Link href="/contact">Contact</Link></nav>
     <nav aria-label="Support"><strong>Support</strong><Link href="/contact">Help Centre</Link><Link href="/faq">FAQs</Link><Link href="/book">Book a Test</Link><Link href="/track">Track a Booking</Link><Link href="/report-access">Report Access</Link></nav>
-    <nav aria-label="Legal"><strong>Legal</strong><Link href="/legal/privacy">Privacy policy (draft)</Link><Link href="/legal/terms">Terms (draft)</Link><Link href="/legal/billing-refunds">Billing information (draft)</Link><Link href="/legal/accessibility">Accessibility (draft)</Link><Link href="/information">Sitemap</Link></nav>
+    <nav aria-label="Legal"><strong>Legal</strong><Link href="/legal/privacy">Privacy policy (draft)</Link><Link href="/legal/terms">Terms (draft)</Link><Link href="/legal/billing-refunds">Billing information (draft)</Link><Link href="/legal/accessibility">Accessibility (draft)</Link><Link href="/information">Sitemap</Link><PublicCookiePreferencesControl /></nav>
     <div className="ref-footer-contact"><strong>Contact Us</strong><p>For current phone, email and centre hours, use the centre contact page.</p><Link href="/contact">Contact Rudra →</Link></div>
     <div className="r-footer-partner"><small>Diagnostic partner details and claims appear only when publication is authorized.</small></div>
     <div className="ref-footer-bottom"><small>© 2026 Rudra Health Care Centre. All rights reserved.</small><small>Service, partner and catalogue information is subject to verification.</small></div>

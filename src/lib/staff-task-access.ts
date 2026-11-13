@@ -12,6 +12,10 @@ export function canCreateSupportFollowupAtCentre(grants: readonly PermissionGran
     && taskReadPermissions.some((permission) => hasAtCentre(grants, permission, centreId));
 }
 
+export function canAssignSupportFollowupAtCentre(grants: readonly PermissionGrant[], centreId: string) {
+  return hasAtCentre(grants, "tasks.assign", centreId);
+}
+
 export function canCreateStaffTaskAtCentre(grants: readonly PermissionGrant[], centreId: string) {
   return hasAtCentre(grants, "tasks.create", centreId) && hasAtCentre(grants, "workspace.read", centreId);
 }
