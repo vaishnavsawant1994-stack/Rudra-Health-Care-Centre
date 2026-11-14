@@ -2,6 +2,10 @@
 
 Rudra Health OS R1 engineering foundation. Rudra owns customer relationships and operational records; Metropolis remains behind a manual integration boundary until an approved workflow or API is available.
 
+## Scope of this GitHub checkout
+
+This README describes the code actually present in **this repository's current `main` branch**, an R1 engineering tranche. It is not a certification of the wider Rudra Health OS 11-phase product, nor proof that changes developed in a separate local workspace have been committed here. The GitHub backend described below uses an **OIDC boundary**; do not substitute authentication or deployment claims from another checkout until its exact commit is reviewed and synchronized.
+
 ## Current contents
 
 - `dist/index.html`: responsive staff-shell prototype using synthetic records. Demo sign-in is not authentication.
