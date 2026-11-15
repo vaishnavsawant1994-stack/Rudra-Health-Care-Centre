@@ -25,3 +25,7 @@ R1.1–R1.3 are qualified for engineering/internal development only. R1.3 passed
 This remains an engineering implementation, not an operational diagnostic system. Do not enter real patient or staff data. No production identity-provider tenant, database, managed key store, hosting environment, report storage, or Metropolis connectivity is configured. Patient use remains prohibited until the exact release is qualified and the applicable privacy, franchise, and operational controls are approved.
 
 See `backend/README.md` for routes, setup, security boundaries, and qualification requirements. Use synthetic data only.
+
+## Detailed project documentation
+
+The [**Project Handbook**](docs/PROJECT_HANDBOOK.md) explains this repository individually: product objectives, user journeys, code and technology, current implementation scope, risks, local development, quality gates, and the next engineering milestones. Statements about planned features do not imply release acceptance.
