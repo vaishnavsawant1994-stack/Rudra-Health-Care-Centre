@@ -29,12 +29,12 @@ Data used: synthetic fixtures only
 | W007 | Public booking stepper | `/book` | Partial; server-validated idempotent enquiry path and in-memory customer fields. | Full journey acceptance; enquiry remains distinct from appointment. | Pending |
 | W008 | Booking review & confirmation | `/book/review` | Partial; enquiry handoff, centre-scoped staff review/CRM evidence and synthetic PostgreSQL integration. | Staff UX and end-to-end manual verification. | Pending |
 | W009 | Online payment checkout | `/checkout/[order]` | Restricted; static unavailable state, no provider or payment initiation. | Authorized billing policy and payment provider plus security review. | Pending |
-| W010 | Booking success & next steps | `/booking/success/[id]` | Partial; grouped `/book/confirmation` acknowledgement for accepted enquiry only. | No appointment/slot/payment confirmation; reload receipt recovery absent. | Pending |
+| W010 | Booking success & next steps | `/booking/success/[id]` | Partial; canonical noindex receipt route shows only the opaque UUID returned after public enquiry acceptance. It does not query or reveal enquiry details. | Enquiry acknowledgement only; no appointment, slot or payment confirmation. Staff/browser acceptance pending. | Pending |
 | W011 | Home sample collection service | `/home-collection` | Partial; published area guidance and centre links; staff confirmation required. | No approved geographic/zone serviceability engine; no reservation. | Pending |
 | W012 | Find centres | `/centres` | Partial; published centre directory, loading/error/retry and directions from published addresses. | Verify published centre records and interaction/accessibility. | Pending |
 | W013 | Centre profile & serviceability | `/centres/[id]` | Partial; API-driven published detail/services, retry states and address directions. | Free-text area is informational only; no serviceability decision or capacity. | Pending |
 | W014 | Order tracking entry | `/track` | Restricted; privacy-safe explanation/redirect; no order or report lookup. | Identity, order authorization and report-release policy. | Pending |
-| W015 | Report access entry | `/reports` | Restricted; patient-facing entry explanatory; staff `/reports` remains protected. | Identity proofing, authorization and report-release workflow. | Pending |
+| W015 | Report access entry | `/reports` | Restricted; explicitly mapped to the noindex `/report-access` explanation; staff `/reports` remains protected. | Identity proofing, patient/representative authority, consent and report-release workflow. No patient report data is exposed. | Pending |
 | W016 | Sign up / patient registration | `/register` | Restricted; self-registration disabled. | Approve identity-proofing method/provider and enrollment controls. | Pending |
 | W017 | Login / OTP / recover access | `/login` | Restricted; patient authentication/recovery disabled. | Approve patient authentication, MFA/session and recovery policy. | Pending |
 | W018 | Corporate diagnostics landing | `/corporate` | Partial; enquiry submits into staff review/relationship workflow; synthetic DB evidence. | No contract or external service implied; authorized legal/commercial review. | Pending |
@@ -66,3 +66,18 @@ Automated evidence verifies the named source behaviors and synthetic integration
 ## Next development wave
 
 Prepare Phase 02 portal foundations only after the prerequisites in [`PHASE_02_PORTAL_READINESS.md`](PHASE_02_PORTAL_READINESS.md) are approved. Continue Phase 01 browser acceptance and close any issues found before promoting a screen to accepted.
+
+## Wave 2 route mapping update — 15 November 2026
+
+- Public enquiry POST responses now include the enquiry's random UUID as `receiptId`, alongside the human-readable reference. The canonical `/booking/success/[id]` page accepts only a UUID-shaped value, performs no public database lookup, shows no enquiry/contact/patient details, is noindex and no-referrer, and explicitly states that no appointment, slot or payment is confirmed.
+- W015 now has a source-validated grouped mapping to `/report-access`, the existing noindex explanation. `/reports` remains a staff-protected report workspace and is not exposed to anonymous users.
+- Inventory before/after: exact route-source matches **176→177**; unmatched route shapes **2→1**; explicit grouped mappings **24→24**; unresolved route mappings **1→0**. Implementation classifications remain **151 partial / 27 restricted**, with **0 accepted**. These route corrections do not promote screens to complete.
+- Focused W010/W015/API/matrix tests: **36/36 across three files**. The complete default Vitest suite passed **954/954 across 240 files**; ESLint and TypeScript passed; the production build passed with **406 generated route entries**. W010 receipt rendering tests are included in the default suite. These results do not substitute for browser, visual, accessibility or Owner/QA acceptance, which remain pending.
+
+## Wave 3 cross-module integration evidence — 15 November 2026
+
+- A new isolated PostgreSQL/API integration scenario traces W007/W008 public selection and submission into the protected R013/R015 staff enquiry queue, staff review into R014 lead qualification, explicit staff lead-to-patient conversion (R004), and an R008 home-collection appointment request.
+- Selected catalogue version, home fee choice (₹99) and address survive in the authorized CRM activity; address remains encrypted in storage. The appointment is persisted as `REQUESTED`, with the service fee in a separate field. It does not reserve capacity or imply confirmation.
+- A synthetic catalogue version with no verified price creates an order in `PENDING_VERIFICATION` with no total. The F002 collection-job API rejects progression until the diagnostic order is confirmed; the test verifies no collection job was created. This is intentional gating, not a completed order/collection/report/finance workflow.
+- The test covers idempotent lead-to-patient, appointment and order retries, centre denial for appointment creation, persisted audit events, and absence of plaintext collection address. It uses a dedicated disposable PostgreSQL schema. No browser session was used against the persistent development database.
+- Full suite after this addition: **955/955 across 240 files**; lint, TypeScript, build (406 route entries) and inventory reconciliation passed. Manual visual, responsive, accessibility and Owner/QA acceptance remain pending.

@@ -1,13 +1,17 @@
 import {afterAll,beforeAll,describe,expect,it} from "vitest";
-import {readFile} from "node:fs/promises";
+import {mkdtemp,readFile,rm} from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import net from "node:net";
 import {parseClamAvScanReply,persistReportPdf,readReportPdf,removeReportPdf,safeReportStorageKey,scanReportBuffer,reportFilePath,probeLocalClamAv} from "./report-storage";
 
 describe("private report storage",()=>{
-  const prior={keys:process.env.REPORT_DOCUMENT_ENCRYPTION_KEYS,id:process.env.REPORT_DOCUMENT_ACTIVE_KEY_ID,scannerHost:process.env.REPORT_CLAMAV_HOST,scannerPort:process.env.REPORT_CLAMAV_PORT};
-  beforeAll(()=>{process.env.REPORT_DOCUMENT_ACTIVE_KEY_ID="test-key";process.env.REPORT_DOCUMENT_ENCRYPTION_KEYS=JSON.stringify({"test-key":Buffer.alloc(32,7).toString("base64")});});
-  afterAll(()=>{if(prior.keys===undefined)delete process.env.REPORT_DOCUMENT_ENCRYPTION_KEYS;else process.env.REPORT_DOCUMENT_ENCRYPTION_KEYS=prior.keys;if(prior.id===undefined)delete process.env.REPORT_DOCUMENT_ACTIVE_KEY_ID;else process.env.REPORT_DOCUMENT_ACTIVE_KEY_ID=prior.id;if(prior.scannerHost===undefined)delete process.env.REPORT_CLAMAV_HOST;else process.env.REPORT_CLAMAV_HOST=prior.scannerHost;if(prior.scannerPort===undefined)delete process.env.REPORT_CLAMAV_PORT;else process.env.REPORT_CLAMAV_PORT=prior.scannerPort;});
-  it("accepts a bounded PDF and stores only authenticated ciphertext under an opaque key",async()=>{const bytes=Buffer.from("%PDF-1.7\nsynthetic report content\n%%EOF\n");const key=safeReportStorageKey();await persistReportPdf(key,bytes);const stored=await readFile(reportFilePath(key));expect(stored.subarray(0,5).toString()).not.toBe("%PDF-");expect(await readReportPdf(key)).toEqual(bytes);await removeReportPdf(key);});
+  const prior={keys:process.env.REPORT_DOCUMENT_ENCRYPTION_KEYS,id:process.env.REPORT_DOCUMENT_ACTIVE_KEY_ID,scannerHost:process.env.REPORT_CLAMAV_HOST,scannerPort:process.env.REPORT_CLAMAV_PORT,storage:process.env.REPORT_PRIVATE_STORAGE_DIR};
+  let isolatedStorage="";
+  beforeAll(async()=>{isolatedStorage=await mkdtemp(path.join(os.tmpdir(),"rudra-report-test-"));process.env.REPORT_PRIVATE_STORAGE_DIR=isolatedStorage;process.env.REPORT_DOCUMENT_ACTIVE_KEY_ID="test-key";process.env.REPORT_DOCUMENT_ENCRYPTION_KEYS=JSON.stringify({"test-key":Buffer.alloc(32,7).toString("base64")});});
+  afterAll(async()=>{await rm(isolatedStorage,{recursive:true,force:true});if(prior.keys===undefined)delete process.env.REPORT_DOCUMENT_ENCRYPTION_KEYS;else process.env.REPORT_DOCUMENT_ENCRYPTION_KEYS=prior.keys;if(prior.id===undefined)delete process.env.REPORT_DOCUMENT_ACTIVE_KEY_ID;else process.env.REPORT_DOCUMENT_ACTIVE_KEY_ID=prior.id;if(prior.scannerHost===undefined)delete process.env.REPORT_CLAMAV_HOST;else process.env.REPORT_CLAMAV_HOST=prior.scannerHost;if(prior.scannerPort===undefined)delete process.env.REPORT_CLAMAV_PORT;else process.env.REPORT_CLAMAV_PORT=prior.scannerPort;if(prior.storage===undefined)delete process.env.REPORT_PRIVATE_STORAGE_DIR;else process.env.REPORT_PRIVATE_STORAGE_DIR=prior.storage;});
+  it("stores a harmless synthetic PDF as authenticated ciphertext in isolated private storage",async()=>{const bytes=Buffer.from("%PDF-1.7\nsynthetic report content\n%%EOF\n");const key=safeReportStorageKey();await persistReportPdf(key,bytes);const filePath=reportFilePath(key);const stored=await readFile(filePath);expect(filePath.startsWith(isolatedStorage+path.sep)).toBe(true);expect(stored.subarray(0,5).toString()).not.toBe("%PDF-");expect(stored.includes(Buffer.from("synthetic report content"))).toBe(false);expect(await readReportPdf(key,"test-key")).toEqual(bytes);await removeReportPdf(key);});
+  it("rejects a configured public storage directory",()=>{process.env.REPORT_PRIVATE_STORAGE_DIR=path.join(process.cwd(),"public","unsafe-reports");expect(()=>reportFilePath(safeReportStorageKey())).toThrow("report_storage_must_be_private");process.env.REPORT_PRIVATE_STORAGE_DIR=isolatedStorage;});
   it("rejects non-PDF content and fails closed to quarantine without a scanner",async()=>{await expect(persistReportPdf(safeReportStorageKey(),Buffer.from("not a pdf"))).rejects.toThrow("invalid_pdf");delete process.env.REPORT_CLAMAV_HOST;delete process.env.REPORT_CLAMAV_PORT;expect(await scanReportBuffer(Buffer.from("synthetic"))).toEqual({status:"QUARANTINED",engine:null});});
   it("accepts only one complete NUL-framed clean scan record",()=>{
     expect(parseClamAvScanReply("stream: OK")).toBeNull();

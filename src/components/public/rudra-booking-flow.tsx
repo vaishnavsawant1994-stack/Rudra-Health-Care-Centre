@@ -134,13 +134,18 @@ export function RudraBookingFlow({ step }: { step: "select" | "review" | "paymen
       const body = JSON.stringify(payload);
       const idempotencyKey = getPublicBookingIdempotencyKey();
       const response = await fetch("/api/public/enquiries", { method: "POST", headers: { "content-type": "application/json", "idempotency-key": idempotencyKey }, body });
-      const result = await response.json() as { accepted?: boolean; reference?: string; error?: string };
-      if (response.status === 202 && result.accepted && result.reference) {
+      const result = await response.json() as { accepted?: boolean; reference?: string; receiptId?: string; error?: string };
+      const validReceiptId = Boolean(result.receiptId && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(result.receiptId));
+      if (response.status === 202 && result.accepted && result.reference && !validReceiptId) {
+        setMessage("Your request was accepted, but its receipt link could not be prepared. Do not submit again; contact the centre to verify the request.");
+        return;
+      }
+      if (response.status === 202 && result.accepted && result.reference && result.receiptId && validReceiptId) {
         clearPublicBookingIdempotencyKey();
         setReceipt(result.reference);
         update(emptyDraft);
         setMessage("");
-        router.push("/book/confirmation");
+        router.push(`/booking/success/${result.receiptId}`);
         return;
       }
       if (response.status < 500 && response.status !== 409) clearPublicBookingIdempotencyKey();

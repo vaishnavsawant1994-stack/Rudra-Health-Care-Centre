@@ -1,0 +1,3 @@
+import Link from "next/link";
+import { AdminShell } from "@/components/admin/admin-shell";
+export default function OfflineQueuePage() { return <AdminShell permission="collections.read" title="Offline field mode"><section className="admin-card"><h2>Secure offline queue unavailable</h2><p>Collection records require a live, authorized server connection. This device does not cache patient, address, specimen, or payment information for offline replay.</p><p>Use the online workflow to verify current assignments and submit changes with server-side authorization and audit records.</p><Link href="/field/today">Return to today’s assignments</Link></section></AdminShell>; }

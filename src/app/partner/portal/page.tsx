@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function PartnerPortalGatePage() { return <main className="inner-page"><div className="page-container"><p className="eyebrow">Rudra Health Care Centre</p><h1>Partner account access is not enabled</h1><p>Partner identity verification and tenant-specific permissions are not configured. No partner directory, sample order, patient record or report data is available through this page.</p><p><Link className="button button-primary" href="/partners">Contact Rudra about partnership</Link></p></div></main>; }

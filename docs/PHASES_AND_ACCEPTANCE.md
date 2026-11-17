@@ -1,3 +1,7 @@
+## 2026-11-13 development checkpoint - Phase 04 Field Operations (F001-F015)
+
+The Phase 04 closeout report and 15-row overlay are recorded in `docs/PHASE_04_FIELD_ACCEPTANCE.md` and the external Rudra Health OS Audit folder. Canonical field routes now enter existing permission-checked collection workflows; F015 explicitly remains unavailable without a safe encrypted offline queue. Specimen IDs are generated server-side; barcode scanning, clinical readiness checklists, GPS/directions, field payment capture and attendance are not claimed. All 15 screens remain partial and pending manual acceptance. Focused tests passed 37/37 and full Vitest passed 902/902 across 221 files. ESLint, TypeScript, isolated PostgreSQL integration (98 migration replays), and production build (327 static pages) passed.
+
 ## 2026-11-04 development checkpoint - Phlebotomist route stage filter
 
 The Phlebotomist Route page now filters the signed-in collector's selected-date assignments by travelling, arrived, or stage-pending status through the existing server-authorized collection endpoint. Clearing the date clears route rows and prompts for a date.
@@ -119,7 +123,7 @@ Collection job actions now require idempotency keys and reject changed-payload r
 
 **Current development note (2026-11-03):** Public booking requests now include a review-before-submit step for centre, contact, service, visit type, preferred date/window, and collection address. Submission remains a staff-reviewed enquiry; it does not reserve a slot, quote a fee, create an appointment/order, or accept payment. W008 is still partial pending verified-patient identity, authoritative quotes/capacity, and appointment confirmation workflows. Full suite **669/669 across 163 files**, typecheck, lint and production build (**232 page entries**) passed. Patient portal accounts remain disabled pending identity proofing; browser/mobile and policy acceptance remain pending. Synthetic data only.
 
-**Current development note (2026-11-03):** Public screen W020’s proposed `/partner` route now redirects to canonical `/partners`, where the existing public form sends an encrypted, staff-reviewed partner enquiry. It does not create an agreement or authorize outreach. The regenerated 178-screen inventory recognizes the route but keeps the screen partial pending action-level review. Full suite **669/669 across 163 files**, typecheck, lint and production build (**232 page entries**) passed. Public browser/mobile review and legal/content approval remain pending; patient accounts remain disabled pending identity-proofing approval. Synthetic data only.
+**Current development note (2026-11-03):** Public screen W020â€™s proposed `/partner` route now redirects to canonical `/partners`, where the existing public form sends an encrypted, staff-reviewed partner enquiry. It does not create an agreement or authorize outreach. The regenerated 178-screen inventory recognizes the route but keeps the screen partial pending action-level review. Full suite **669/669 across 163 files**, typecheck, lint and production build (**232 page entries**) passed. Public browser/mobile review and legal/content approval remain pending; patient accounts remain disabled pending identity-proofing approval. Synthetic data only.
 
 **Current development note (2026-11-03):** Website UTM attribution now links to a configured Rudra marketing campaign only on an exact active campaign-code match within the same organization and centre. Unmatched visitor labels remain unverified encrypted metadata and do not affect campaign metrics. CRM contact permission stays pending and marketing consent remains separate. The full automated suite passed **668/668 across 162 files**, typecheck and lint passed, and production build emitted **231 page entries**. This is one integration slice; the 178-screen functional reconciliation and final browser/mobile acceptance remain pending. Synthetic data only; portal accounts remain disabled until identity proofing is approved.
 
@@ -127,7 +131,7 @@ Collection job actions now require idempotency keys and reject changed-payload r
 
 **Current development note (2026-11-03):** The 178-ID matrix currently classifies 29 exact-route rows as partial, 123 as requiring grouped-route mapping and 26 as blocked; no row is promoted to complete from file presence alone. Windows local key backup and restore files receive restrictive ACLs before key bytes are written. Escalation duplicate-suppression replay rechecks centre read scope, including assignment for assigned-only readers. Latest default suite: **665/665 across 162 files**. The new unauthorized-replay case also passed in the disposable PostgreSQL integration schema; typecheck and targeted lint passed. Production build (231 page entries) passed on the prior runtime-code checkpoint and was not rerun for this integration-test-only change. This does not establish live authenticated authorization or browser acceptance. Off-device backup, coordinated restore, key rotation, scanner deployment, browser/mobile acceptance and production qualification remain open. Patient accounts remain disabled pending approved identity proofing. Synthetic data only.
 
-﻿**Current development note (2026-11-01):** Public-site navigation now exposes a prominent â€œRequest a visitâ€ action, with the remaining informational and relationship destinations retained in the responsive footer. Booking remains a staff-reviewed request, not a confirmed appointment. Patient portal accounts remain disabled pending approval of identity proofing. This is a navigation improvement, not completion of the public website or portal; live browser/mobile acceptance and production gates remain open.
+ï»¿**Current development note (2026-11-01):** Public-site navigation now exposes a prominent Ã¢â‚¬Å“Request a visitÃ¢â‚¬Â action, with the remaining informational and relationship destinations retained in the responsive footer. Booking remains a staff-reviewed request, not a confirmed appointment. Patient portal accounts remain disabled pending approval of identity proofing. This is a navigation improvement, not completion of the public website or portal; live browser/mobile acceptance and production gates remain open.
 
 **Current development note (2026-11-01):** Doctor, Corporate and Partner directories now show centre-scoped CRM lead and recorded-conversion totals only to staff who also have `leads.read`; no patient/contact details or referral entitlements are inferred. The slice passed PostgreSQL integration, the full unit/API suite, migration/runtime-role integration, lint, TypeScript and production build. Patient portal accounts remain disabled until an identity-proofing approach is approved. This does not complete the relationship-management wave; live browser/mobile acceptance and production gates remain open.
 
@@ -1180,137 +1184,137 @@ This advances the public website directory but does not complete the website or 
 
 Follow-up route-boundary tests verify malformed IDs, centre permission denial before persistence, and cross-origin write rejection. The expanded default suite now passes **389/389 across 91 files**; lint and TypeScript pass. The prior migration/runtime-role, build, and dependency-audit results remain valid because only tests and documentation changed afterward.
 
-### 2026-10-31 Ã¢â‚¬â€ Finance/report key rotation rehearsal
+### 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Finance/report key rotation rehearsal
 
 Added a resumable encrypted-envelope rotation utility for finance/report metadata, with a forward-only database guard migration **0076** for ciphertext-only re-encryption of append-only history. The trigger path requires the dedicated migration/test database role and transaction-local rotation flag; it still rejects changes to all other row fields. Historical encryption keys are retained. Migration 0076 has now been applied additively to the persistent development database; it changed trigger functions only. No persistent development key was rotated.
 
 The isolated populated synthetic qualification passed, covering all ten finance/report tables, interrupted/resumed migration backfill, plaintext parity, removal/replay, tamper rejection, interrupted/resumed key rotation, preserved decrypted values, and idempotent second rotation. Full default suite **389/389 across 91 files**, lint, TypeScript, PostgreSQL integration (**76 migrations**, runtime-role/append-only checks), production build (**201 generated routes/pages**), audit-chain verification (**2 events**) and dependency audit (**0 vulnerabilities**) passed. After applying 0076 locally, `db:integration` again passed at 76 migrations and runtime-role checks; the audit chain again verified 2 events. This closes only the finance/report rotation rehearsal. Key backup/restore and other encryption domains, malware scanning, live authorization, browser/mobile acceptance and remaining development waves remain open. Synthetic data only.
 
-### 2026-10-31 Ã¢â‚¬â€ Local encryption-key backup and restore utility
+### 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Local encryption-key backup and restore utility
 
 Added encrypted local key backup/restore for the report-document keyring, operational field-encryption keyring and blind-index key. The utility uses scrypt plus AES-256-GCM; requires hidden interactive passphrase input; rejects production/non-local environments; creates encrypted backups outside the project without overwriting; and restores only the five key variables into ignored `.env.local` after a typed confirmation. Authentication, scheduler, provider and database secrets are excluded. See `docs/LOCAL_KEY_RECOVERY.md` for operator commands and recovery boundaries.
 
 Synthetic utility tests passed **6/6**; full default suite **395/395 across 92 files**; lint, TypeScript, production build (**201 routes/pages**) and `npm ls --depth=0` passed. No dependencies, migration or persistent key changes. This implements a local key recovery tool only. No actual key backup, populated encrypted-data restore, off-device backup verification, Windows ACL review or production recovery qualification occurred. P2-09 and the full application backlog remain open; synthetic data only.
 
-## 2026-10-31 Ã¢â‚¬â€ Published service-area search and home-collection request handoff
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Published service-area search and home-collection request handoff
 
 Added `/service-areas` using only centre profile `serviceArea` values that centre staff explicitly published. Search covers published area, centre name and centre code. Results lead to the existing public booking-request form with the eligible public centre preselected and home collection selected; these query parameters contain no patient data and remain editable. The page states that service coverage, appointment time, service and price all require staff confirmation. Header and footer navigation now include the directory.
 
 Focused search and booking-prefill tests passed **7/7**. Full default suite passed **399/399 across 93 files**. TypeScript, lint and production build (**202 generated routes/pages**) passed. No persistence/schema or dependency changes; PostgreSQL integration and dependency audit were not rerun for this public UI-only slice. No browser/mobile acceptance was performed. It does not implement patient portal identity access or confirm a home collection. Centre & Staff Operations and the overall roadmap remain incomplete; P2-09 recovery/scanning/live authorization and browser/mobile acceptance gates remain open. Synthetic data only.
 
 
-### 2026-10-31 Ã¢â‚¬â€ Public CMS coverage for catalogue and enquiry pages
+### 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Public CMS coverage for catalogue and enquiry pages
 
 Extended the encrypted/versioned website content system and Owner editor to support published content for Centres, Service Areas, Tests, Packages, Booking and Contact. Those public pages now render optional published explanatory sections alongside their existing authoritative centre/catalogue data, enquiry forms and booking-request workflow. CMS content does not replace functional forms or service records. Privacy/terms pages remain outside this editor; patient data, unapproved pricing, clinical guidance and legal claims must not be published without review.
 
 Focused CMS/API tests passed **13/13**; full default suite passed **400/400 across 93 files**; lint, TypeScript and production build passed (**208 generated pages/routes**). No schema, migration or dependency changes, so PostgreSQL integration and dependency audit were not rerun. Public website and Patient/Family Portal remain incomplete; identity proofing, browser/mobile acceptance, key recovery qualification, malware scanning, live authorization and production approval remain open. Synthetic-data development only.
 
-### 2026-10-31 Ã¢â‚¬â€ Fresh default-suite and static-check rerun
+### 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Fresh default-suite and static-check rerun
 
 Re-ran the repository default `npm.cmd test -- --reporter=dot` against the current project state: **400/400 tests across 93 files passed** in 222.84 seconds with the configured isolated Vitest worker. Whole-project lint and TypeScript checks also passed. This is fresh evidence that the configured default test invocation is green; it does not prove concurrent multi-worker execution, live authenticated role authorization, browser/mobile acceptance, or production readiness. No source, schema, migration, or dependency changes were made during this verification.
 
-### 2026-10-31 Ã¢â‚¬â€ Dependency advisory remediation and complete engineering rerun
+### 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Dependency advisory remediation and complete engineering rerun
 
 A fresh `npm.cmd audit --audit-level=low` found **19 moderate vulnerabilities** in transitive `minimatch` dependencies, despite the earlier reported clean audit. Plain `npm audit fix` could not remediate the tree without proposing a breaking ESLint downgrade. Added explicit overrides to use patched `minimatch` **11.0.3** and ExcelJS-compatible Archiver **8.0.0**. The `.xlsx` workbook import/export regression passes; `npm ls minimatch archiver glob readdir-glob --all` resolves the affected paths to the patched matcher. Audit now reports **0 vulnerabilities**.
 
 Post-change verification: focused workbook tests **2/2**; default Vitest **400/400 across 93 files**; lint; TypeScript; production build (**208 generated pages/routes**); `npm ci --ignore-scripts --dry-run`; PostgreSQL integration replay (**76 migrations**) and runtime-role/append-only checks all passed. No database migration or persistent database/account/key change. Approval policy authority remains limited to task completion; sensitive financial/clinical policies, live role/browser acceptance, portal identity policy and production qualification remain open. Synthetic-data development only.
 
-### 2026-10-31 Ã¢â‚¬â€ Reassign pending approval escalations before deadline
+### 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Reassign pending approval escalations before deadline
 
 Closed an operational dead-end where the designated escalation approver could become unavailable, but managers could reassign only after the deadline. A pending task-completion escalation can now be reassigned before or after its current deadline by a staff member with both `tasks.assign` and `tasks.approve` in the centre. The API still requires the new owner to be an active, in-scope approver present in the immutable submission snapshot, distinct from the task creator and assignee, and requires a future due time, reason, current version and idempotency key. The transactional update preserves the pending approval and appends an encrypted `ESCALATION_REASSIGNED` event plus audit event; it does not approve or reject the task. The workbench now exposes the action while an approval is pending.
 
 Added a route regression for an early reassignment and retained the rejection test for selecting the creator/assignee. Focused task route/policy tests **22/22**; full default suite **401/401 across 93 files**; whole-project lint and TypeScript passed; production build passed (**208 generated pages/routes**). No migration or dependency changes in this slice. PostgreSQL integration/runtime-role verification most recently replayed **76 migrations** after the dependency remediation. Approval authority remains task-completion only; domain-sensitive financial/clinical approvals, broader role/browser acceptance, portal identity, scanner/key recovery and production gates remain open. Synthetic data only.
-### 2026-10-31 Ã¢â‚¬â€ Centre Operations task deep-links and assigned-only staff access
+### 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Centre Operations task deep-links and assigned-only staff access
 
 Centre Operations task entries now open the selected task directly, including approval-expiry and escalation-due entries while retaining their queue filter. Task detail is loaded from the protected API rather than relying on the task being in the currently loaded list page. `/tasks` now admits staff who have assigned-only or support-queue read grants through the authenticated workspace shell; API reads and mutations continue to enforce the exact task, centre, assignment and action permissions.
 
 Synthetic verification: task detail route tests **16/16**; role workspace tests **12/12**; focused PostgreSQL operations integration **3/3** (22 unrelated cases skipped); full default suite **405/405 across 93 files**; lint, TypeScript and production build (**208 generated pages/routes**) passed. The initial build caught a Next.js Cache Components issue because `searchParams` was outside Suspense; the page now streams the query-dependent workbench behind a loading fallback. No migration or dependency change. This closes one role-queue handoff only. Centre & Staff Operations and later waves remain incomplete; live role/browser acceptance, key recovery/rotation, malware scanning, portal identity and production qualification remain open. Synthetic-data development only.
 
-### 2026-10-31 Ã¢â‚¬â€ Approval escalation picker follows submission snapshot
+### 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Approval escalation picker follows submission snapshot
 
 Pending task approval escalation reassignment now offers only currently active, centre-authorized approvers included in the immutable encrypted approver set captured when the task was submitted. The task creator and assignee are excluded. This keeps the UI consistent with the server's snapshot-based reassignment validation after approval-policy edits. Malformed versioned snapshots fail closed and expose no reassignment choices; legacy events without a snapshot keep the existing current-policy fallback.
 
 Synthetic route regressions cover policy changes and malformed snapshots. Focused task-detail tests passed **15/15**; default parallel suite passed **403/403 across 93 files**; lint, TypeScript, production build (**208 generated pages/routes**) and dependency audit (**0 vulnerabilities**) passed. No migration or dependency changes. PostgreSQL integration/runtime-role verification most recently replayed **76 migrations** before this route-only change and was not rerun. Approval authority remains limited to operational task completion. Centre & Staff Operations and later waves remain incomplete; live authorization/browser acceptance, encryption key recovery/rotation, malware scanning and production qualification remain open. Synthetic-data development only.
 
-## Development checkpoint Ã¢â‚¬â€ 2026-10-31
+## Development checkpoint ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 2026-10-31
 
 - Roster workspace now includes a centre-timezone weekly calendar with planned shifts and unavailability, overnight grouping, and the existing paginated list for edits. It does not indicate attendance or certified staffing coverage.
 - Verification: default test suite **407/407 across 94 files**, focused calendar tests **2/2**, lint, TypeScript and production build (**208 generated pages/routes**) passed.
 - Centre & Staff Operations remains in progress. Full role workflows, final approvals/escalation scope, security prerequisites and manual browser/mobile acceptance remain open. Synthetic data only; no production use.
 
-## Development checkpoint Ã¢â‚¬â€ roster workload integration Ã¢â‚¬â€ 2026-10-31
+## Development checkpoint ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â roster workload integration ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 2026-10-31
 
 - The centre-timezone roster calendar now shows per-day assigned appointment and collection counts by staff alongside planned shift/unavailability entries. The API returns aggregate workload only, without patient or individual appointment/collection details, and requires existing centre-scoped `roster.read` authorization.
 - Verification: focused appointment PostgreSQL integration **25/25**; full default test suite **407/407 across 94 files**; lint, TypeScript and production build (**208 generated pages/routes**) passed. No migration or dependency change.
 - Centre & Staff Operations and the larger development backlog remain incomplete. Patient/family portal identity and live browser/role acceptance, security operations and production qualification remain open. Synthetic-data development only.
 
 
-### 2026-10-31 Ã¢â‚¬â€ Relationship-linked staff tasks
+### 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Relationship-linked staff tasks
 
 Task creation now supports corporate, partner and doctor relationship references when staff have the corresponding explicit read permission. Protected task reference lookup continues enforcing centre scope, and task detail links lead to the existing protected relationship directories. Added permission mapping tests (**2/2**). Full default suite **409/409 across 95 files**, lint, TypeScript and production build (**208 generated pages/routes**) passed. No database/dependency changes; PostgreSQL integration and dependency audit were not rerun for this slice. This is not completion of Centre & Staff Operations. Browser/mobile acceptance, role acceptance, key recovery/rotation, malware scanning and production qualification remain pending. Synthetic-data development only.
-## Development checkpoint Ã¢â‚¬â€ retry-safe staff reassignment Ã¢â‚¬â€ 2026-10-31
+## Development checkpoint ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â retry-safe staff reassignment ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 2026-10-31
 
 Appointment and collection reassignment now use mutation idempotency so an uncertain response can be retried without duplicating assignment history. Same-key/different-payload requests are rejected; centre/role authorization, eligibility, scheduling conflicts and version rules remain enforced. Added migration 0077 with a partial unique audit idempotency index and updated appointment, sample and roster workbenches to retain keys for uncertain retries.
 
 The new PostgreSQL test initially collided with an appointment fixture from an earlier test because all cases share one disposable schema. Giving that case a unique synthetic future slot fixed the fixture without changing scheduling behavior. Verification: appointment PostgreSQL integration **27/27**; default suite **411/411 across 95 files**; lint, TypeScript, production build (**208 generated routes/pages**) and PostgreSQL migration/runtime-role checks passed (**77 migrations replayed**). No live browser or authenticated end-user acceptance was performed. Centre & Staff Operations and the full development backlog remain incomplete; synthetic data only.
-## Development checkpoint Ã¢â‚¬â€ fail-closed task approval submission Ã¢â‚¬â€ 2026-10-31
+## Development checkpoint ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â fail-closed task approval submission ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 2026-10-31
 
 Task approval submission now checks named approvers and configured escalation ownership against current active, centre-scoped `tasks.approve` permissions in the same task transaction. Stale named approvers are omitted from the frozen submission snapshot; if the configured set has no eligible member, the task remains unchanged and submission fails with a clear policy error. An unnamed role-based policy requires at least one eligible approver. This prevents submitting tasks into a queue with no usable approver; it does not enable financial or clinical approval authority.
 
 Verification: focused task route tests **16/16**; populated PostgreSQL approval-deadline integration passed, including stale-only approver rejection and unchanged task state; full suite **411/411 across 95 files**; lint, TypeScript, production build (**208 routes/pages**) and PostgreSQL integration/runtime-role checks (**77 migrations replayed**) passed. No schema or dependency change. Centre & Staff Operations and the full development backlog remain incomplete; live role/browser acceptance, key recovery/rotation, malware scanning and production qualification remain open. Synthetic-data development only.
-## Development checkpoint Ã¢â‚¬â€ validate approval policy eligibility at submission Ã¢â‚¬â€ 2026-10-31
+## Development checkpoint ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â validate approval policy eligibility at submission ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 2026-10-31
 
 The task approval action now locks and checks active approver permissions in the task's centre during submission. Stale named staff are filtered from the immutable submission snapshot; no eligible named approver or an ineligible configured escalation owner blocks submission without changing the task. Role-based approval with no named list still requires at least one currently eligible approver. Added a PostgreSQL-backed stale-only policy regression and a clear policy-manager remediation message.
 
 Final verification after the lock change: approval PostgreSQL integration passed; default test suite **411/411 across 95 files**; lint, TypeScript and production build (**208 routes/pages**) passed. `db:integration` replayed **77 migrations** and passed runtime-role checks. No new migration or dependency. This does not complete Centre & Staff Operations or enable financial/clinical approval authority. Browser/live-role acceptance and production security gates remain open; synthetic data only.
 
-### 2026-10-31 Ã¢â‚¬â€ Pending task approval reviewer recovery
+### 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Pending task approval reviewer recovery
 
 Added migration 0078 and a recovery path for a pending task-completion approval only when every reviewer in its immutable submission snapshot is no longer active/authorized in the task's organization and centre. An independent manager with both assignment and approval permissions can select a currently eligible reviewer; creator/assignee conflicts are rejected. The immutable submission event is retained, and an encrypted append-only reassignment event records the effective reviewer. A still-eligible reviewer prevents unnecessary reassignment. The task detail API and workbench expose the action only in that recovery case; public history resolves a staff label and omits the raw reviewer identifier.
 
 Verification: focused task route **16/16**; populated PostgreSQL recovery integration **1/1** (26 unrelated cases skipped); full default suite **411/411 across 95 files**; lint, TypeScript, production build (**208 routes/pages**), `db:integration` (**78 migrations**, runtime-role/append-only checks), local migration application (**78 total**) and `npm audit --audit-level=low` (**0 vulnerabilities**) passed. No manual browser or live end-user role acceptance was performed. Approval authority remains task-completion only; Centre & Staff Operations, the overall backlog, key recovery/rotation, malware scanning, browser/live authorization acceptance and production qualification remain open. Synthetic data only.
 
-### 2026-10-31 Ã¢â‚¬â€ Reviewer recovery policy edge case
+### 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Reviewer recovery policy edge case
 
 Clarified and enforced that an empty named-approver snapshot represents a role-based approval pool, not a stale named approver set. Such tasks remain actionable by any current authorized approver and cannot use the replacement-reviewer action. Escalation choices for role-based snapshots continue to use the active scoped approver pool. Added a PostgreSQL regression proving role-based reassignment is rejected, while the named-stale-reviewer recovery, unnecessary-reassignment denial, encrypted history readback and subsequent approval pass.
 
 Verification on the final source state: default suite **411/411 across 95 files**; focused task route tests **16/16**; PostgreSQL recovery integration **1/1** (26 unrelated cases skipped); TypeScript, lint and production build (**208 generated routes/pages**) passed. Migration 0078 remains applied locally; no new migration or dependency change. This does not complete Centre & Staff Operations or the Rudra backlog. Browser/live role acceptance, key recovery/rotation, malware scanning and production qualification remain open. Synthetic data only.
 
-### 2026-10-31 Ã¢â‚¬â€ Transactional approval-policy eligibility
+### 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Transactional approval-policy eligibility
 
 Policy writes now lock and revalidate approver and escalation-owner active role permissions in the configured organization/centre inside the same PostgreSQL transaction as the versioned policy update. This closes a time-of-check/time-of-use window in which a role assignment could be revoked after preflight validation but before the policy was saved. Race-time invalidation returns a conflict; stale policy submission remains fail-closed.
 
 Verification: PostgreSQL policy create/edit integration **1/1** (26 unrelated cases skipped); approval-policy route tests **14/14**; full default test suite **411/411 across 95 files**; typecheck, lint, production build (**208 routes/pages**) and dependency audit (**0 vulnerabilities**) passed. No migration or dependency change. Database migration/runtime-role replay had passed with **78 migrations** in the prior checkpoint. This does not complete Centre & Staff Operations or the full Rudra backlog. Live browser/role acceptance, key recovery/rotation, malware scanning and production qualification remain open. Synthetic data only.
 
-## 2026-10-31 Ã¢â‚¬â€ CRM acquisition overview development checkpoint
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â CRM acquisition overview development checkpoint
 
 The authenticated `/leads/analytics` view aggregates lead creation, current status, source and centre counts from existing CRM records. It is scoped by `leads.read`, validates date filters and returns no individual lead or encrypted private payload fields. Automated verification passed: default suite 417/417 across 97 files, lint, TypeScript, production build (210 pages/routes), PostgreSQL integration/runtime-role replay (78 migrations), and dependency audit (0 vulnerabilities). No migration was needed.
 
 This does not complete Marketing analytics, Centre & Staff Operations or the product backlog. Patient/family portal identity proofing, key recovery/rotation and restore qualification, malware scanning, live role/API and browser/mobile acceptance, approved legal/privacy copy, external provider authorization and production qualification remain outstanding. Synthetic-data development only.
 
-## 2026-10-31 Ã¢â‚¬â€ CRM and finance role workspace integration
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â CRM and finance role workspace integration
 
 Sales and Owner workspaces now link the aggregate CRM acquisition overview only when the current session has `leads.read`; the Owner workspace embeds the existing Finance summary only when `finance.read` is granted. Regression coverage verifies grant-dependent projection. Default suite 419/419, lint, TypeScript and production build (210 generated routes/pages) passed. No schema changes; PostgreSQL replay was passed in the preceding connected analytics checkpoint.
 
 This does not complete Centre & Staff Operations. Live role/browser acceptance, identity proofing for patient accounts, encryption-key recovery/rotation qualification, malware scanning, later development waves and production qualification remain open.
 
-## 2026-10-31 Ã¢â‚¬â€ Owner command centre integration
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Owner command centre integration
 
 The Owner landing page now composes the existing Centre Operations, staffing, task/approval, CRM, finance and report-follow-up workbenches according to current permission grants. APIs continue to enforce their own session, MFA, organization and centre authorization. Projection tests verify that organization-only and approval-only grants do not reveal task records. Full default suite 423/423 across 98 files, lint, TypeScript and production build (210 routes/pages) passed. No database changes; PostgreSQL replay passed in the preceding analytics checkpoint.
 
 The complete Owner administration/analytics wave remains in development. Patient portal account activation awaits an approved identity-proofing method. Browser/mobile and authenticated live-role acceptance, key recovery/rotation, malware scanning and production qualification remain open.
 
-## 2026-10-31 Ã¢â‚¬â€ Fail-closed ClamAV reply parsing
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Fail-closed ClamAV reply parsing
 
-Tightened the local ClamAV INSTREAM response parser. A document is classified CLEAN only for one complete NUL-terminated `stream: OK` record; FOUND, ERROR (including text containing Ã¢â‚¬Å“OKÃ¢â‚¬Â), malformed, multiple, truncated and oversized replies cannot clear quarantine. Scanner endpoints are restricted to explicit loopback names/addresses because the ClamAV TCP protocol has no transport authentication or encryption. Regression tests cover these reply cases and reject remote endpoints. Focused report-storage suite passed 4/4; full default suite passed 425/425 across 98 files on the final source state; lint and TypeScript passed. No schema, migration, dependency or persistent-data change. A local ClamAV service is not installed/configured, so no real clean or malware scan was claimed; report documents remain blocked in quarantine without scanner clearance. Key recovery/rotation qualification, live authorization, browser/mobile acceptance and production qualification remain open. Synthetic data only.
+Tightened the local ClamAV INSTREAM response parser. A document is classified CLEAN only for one complete NUL-terminated `stream: OK` record; FOUND, ERROR (including text containing ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œOKÃƒÂ¢Ã¢â€šÂ¬Ã‚Â), malformed, multiple, truncated and oversized replies cannot clear quarantine. Scanner endpoints are restricted to explicit loopback names/addresses because the ClamAV TCP protocol has no transport authentication or encryption. Regression tests cover these reply cases and reject remote endpoints. Focused report-storage suite passed 4/4; full default suite passed 425/425 across 98 files on the final source state; lint and TypeScript passed. No schema, migration, dependency or persistent-data change. A local ClamAV service is not installed/configured, so no real clean or malware scan was claimed; report documents remain blocked in quarantine without scanner clearance. Key recovery/rotation qualification, live authorization, browser/mobile acceptance and production qualification remain open. Synthetic data only.
 
 Verification addendum: the production build completed successfully with 210 generated pages/routes; `npm audit` reported 0 vulnerabilities and `npm ls --depth=0` showed a consistent installed dependency tree. PostgreSQL integration was not rerun for this scanner-only change; the latest integration checkpoint replayed 78 migrations. No live scanner was available, so this work validates the fail-closed parser only, not malware-scanning efficacy.
 
-## Patient portal identity-proofing decision Ã¢â‚¬â€ 2026-10-31
+## Patient portal identity-proofing decision ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 2026-10-31
 
 Owner decision: patient portal accounts remain disabled until an identity-proofing method is approved. Do not enable self-service patient registration, account recovery or patient access based only on a patient ID or phone number. Portal design and non-authenticated public website development may continue; authenticated patient/family access remains gated.
 
-## 2026-10-31 Ã¢â‚¬â€ Phlebotomist daily schedule filter
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phlebotomist daily schedule filter
 
 `/field/today` now displays assigned collection jobs for a chosen date. Filtering is performed in PostgreSQL using each centre's timezone and remains combined with existing organization, centre and assignment visibility. Invalid dates are rejected. Focused PostgreSQL authorization/date checks passed **29/29**; final default parallel suite passed **427/427 across 99 files**, typecheck, whole-project lint and production build (**210 generated routes/pages**) passed. The first run concurrent with build/lint timed out one unrelated calendar test (426/427); isolated rerun passed. No migration or persistent-data change. Visual/manual browser acceptance remains deferred; this does not close Centre & Staff Operations.
 
@@ -1318,228 +1322,228 @@ The queue now also returns each permitted centre's timezone and renders appointm
 
 The Phlebotomist role workspace uses this daily view; the Manager panel remains centre-wide. Follow-up role policy/PostgreSQL/date tests passed **44/44**; typecheck, targeted lint and production build passed after the role wiring. Full default suite was not rerun after this last integration change. Centre & Staff Operations and browser/mobile acceptance remain open.
 
-## 2026-10-31 Ã¢â‚¬â€ Phlebotomist samples awaiting Rudra receiving
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phlebotomist samples awaiting Rudra receiving
 
 Added a dedicated Phlebotomist view for authorized collected specimens awaiting the separate Rudra receiving action. It reuses `COLLECTED` status and existing assignment/centre/identity controls; no physical handover is inferred or recorded by opening this queue. Focused role/policy/PostgreSQL integration passed **46/46**; full default suite passed **429/429 across 99 files**, TypeScript, lint and production build (**210 generated routes/pages**) passed. Browser/mobile acceptance and the broader Centre & Staff Operations wave remain open.
 
-## 2026-10-31 Ã¢â‚¬â€ Role-scoped Centre Operations summary visibility
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Role-scoped Centre Operations summary visibility
 
 Role workspaces now render the aggregate Centre Operations panel only when the signed-in staff context has at least one permission recognized by the summary API. A standalone handover grant or patient-directory grant no longer causes an unrelated summary request/error panel. The server-side summary API remains the authority and continues to project only each grant's permitted centre queues. Added permission-policy regression coverage.
 
 Verification: role/summary focused tests **23/23**; default parallel suite **425/425 across 98 files**; whole-project lint, TypeScript and production build (**210 generated pages/routes**) passed. No database, migration, dependency or persistent-data change. This fixes one workspace visibility mismatch; it does not complete Centre & Staff Operations. Remaining operational workflow mapping and later product waves remain active; patient portal accounts stay disabled pending identity-proofing approval. Key recovery/rotation qualification, live scanner deployment, live role authorization, browser/mobile acceptance and production qualification remain open. Synthetic data only.
 
-## 2026-10-31 Ã¢â‚¬â€ Sample directory field-staff authorization regression
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Sample directory field-staff authorization regression
 
 The sample directory now applies assigned-job visibility to staff with `collections.visit.record` as well as `samples.collect`, while preserving centre-scoped assignment-management visibility and independent patient-identity permission checks. A PostgreSQL-backed synthetic regression verifies cross-centre assigned-only visibility, exclusion of another collector's samples, and omission of patient identity. The first test run had a pagination fixture expectation inconsistent with the authorized result set; after correcting the expectation, focused tests passed **31/31**, the default suite passed **430/430 across 99 files**, TypeScript and lint passed, and production build passed (**210 generated routes/pages**). No schema or persistent data changes.
 
 This automated synthetic test does not constitute live authenticated HTTP, MFA-incomplete, or browser acceptance. Centre & Staff Operations remains in progress. Patient portal accounts remain disabled pending an approved identity-proofing approach. P2-09 scanner/key lifecycle and production gates remain open.
 
-## 2026-10-31 Ã¢â‚¬â€ Published catalogue selection in public booking request
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Published catalogue selection in public booking request
 
 The public appointment-request form now searches and paginates currently published, verified test/package entries from the existing centre-scoped public catalogue API. Selecting a result copies its name and service code into the editable request field; absent/unpublished IDs are not resolved by the selection helper. Centre changes reset the selected service, stale catalogue responses are discarded, and successful submission resets catalogue selection/search state. Manual text remains available when no listed service matches. The copy clearly labels this as an unconfirmed request: it does not reserve a slot, promise availability, or create an appointment; staff must verify catalogue and scheduling details.
 
 Verification: focused booking/catalogue tests **12/12 across 3 files**, including PostgreSQL catalogue eligibility; final default suite **432/432 across 99 files**; TypeScript, repository lint and production build passed (**210 generated routes/pages**). No schema migration or dependency change. Browser/mobile visual acceptance remains pending. Patient portal accounts stay disabled pending approved identity proofing; Centre Operations, the full website/portal and remaining security gates are not complete.
 
-## 2026-10-31 Ã¢â‚¬â€ Server-side validation of public booking catalogue selection
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Server-side validation of public booking catalogue selection
 
 Selected catalogue items now carry an item ID and version into public enquiry submission. The API rechecks the current published/verified/effective catalogue version and selected centre before accepting the request, then stores canonical name/code and catalogue reference/version inside the encrypted enquiry. Stale, unpublished, mismatched-version or wrong-centre selections are rejected without persistence. Free-text remains clearly an unverified request for staff review.
 
 Verification: focused public-enquiry route tests **16/16 across 2 files** after adding stale-version and cross-centre rejection assertions; the broader focused public-enquiry/catalogue run passed **28/28 across 5 files**. Default parallel suite **434/434 across 99 files**; TypeScript, whole-project lint and production build passed (**210 generated pages/routes**). No migration or dependency change. No browser/mobile acceptance was performed. This does not confirm an appointment or price quote. Patient portal accounts remain disabled pending approved identity proofing; Centre & Staff Operations, key recovery/rotation, malware scanner configuration, live authorization/browser acceptance and production qualification remain open. Synthetic-data development only.
 
-## 2026-10-31 Ã¢â‚¬â€ Effective approval policy scope visibility
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Effective approval policy scope visibility
 
 The centre policy read now reports whether a global organization default is effective when the centre has no local override. It exposes only the source scope and enabled state, not organization-level approver identities. The editor clarifies that saving creates a centre override. Switching policy scopes clears the previous draft and disables Save until the new scope loads. No approval authority was added; only operational task completion is supported.
 
 Verification: approval-policy/task focused suite **35/35 across 3 files**; default suite **435/435 across 99 files**; TypeScript, repository lint, and production build (**210 generated pages/routes**) passed. `db:integration` replayed **78 migrations** and passed workflow/runtime-role/RBAC/append-only checks; it does not execute this GET route against PostgreSQL. No schema or dependency change. Manual browser and live authenticated-role acceptance remain open. Patient portal accounts remain disabled pending identity-proofing approval; security and production gates remain open. Synthetic data only.
 
 Verification addendum: the approval-policy GET route is now exercised against a disposable migrated PostgreSQL schema using centre-only synthetic authorization. It confirms the effective organization default without exposing the named approver, then verifies an explicit centre override takes precedence. Focused policy API unit/PostgreSQL route tests **16/16 across 2 files**; full default suite **436/436 across 100 files**; typecheck and whole-project lint passed. The implementation-code production build from the preceding checkpoint passed (**210 generated pages/routes**); subsequent changes were limited to integration tests and documentation. No persistent development data changed. Live authenticated HTTP, browser/mobile acceptance, and production/security gates remain pending.
-## 2026-10-31 Ã¢â‚¬â€ Roster conflict escalation compatibility
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Roster conflict escalation compatibility
 
 Roster collection conflicts now submit the canonical `COLLECTION_JOB` escalation reference; appointment conflicts submit `APPOINTMENT`. The existing escalation resolver enforces organization/centre scope and role/assignment visibility. Regression mapping and route tests passed **10/10 across 3 files**; full default suite **437/437 across 100 files**; TypeScript, lint and production build (**210 generated routes/pages**) passed. No database or persistent-data changes. This does not complete Centre & Staff Operations. Live authenticated authorization/MFA, cross-centre, and browser/mobile acceptance remain pending. Patient portal accounts remain disabled until identity proofing is approved; key recovery/rotation, malware scanner configuration and production qualification remain open. Synthetic data only.
-## 2026-10-31 Ã¢â‚¬â€ PostgreSQL verification of collection-job escalations
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PostgreSQL verification of collection-job escalations
 
 Added a disposable PostgreSQL route integration that seeds a synthetic appointment, order and assigned collection job; creates an escalation using `COLLECTION_JOB`; verifies persisted source identity; and reads the escalation through the real GET route. Appointment route integration passed **28/28**; the full default suite passed **438/438 across 100 files**; TypeScript and lint passed. Auth remains mocked in this test, so live session/MFA and cross-centre acceptance are still pending. No persistent development data or migrations changed. Centre & Staff Operations remains in progress; browser/mobile review, key recovery/rotation, malware-scanner configuration and production qualification remain open. Synthetic data only.
-## 2026-10-31 Ã¢â‚¬â€ Assigned-only collection reference visibility
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Assigned-only collection reference visibility
 
 The PostgreSQL route integration now verifies collection references are filtered to a field worker's assigned jobs when that staff member has read/visit permissions but no assignment-management grant. A second synthetic job assigned to another staff account is excluded. Focused appointment route integration passed **28/28**; the fresh full default suite passed **438/438 across 100 files**; TypeScript and lint passed. Session identity is mocked; live authorization remains a separate acceptance gate. No migration or persistent data changed; Centre & Staff Operations remains in progress, with browser/mobile and remaining security gates open. Synthetic data only.
-## 2026-10-31 Ã¢â‚¬â€ Admin-shell text encoding correction
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Admin-shell text encoding correction
 
-Replaced corrupted `Ãƒâ€šÃ‚Â·` and `ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦` literals in the authenticated admin shell with readable ASCII text. A scan found no further matching mojibake in application source. TypeScript, lint and production build (**210 generated routes/pages**) passed. The latest full test suite result (**438/438 across 100 files**) preceded this text-only change. No database or persistent data changed. Manual browser visual acceptance remains pending; Centre & Staff Operations and the overall roadmap remain in progress. Synthetic-data development only.
+Replaced corrupted `ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â·` and `ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦` literals in the authenticated admin shell with readable ASCII text. A scan found no further matching mojibake in application source. TypeScript, lint and production build (**210 generated routes/pages**) passed. The latest full test suite result (**438/438 across 100 files**) preceded this text-only change. No database or persistent data changed. Manual browser visual acceptance remains pending; Centre & Staff Operations and the overall roadmap remain in progress. Synthetic-data development only.
 
-## 2026-10-31 Ã¢â‚¬â€ Centre Operations escalation deep links
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Centre Operations escalation deep links
 
 The combined Centre Operations queue now opens the specific escalation selected in the queue. The workbench loads it through the existing protected API; query IDs are UUID-validated and access rules are unchanged. Focused helper/queue/PostgreSQL integration: **34/34**; default Vitest: **441/441 across 101 files**; TypeScript, lint and production build passed (**210 generated routes/pages**). The PostgreSQL route test uses synthetic data and mocked session identity, so live authenticated role/MFA and cross-centre checks are still pending. No schema or persistent-data changes.
 
 This is a queue navigation improvement, not completion of Centre & Staff Operations. Patient portal accounts remain disabled pending an approved identity-proofing approach. Key lifecycle, malware scanner, live authorization, desktop/mobile review and production gates remain open. Synthetic data only.
 
-## 2026-10-31 Ã¢â‚¬â€ Centre Operations timestamps use centre-local time
+## 2026-10-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Centre Operations timestamps use centre-local time
 
-The combined operations queue previously formatted ISO timestamps in the viewer's browser timezone even though the queue is organized by centre and displays each centre's configured timezone. Queue item times now format in that centre timezone and use the semantic `<time>` element. Invalid timestamps/timezones fail safely as Ã¢â‚¬Å“Time unavailableÃ¢â‚¬Â rather than causing a render exception.
+The combined operations queue previously formatted ISO timestamps in the viewer's browser timezone even though the queue is organized by centre and displays each centre's configured timezone. Queue item times now format in that centre timezone and use the semantic `<time>` element. Invalid timestamps/timezones fail safely as ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œTime unavailableÃƒÂ¢Ã¢â€šÂ¬Ã‚Â rather than causing a render exception.
 
 Added tests for Asia/Kolkata rendering across a UTC date boundary and invalid inputs. Default parallel suite: **443/443 across 102 files**; TypeScript, whole-project lint, and production build passed (**210 generated routes/pages**). No database, migration, dependency, or persistent-data change. The formatter is covered directly; live browser timezone rendering was not reviewed.
 
 This fixes a display-time consistency issue only. Centre & Staff Operations and the complete product backlog remain in progress. Patient portal accounts remain disabled pending an approved identity-proofing method. Live authenticated authorization, browser/mobile acceptance, key recovery/rotation, malware scanner configuration, and production qualification remain open. Synthetic data only.
 
-## 2026-11-01 Ã¢â‚¬â€ Public centre details and service enquiry path
+## 2026-11-01 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Public centre details and service enquiry path
 
-Added a public centre detail route reachable from the centres and service-area directories. It reads only centres returned by the existing public catalogue-centres endpoint, then loads that centre's current published/verified/price-effective service records from the existing public catalogue API. The page supports test/package filtering, service-name/code search, pagination, published profile details, and links to existing service-detail pages. Ã¢â‚¬Å“Ask about this serviceÃ¢â‚¬Â prefills the existing staff-reviewed booking-request form with a bounded editable service label and centre; it does not confirm a booking, reserve availability, or establish patient portal access. No new API, migration, external service, or patient authentication was added.
+Added a public centre detail route reachable from the centres and service-area directories. It reads only centres returned by the existing public catalogue-centres endpoint, then loads that centre's current published/verified/price-effective service records from the existing public catalogue API. The page supports test/package filtering, service-name/code search, pagination, published profile details, and links to existing service-detail pages. ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œAsk about this serviceÃƒÂ¢Ã¢â€šÂ¬Ã‚Â prefills the existing staff-reviewed booking-request form with a bounded editable service label and centre; it does not confirm a booking, reserve availability, or establish patient portal access. No new API, migration, external service, or patient authentication was added.
 
 Verification: public-centre/catalogue/enquiry focused suite **15/15**; default `npm test` **445/445 across 103 files**. The first full test run exposed a timeout in existing Orders route tests caused by dynamic imports inside the timed test body; moving those imports to module scope resolved it, and the subsequent default run passed. TypeScript and whole-project lint passed. The first production build found the new dynamic route needed its `params` read under Suspense; the route was corrected and the final build passed, generating **211 pages/routes**. No database, dependency, Owner credential, encryption key, or persistent data changes.
 
 This advances the public website and centre catalogue flow; it does not complete the public website or portal. Patient portal accounts remain disabled pending an approved identity-proofing method. Centre & Staff Operations, key recovery/rotation, malware scanner qualification, live authenticated authorization, desktop/mobile review, approved policy/legal content, and production qualification remain open. Synthetic-data development only.
 
-## 2026-11-01 Ã¢â‚¬â€ Roster history UI
+## 2026-11-01 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Roster history UI
 
 Authorized roster users can now open shift/unavailability history directly from calendar and list views. The existing centre-scoped detail API supplies the encrypted history. New roster events include encrypted note snapshots; immutable prior events are retained. Focused roster suite **10/10**, roster handover PostgreSQL integration **3/3**, default Vitest **445/445 across 103 files**, whole-project TypeScript and lint, and production build (**211 routes/pages**) passed. No migration or persistent-data change. Browser and live authenticated role acceptance remain pending.
 
-## 2026-11-01 Ã¢â‚¬â€ Escalation links open the specific follow-up
+## 2026-11-01 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Escalation links open the specific follow-up
 
 Centre Operations escalation entries for CRM and report follow-ups now carry the opaque follow-up ID and centre context into their existing protected workbenches. The lead follow-up API filters the existing centre/permission-scoped query by ID. The report follow-up API does the same; its PostgreSQL centre filter now emits a safely parameterized typed `IN` list, fixing an invalid array-parameter query exposed by integration coverage. Workbenches load the specific follow-up and scroll it into view. Access remains governed by existing API permissions.
 
 Verification: disposable PostgreSQL follow-up route integration **28/28**; focused escalation-link tests **2/2**; default `npm test` **447/447 across 104 files**; TypeScript and whole-project lint passed. Production build passed after rerunning it after the previous process handle expired; Next.js generated **211 routes/pages**. No migration, dependency, persistent data, credentials, encryption keys or audit history changed. Integration test sessions are mocked; live authenticated MFA/role/cross-centre checks and browser/mobile acceptance remain pending. Centre & Staff Operations and the overall backlog remain incomplete. Patient portal accounts remain disabled pending approved identity proofing. Synthetic-data development only.
 
 
-## 2026-11-01 â€” Centre Operations opens exact CRM/report follow-up
+## 2026-11-01 Ã¢â‚¬â€ Centre Operations opens exact CRM/report follow-up
 
 The Centre Operations queue previously sent overdue CRM follow-ups to the lead detail page and report follow-ups to an unfiltered queue. Queue links now include the specific opaque follow-up ID and centre. The Lead Follow-ups workbench forwards that centre scope to `/api/followups`; the Report Follow-ups workbench forwards it to `/api/report-followups`. Those APIs retain existing authorization and centre-scope checks and return only the requested row when the caller is allowed to see it. Both workbenches scroll the matching row into view. No permission or data access path was added.
 
 Verification: focused helper and PostgreSQL route integration **30/30**; default `npm test` **449/449 across 105 files**; TypeScript and whole-project lint passed; production build passed (**211 routes/pages**). PostgreSQL coverage uses disposable synthetic data and mocked session identity; live authenticated role/MFA/cross-centre acceptance and browser/mobile review remain pending. No migration, dependency, persistent data, Owner credentials, encryption keys or audit history changed. This is one queue-to-record improvement, not completion of Centre & Staff Operations or the wider backlog. Patient portal accounts remain disabled pending approved identity proofing. Synthetic data only.
 
-## 2026-11-01 â€” Support workspace task queue is type-scoped
+## 2026-11-01 Ã¢â‚¬â€ Support workspace task queue is type-scoped
 
 The fixed Support Requests workbench previously constrained newly created tasks to `SUPPORT_REQUEST` but initialized its list without a type filter. In scopes where assigned-task permissions also allow the support queue, unrelated task types could appear in the support panel. It now filters the list by the fixed task type, hides the type selector for fixed-type queues, and labels the panel accordingly. Other role filters and general task queues remain unchanged; server-side permissions and filters are authoritative.
 
 Focused task/role tests **23/23**; full default suite **452/452 across 106 files**; TypeScript and whole-project lint passed; production build passed (**211 routes/pages**). No schema, migration, dependency, persistent-data or security-secret change. This closes one role-workspace classification defect, not the Centre & Staff Operations wave. Live authenticated role/MFA/cross-centre tests and browser/mobile acceptance remain pending. Patient portal accounts remain disabled pending approved identity proofing. Synthetic data only.
 
-## 2026-11-01 â€” Enforce support/task visibility in the SQL queue
+## 2026-11-01 Ã¢â‚¬â€ Enforce support/task visibility in the SQL queue
 
 Fixed a task API scope defect for staff holding `tasks.assigned.read` and `tasks.support.read` without broad `tasks.read`. Previously the API disabled assigned-task SQL filtering when the support grant existed, then filtered unauthorized rows after pagination. That could leak a `hasMore` signal and let unrelated tasks displace the caller's assigned work. The API now enforces assigned-only visibility in SQL while including support requests the staff member is authorized to see; response-level filtering remains in place.
 
 A disposable PostgreSQL regression seeds authorized records and 102 unrelated earlier-due tasks. The real route returns only the assigned task and authorized support request, with no false extra-page indicator or unauthorized private sentinel. Focused task/role/PostgreSQL tests **42/42**; full default suite **453/453 across 106 files**; TypeScript, whole-project lint, and production build (**211 routes/pages**) passed. No schema, migration, dependency, persistent data, credentials, keys, or audit history changed. This is a security fix for one queue; Centre & Staff Operations and the overall backlog remain incomplete. Live authenticated MFA/role/cross-centre checks and browser/mobile acceptance remain pending. Patient portal accounts remain disabled pending approved identity proofing. Synthetic data only.
 
-## 2026-11-01 â€” Roster privacy and assigned collection visibility
+## 2026-11-01 Ã¢â‚¬â€ Roster privacy and assigned collection visibility
 
 `/api/roster` and `/api/roster/workload` now scope basic `roster.read` users to their own shifts and workload in SQL; another staff member's requested shift returns `not_found`. Team-wide views require a matching `roster.manage` or `staff.read` grant. Collection conflict summaries now treat `collections.visit.record` without `collections.assign` as assigned-only, even where `collections.read` is also granted.
 
 The disposable PostgreSQL test seeded two synthetic staff members and confirmed no other-worker private shift note, staff row, workload, or roster conflict was returned. Final focused PostgreSQL/policy tests **38/38**; default `npm test` **456/456 across 107 files**; TypeScript, lint and production build (**211 routes/pages**) passed. No migration or persistent security/data changes. Live session/MFA and browser/mobile acceptance remain deferred to the consolidated campaign. This does not complete the Centre & Staff Operations wave. Synthetic data only; patient portal accounts remain disabled pending approved identity proofing.
 
-## 2026-11-01 â€” Phlebotomist personal roster workspace
+## 2026-11-01 Ã¢â‚¬â€ Phlebotomist personal roster workspace
 
 The phlebotomist role workspace now embeds the existing roster/workload component when the role has `roster.read`, showing a personal schedule/workload label. This complements the daily collection schedule. Basic roster and workload APIs restrict the view to the session staff member; management and assignment actions remain separately permission-controlled.
 
 Focused role-workspace/PostgreSQL tests **46/46**; default `npm test` **457/457 across 107 files**; TypeScript, lint and production build (**211 routes/pages**) passed. No schema or persistent-data change. Manual visual review and live authenticated role/MFA acceptance remain pending. Centre & Staff Operations and the larger development backlog remain in progress. Synthetic data only; patient portal accounts remain disabled pending identity-proofing approval.
 
-## 2026-11-01 â€” Roster team access remains centre-scoped on unfiltered requests
+## 2026-11-01 Ã¢â‚¬â€ Roster team access remains centre-scoped on unfiltered requests
 
 Corrected `/api/roster` so a team-management grant for one centre does not widen visibility to coworkers at other centres when `centreId` is omitted. Basic reads include the staff member's own roster across their authorized roster centres plus team records only in explicitly granted team centres. An organization-scoped manager/auditor grant still allows organization-wide team visibility.
 
 A disposable PostgreSQL test covers two centres: team visibility in Centre A, self-only visibility in Centre B, and a denied coworker lookup in Centre B. Focused PostgreSQL/policy suite **34/34**; default test suite **458/458 across 107 files**; TypeScript, lint and production build (**211 routes/pages**) passed. No migration or persistent-data modification. Live authenticated authorization and browser/mobile review remain open. Centre & Staff Operations and later waves remain incomplete; patient portal accounts remain disabled pending identity-proofing approval. Synthetic data only.
 
-## 2026-11-01 â€” Roster detail/history follows self and team scope
+## 2026-11-01 Ã¢â‚¬â€ Roster detail/history follows self and team scope
 
 Fixed direct-ID disclosure on `/api/roster/[id]`: `roster.read` in a centre alone no longer grants access to another worker's private shift note or event history. Readers need either team access for that centre or ownership of the shift; unavailable records return `not_found`. The endpoint continues to require `roster.manage` for updates/cancellation.
 
 A disposable PostgreSQL route test confirms own-shift history is readable and a known coworker UUID is denied, alongside the unfiltered cross-centre regression. Focused PostgreSQL/policy tests **34/34**; full `npm test` **458/458 across 107 files**; TypeScript, lint and build (**211 routes/pages**) passed. No schema or persistent-data changes. Live session/MFA and browser/mobile acceptance remain pending. Centre & Staff Operations and the full backlog remain incomplete; synthetic data only; patient portal accounts remain disabled pending identity-proofing approval.
-## 2026-11-01 â€” Assigned escalation record access
+## 2026-11-01 Ã¢â‚¬â€ Assigned escalation record access
 
 Escalation detail GET and PATCH now use the same broad-or-assigned read permission model as the escalation queue. This removes the unrelated `workspace.read` prerequisite for staff who are permitted to read assigned escalations. Centre-level visibility, assigned-owner filtering and manager-only sensitive actions are still enforced. Regression tests cover the assigned-reader gate and denial before database access when escalation read permission is absent.
 
 Verification: focused route tests **2/2**; default suite **460/460 across 108 files**; TypeScript, lint and production build (**211 generated paths**) passed. This is a permission/workspace correction only; no database migration. Centre & Staff Operations and later development waves remain incomplete. Live authenticated role/MFA/cross-centre and browser/mobile acceptance, key recovery/rotation, malware scanning and production qualification remain open. Patient portal accounts remain disabled pending approved identity proofing. Synthetic data only.
-## 2026-11-01 â€” Shift handover recipient authorization
+## 2026-11-01 Ã¢â‚¬â€ Shift handover recipient authorization
 
 The handover picker now lists only staff with active centre-scoped or organization-wide `roster.handover` access. The POST endpoint applies the same permission requirement, so an API request cannot create an unacknowledgeable handover for an ineligible staff member. Existing handover access policy and records are unchanged.
 
 Verification: synthetic disposable-PostgreSQL handover tests **4/4**; default suite **461/461 across 108 files**; TypeScript, lint and production build (**211 generated paths**) passed. No migration. Session identity in the integration route is mocked; live authorization and browser/mobile review remain pending. Centre & Staff Operations and later waves remain incomplete. Key recovery/rotation, malware scanning, identity proofing for patient accounts and production qualification remain open. Synthetic data only.
-## 2026-11-01 â€” Synthetic key recovery of encrypted artifacts
+## 2026-11-01 Ã¢â‚¬â€ Synthetic key recovery of encrypted artifacts
 
 Added a key-recovery regression that persists unique synthetic PDFs through Rudra's private encrypted report-storage API and encrypts synthetic field values under current and historical key IDs. The test simulates loss of its test key configuration, fails closed, restores from an authenticated backup envelope, verifies the original contents, and removes only its generated files while restoring its prior process environment.
 
 Verification: focused key-recovery suite **7/7**; default suite **462/462 across 108 files**; TypeScript and lint passed. No migration, persistent database, or development-key change. This is not a coordinated database/filesystem backup restore drill. Formal key custody, off-device backup, ACL, disaster-recovery, malware-scanner, live authorization, browser/mobile and production gates remain open. Synthetic data only.
 
-### Patient portal identity-proofing gate â€” 2026-11-01
+### Patient portal identity-proofing gate Ã¢â‚¬â€ 2026-11-01
 
-The Owner selected â€œKeep accounts disabled until approved.â€ No proofing method/provider is approved. Patient portal accounts and patient-facing report access must remain disabled until a separate approval establishes identity-proofing rules. Development may proceed on non-account public website and staff-side CRM workflows; this is not authorization to enable registration, login, recovery, report downloads or external communication.
+The Owner selected Ã¢â‚¬Å“Keep accounts disabled until approved.Ã¢â‚¬Â No proofing method/provider is approved. Patient portal accounts and patient-facing report access must remain disabled until a separate approval establishes identity-proofing rules. Development may proceed on non-account public website and staff-side CRM workflows; this is not authorization to enable registration, login, recovery, report downloads or external communication.
 
 
-### Internal CRM communication drafts â€” 2026-11-01
+### Internal CRM communication drafts Ã¢â‚¬â€ 2026-11-01
 
-Lead 360Â° now has an internal encrypted draft workflow. It requires active operational contact authorization, rejects Do Not Contact, matches the recorded preferred channel, and requires separate granted marketing consent for marketing drafts. No provider send, delivery, external communication or patient portal account is enabled. Database integration and regression results are tracked with this checkpoint; this does not complete the Communications wave. The Owner decision stands: patient accounts remain disabled pending an approved identity-proofing approach. Synthetic data only.
+Lead 360Ã‚Â° now has an internal encrypted draft workflow. It requires active operational contact authorization, rejects Do Not Contact, matches the recorded preferred channel, and requires separate granted marketing consent for marketing drafts. No provider send, delivery, external communication or patient portal account is enabled. Database integration and regression results are tracked with this checkpoint; this does not complete the Communications wave. The Owner decision stands: patient accounts remain disabled pending an approved identity-proofing approach. Synthetic data only.
 
 Verification addendum (2026-11-01): Migration 0079 applied locally as an additive schema change. PostgreSQL integration/replay passed with 79 migrations, including runtime-role grants for encrypted drafts and append-only events. Default parallel suite: 468/468 tests across 109 files. TypeScript, lint, and production build passed. The initial integration attempt exposed that the runtime development database had not yet applied 0079; after applying the migration, the rerun passed. This verifies this draft slice only and does not close the Communications wave, all Centre Operations, portal identity-proofing, malware scanning/key recovery, live browser/authenticated acceptance, or production qualification.
 
-### Approval deadline worker starvation fix â€” 2026-11-01
+### Approval deadline worker starvation fix Ã¢â‚¬â€ 2026-11-01
 
 Overdue escalations assigned to invalid or conflicting reviewers are now excluded from the bounded processing batch while remaining visible/pending for manager repair. The worker reports the stale assignment count. Expiry takes precedence and remains processable. Regression coverage used 55 stale synthetic assignments plus valid due escalation and expiry records. Verification: PostgreSQL route integration 29/29; full Vitest 468/468 across 109 files; 79-migration database integration/replay and runtime privileges passed; TypeScript, lint, and production build passed. No migration or persistent task mutation. This is a reliability fix within the approval workflow, not completion of Centre & Staff Operations or the broader development programme. Patient accounts stay disabled until identity proofing is approved; security and final acceptance gates remain open; synthetic data only.
 
-### Approval queue permission alignment â€” 2026-11-01
+### Approval queue permission alignment Ã¢â‚¬â€ 2026-11-01
 
 Role workspace links and approval queue panels now require the same broad task-read permission as the centre-wide approval listing, in addition to `tasks.approve`. Approval-only and assigned-only users are not shown an inaccessible broad queue. Focused role-workspace/task route tests **49/49**; default `npm test` **469/469 across 109 files**; TypeScript, lint, and production build (**211 generated paths**) passed. No migration. Centre & Staff Operations remains incomplete; live authorization and browser/mobile acceptance remain pending. Patient portal accounts remain disabled pending identity-proofing approval. Synthetic data only.
 
-### Shift handover replay authorization â€” 2026-11-01
+### Shift handover replay authorization Ã¢â‚¬â€ 2026-11-01
 
 Handover idempotency replay now rechecks that the current caller is an outgoing/incoming participant or has `roster.manage` for the centre before returning an existing handover identifier. Added PostgreSQL regression coverage for denied outsider replay and permitted participant replay. Handover DB integration **5/5**; full default suite **470/470 across 109 files**; TypeScript, lint and production build (**211 generated paths**) passed. No migration. Live authenticated MFA/cross-centre acceptance and browser/mobile review remain pending. Centre & Staff Operations remains incomplete; patient portal accounts remain disabled pending approved identity proofing. Synthetic data only.
 
-### Task workbench controls use record-centre permissions â€” 2026-11-01
+### Task workbench controls use record-centre permissions Ã¢â‚¬â€ 2026-11-01
 
 Updated task edit, assignment, approval, and escalation controls to check grants against the selected centre/task record rather than any grant in the user's organization. Shared task-update logic is used by both the API and client; centre-scoped helper tests cover cross-centre, organization-grant, assigned-worker, and support-manager cases. Focused tests **30/30**; full suite **472/472 across 110 files**; TypeScript, lint and production build (**211 generated paths**) passed. APIs continue to enforce authorization. No migration. Live authenticated acceptance and browser/mobile review remain pending; Centre & Staff Operations remains in progress. Patient accounts stay disabled pending approved identity proofing. Synthetic data only.
 
 Verification addendum (2026-11-01): Task action route and policy regressions rerun after moving the update capability helper: **28/28** across task API, policy and capability-helper files. This remains automated unit/route coverage, not live session acceptance.
 
-### Escalation owner picker respects centre scope â€” 2026-11-01
+### Escalation owner picker respects centre scope Ã¢â‚¬â€ 2026-11-01
 
 The escalation workbench now displays and loads alternate owners only when the current session has `escalations.manage` for the selected centre. Without that grant, creation assigns the current staff member. Shared helper tests cover centre-specific and organization-wide management grants; existing record action controls continue to follow server-returned capability and API checks. Focused escalation tests **21/21**; full suite **474/474 across 111 files**; TypeScript, lint, and production build (**211 generated paths**) passed. No migration. Centre & Staff Operations remains unfinished; live authorization and browser/mobile acceptance remain pending. Patient accounts stay disabled pending approved identity proofing. Synthetic data only.
 
-### Roster workbench controls honor selected-centre grants â€” 2026-11-01
+### Roster workbench controls honor selected-centre grants Ã¢â‚¬â€ 2026-11-01
 
 Roster management, appointment/collection reassignment and conflict escalation controls now derive from the user's grants for the selected centre rather than workspace-wide booleans. Appointment reassignment requires both centre-scoped `appointments.assign` and `appointments.update`; organization-wide grants remain valid. APIs remain authoritative. Added cross-centre and missing-permission helper tests. No migration. Focused tests **2/2**; full default suite **476/476 across 112 files**; TypeScript and lint passed; production build passed with **211 generated paths**. The Centre & Staff Operations wave remains incomplete; browser/mobile and live authenticated authorization checks remain deferred. Patient portal accounts remain disabled pending approved identity proofing. Synthetic data only.
 
-### Centre-scoped collection and sample controls â€” 2026-11-01
+### Centre-scoped collection and sample controls Ã¢â‚¬â€ 2026-11-01
 
 Collection job creation now filters eligible appointment/order pairs by `collections.assign` at the pair's centre. Procedure management, receiving, sample exception resolution, recollection authorization, dispatch, and external receipt controls are scoped to the selected specimen or batch centre. All staff and branch workbench entry points pass the authenticated grants; server authorization remains authoritative. Added scope-helper tests. No migration or persistent-data change. Focused permission tests **4/4**; full default suite **478/478 across 113 files**; typecheck, lint and production build (**211 generated paths**) passed. This is a permission-consistency improvement and does not complete Centre & Staff Operations. Live authorization and browser/mobile acceptance remain pending. Patient portal accounts remain disabled pending approved identity proofing. Synthetic data only.
 
-### Centre-scoped reception and sample workflow controls â€” 2026-11-01
+### Centre-scoped reception and sample workflow controls Ã¢â‚¬â€ 2026-11-01
 
 Walk-in token actions now require `appointments.update` at the selected centre. Collection job creation, procedure management, specimen receiving, exception resolution, recollection authorization, dispatch and external receipt controls use the selected record's centre grants. Staff workspace entry points pass authenticated grants; APIs remain the authorization boundary. Added helper coverage for centre-specific and organization-wide grants. No database migration. Focused tests **6/6**; full default suite **480/480 across 114 files**; TypeScript, lint and production build (**211 generated paths**) passed. This improves permission consistency without qualifying Centre & Staff Operations or live/browser acceptance. Patient portal accounts remain disabled pending approved identity proofing. Synthetic data only.
 
 Verification addendum (2026-11-01): Final combined centre-scope changes passed focused permission tests **6/6**, default Vitest **480/480 across 114 files**, TypeScript, lint and production build (**211 generated paths**). No migration or persistent-data change. This is not live authenticated authorization acceptance.
 
-### Collection job action controls follow assignment and centre scope â€” 2026-11-01
+### Collection job action controls follow assignment and centre scope Ã¢â‚¬â€ 2026-11-01
 
 Assignment, visit and sample-collection actions on collection job details now use centre-scoped grants. Visit and collection controls are available only to a permitted assigned collector or an authorized collection assigner for that centre. Regression helpers cover assigned, reassigned, cross-centre and missing-permission cases. No migration or persistent-data change. Focused permission tests **7/7 across three helper files**; full suite **481/481 across 114 files**; TypeScript, lint and production build (**211 generated paths**) passed. Server checks remain authoritative; this is not live authorization acceptance. Centre & Staff Operations remains in progress, and patient portal accounts remain disabled pending approved identity proofing. Synthetic data only.
 
-## 2026-11-01 â€” Consolidated local engineering baseline
+## 2026-11-01 Ã¢â‚¬â€ Consolidated local engineering baseline
 
 Current re-verification: default `npm.cmd test -- --reporter=dot` **481/481 across 114 files**; whole-project lint passed; production build passed (**211 routes/pages**); PostgreSQL integration replayed **79 migrations** with synthetic integration and runtime-role/append-only checks passed; dependency audit reported **0 vulnerabilities**; installed dependency tree is consistent. TypeScript initially raced Next.js build output and could not find generated `.next/types`; the post-build rerun passed. This verification changed no application code, migration, account, encryption key, or audit history.
 
 Development is not complete. Centre & Staff Operations and later development waves remain in progress. Patient accounts remain disabled until an identity-proofing approach is explicitly approved. Key lifecycle and coordinated restore qualification, configured malware scanning, live authenticated authorization, desktop/mobile acceptance, policy approvals and production qualification remain pending. Synthetic-data development only.
 
-## 2026-11-01 â€” Public sitemap and crawler boundaries
+## 2026-11-01 Ã¢â‚¬â€ Public sitemap and crawler boundaries
 
 Added public `sitemap.xml` and `robots.txt` generation. Sitemap entries are restricted to public static pages plus centres/catalogue entries returned by the existing verified, published, price-effective read model. A catalogue outage omits dynamic URLs but preserves the static public pages. Crawler exclusions cover patient/account/staff/operational routes; robots rules are not access control. Production output requires an explicit HTTPS canonical website origin; local development may use `BETTER_AUTH_URL` or localhost. `PUBLIC_SITE_URL` is documented in `.env.example`.
 
 Focused tests: **7/7 across 2 files passed**. No database or migration changes. Full regression suite, TypeScript, lint and production build remain to be run for this change. Patient portal accounts stay disabled pending identity-proofing approval; Centre & Staff Operations and later development waves remain in progress. Synthetic-data development only.
 
-Verification addendum â€” public sitemap build behavior (2026-11-01): The initial Next.js build rejected `dynamic = "force-dynamic"` because Cache Components are enabled. Replaced it with the documented `connection()` request-time API; the final build succeeds and emits `/sitemap.xml` as a dynamic route, so catalogue publication is read at request time. Final checks on this source: focused tests **7/7**, full suite **488/488 across 116 files**, lint, TypeScript, build (**213 routes/pages**), dependency audit (**0 vulnerabilities**) and dependency-tree consistency all passed. Existing 79-migration PostgreSQL integration remains the latest schema qualification; this change has no DB/schema effect. This is a public-site infrastructure slice only. The full site, Centre & Staff Operations, patient portal, live acceptance and production gates remain incomplete; patient accounts stay disabled pending identity-proofing approval. Synthetic data only.
+Verification addendum Ã¢â‚¬â€ public sitemap build behavior (2026-11-01): The initial Next.js build rejected `dynamic = "force-dynamic"` because Cache Components are enabled. Replaced it with the documented `connection()` request-time API; the final build succeeds and emits `/sitemap.xml` as a dynamic route, so catalogue publication is read at request time. Final checks on this source: focused tests **7/7**, full suite **488/488 across 116 files**, lint, TypeScript, build (**213 routes/pages**), dependency audit (**0 vulnerabilities**) and dependency-tree consistency all passed. Existing 79-migration PostgreSQL integration remains the latest schema qualification; this change has no DB/schema effect. This is a public-site infrastructure slice only. The full site, Centre & Staff Operations, patient portal, live acceptance and production gates remain incomplete; patient accounts stay disabled pending identity-proofing approval. Synthetic data only.
 
-## 2026-11-01 â€” Centre Operations roster-count privacy alignment
+## 2026-11-01 Ã¢â‚¬â€ Centre Operations roster-count privacy alignment
 
 The Centre Operations dashboard previously used basic `roster.read` to return counts of all centre staff shifts and unavailability, although that permission only grants self-scoped roster views. Centre-wide totals now require `roster.manage` or `staff.read` in the relevant centre/organization. Regression coverage verifies basic readers do not receive these fields and that the API skips the centre shift queries. Other roster/workload policies are unchanged.
 
 Verification: **490/490 tests across 116 files**, lint, TypeScript and production build (**213 routes/pages**) passed. No database/schema change; PostgreSQL migration replay was not rerun for this code-only permission change. This is one privacy correction and does not complete Centre & Staff Operations or the wider roadmap. Patient accounts remain disabled pending identity-proofing approval; live auth, browser/mobile and production gates remain open. Synthetic data only.
 
-## 2026-11-01 â€” Centre Operations sample-exception assignment privacy
+## 2026-11-01 Ã¢â‚¬â€ Centre Operations sample-exception assignment privacy
 
 The Centre Operations dashboard previously counted all open sample exceptions for staff whose sample-directory access is assignment-limited. The count and exception queue now follow the sample assignment visibility policy. Assigned field staff see only their assigned jobs' exception summaries; exception managers keep centre-wide access. Added policy and API regressions. Focused tests **14/14**; full default suite **492/492 across 116 files**; lint, TypeScript, and production build (**213 routes/pages**) passed. No schema change; PostgreSQL replay was not rerun for this code-only patch. This fix does not close Centre & Staff Operations or live authorization acceptance. Patient portal accounts remain disabled pending approved identity-proofing. Synthetic data only.
 
-## 2026-11-01 â€” Escalation action replay authorization
+## 2026-11-01 Ã¢â‚¬â€ Escalation action replay authorization
 
 Escalation idempotency replays now recheck the caller's permission for the requested action before reading/decrypting the saved result. The previous behavior was reproduced with a regression: a centre-wide read-only caller could receive a cached privileged-action result. The fix denies that request and preserves authorized manager replay without rerunning the mutation. Focused tests **4/4**; default suite **494/494 across 116 files**; TypeScript, lint, and production build (**213 routes/pages**) passed. No schema change; migration replay was not rerun. This is not live authorization acceptance. Centre & Staff Operations, browser/mobile review, key/scanner qualification, and production gates remain open. Patient accounts remain disabled pending approved identity proofing. Synthetic data only.
 
-## 2026-11-01 â€” PostgreSQL-backed escalation replay authorization
+## 2026-11-01 Ã¢â‚¬â€ PostgreSQL-backed escalation replay authorization
 
 Added a disposable-schema PostgreSQL test that replays migrations, seeds encrypted synthetic escalation/event records, calls the actual escalation PATCH route using a read-only session fixture, and verifies 403 plus unchanged persisted status/version and exactly one event. Dedicated PostgreSQL test passed **1/1**; escalation route tests **4/4**; full suite **495/495 across 117 files**; TypeScript, lint, and build (**213 routes/pages**) passed. The access boundary is mocked, so this is not live MFA/role acceptance. No persistent database changes. Centre & Staff Operations and live browser/security gates remain open; patient accounts remain disabled pending identity-proofing approval. Synthetic data only.
 
-## 2026-11-01 â€” PostgreSQL/runtime-role baseline after escalation hardening
+## 2026-11-01 Ã¢â‚¬â€ PostgreSQL/runtime-role baseline after escalation hardening
 
 `npm.cmd run db:integration` passed after the escalation replay fix: **79 migrations replayed**, synthetic auth/MFA and module integration checks passed, and runtime-role operation/append-only checks passed. The standalone escalation replay test also migrates a dedicated disposable schema and passed. Approval deadline processing has an authenticated staff-triggered action and `tasks:process-approval-deadlines` caller, but no automatic scheduler is configured in this local project; an external scheduler must be configured for unattended deployment operation. No real data or secrets changed. Synthetic-data development only.
 
@@ -1550,26 +1554,26 @@ Added a disposable-schema PostgreSQL test that replays migrations, seeds encrypt
 
 **Verification addendum (2026-11-01):** A disposable PostgreSQL regression initially returned an empty queue for visit-only staff, exposing a stale `collections.read`-only centre predicate. The predicate now includes `collections.visit.record` centres while preserving assigned-only job filtering. Rerun passed (1/1): own assignment visible, coworker and cross-centre records not disclosed, own job detail opens. Final default suite: 499/499 across 118 files; lint, TypeScript, and build (213 routes/pages) passed. No migration or persistent-data change. Centre & Staff Operations and later waves remain incomplete; patient portal accounts remain disabled pending approved identity proofing. Synthetic data only; live/browser and production gates remain open.
 
-**2026-11-01 development update:** Reconciled the older tracker statement that Reception required an existing patient. The current workflow links the existing encrypted patient registration form to walk-in booking; a new PostgreSQL integration test now covers registration API â†’ walk-in appointment API, including persisted patient/centre/source/status and encrypted name storage. Full suite **500/500 across 118 files**, lint and TypeScript passed. This remains automated development evidence, not browser acceptance. Centre Operations and the wider backlog remain in progress; portal accounts remain disabled pending identity-proofing approval. Synthetic data only.
+**2026-11-01 development update:** Reconciled the older tracker statement that Reception required an existing patient. The current workflow links the existing encrypted patient registration form to walk-in booking; a new PostgreSQL integration test now covers registration API Ã¢â€ â€™ walk-in appointment API, including persisted patient/centre/source/status and encrypted name storage. Full suite **500/500 across 118 files**, lint and TypeScript passed. This remains automated development evidence, not browser acceptance. Centre Operations and the wider backlog remain in progress; portal accounts remain disabled pending identity-proofing approval. Synthetic data only.
 
-### 2026-11-01 â€” Appointment patient handoff privacy correction
+### 2026-11-01 Ã¢â‚¬â€ Appointment patient handoff privacy correction
 
 The Reception walk-in registration handoff and Patient 360 appointment action no longer place the patient UUID in the `/appointments/new` URL. They pass a validated selection through tab-scoped `sessionStorage`, consume it once, expire it after ten minutes, and then fetch the patient through the existing authenticated API. The appointment form checks the patient belongs to a centre authorized for booking before selecting it; if storage or lookup fails, staff can search manually. Added unit coverage for one-use, expiration, malformed input and invalid identifiers. This is a URL/privacy hardening and does not alter server authorization or portal identity proofing. Synthetic-data development only; browser acceptance remains deferred.
 Verification addendum: focused appointment handoff and PostgreSQL route tests passed; final `npm.cmd test -- --run` passed **503 tests across 119 files**; `npm.cmd run lint` and `npm.cmd run typecheck` passed; `npm.cmd run build` passed and generated 213 routes/pages. No migrations were added. No live browser or manual mobile review was performed.
 
-## Centre & Staff Operations wave implementation checkpoint â€” 2026-11-01
+## Centre & Staff Operations wave implementation checkpoint Ã¢â‚¬â€ 2026-11-01
 
 The current source has functional, permission-projected daily workspaces for Reception, Phlebotomist, Centre Manager, Accounts, Sales, Support, and Owner/Admin, composing the existing APIs for patient/appointment intake, collections/samples, finance, CRM, reports, tasks, task-completion approvals, escalations, roster/workload and handovers. The latest full suite (503 tests across 119 files), lint, TypeScript and production build (213 routes/pages) passed. PostgreSQL integration had passed with 79 migration replay and runtime-role/append-only checks; no schema change followed that run.
 
 This is a local engineering checkpoint, not live role or visual acceptance. Approval policies remain restricted to task completion; patient portal accounts remain disabled pending identity-proofing approval. Key recovery/rotation, scanner configuration, live authorization, browser/mobile review, approved business/clinical policies and production qualification remain open. Synthetic-data development only; proceed to the next dependency-ready development wave without enabling those gates.
 
-## 2026-11-01 â€” Internal communication draft queue foundation
+## 2026-11-01 Ã¢â‚¬â€ Internal communication draft queue foundation
 
 Added an authenticated Communications workspace and centre-filtered API over existing encrypted CRM communication drafts. The list is paginated and returns draft metadata, lead number, creator label and status only; it omits draft text/ciphertext and recipient contact details. Each entry links to the already authorized Lead 360 draft view. Every draft is explicitly shown as not sent; there is no provider dispatch or delivery claim. Route tests cover MFA rejection, cross-centre denial, bad filters and metadata-only projection.
 
 Verification: focused route tests **4/4**; default test suite **507/507 across 120 files**; lint, TypeScript and production build passed (**215 routes/pages**). No schema migration; prior PostgreSQL migration/runtime-role evidence remains 79 migrations, not rerun for this code-only slice. No external provider or real patient data used. The unified communications wave remains incomplete. Patient portal accounts remain disabled pending identity-proofing approval; legal/privacy text approvals, provider credentials, security and browser acceptance gates remain open. Synthetic-data development only.
 
-### 2026-11-01 â€” Communication draft cancellation
+### 2026-11-01 Ã¢â‚¬â€ Communication draft cancellation
 
 The internal CRM communication draft workflow now supports discarding an unsent draft. The authenticated same-origin API rechecks the lead's organization/centre scope, uses a row lock and `updatedAt` conflict check, and records an append-only cancellation event and content-free audit event. The encrypted body remains stored and is never dispatched. Focused tests **6/6**; full test suite **509/509 across 120 files**; lint and TypeScript passed; PostgreSQL integration replayed **79 migrations** with runtime-role checks; audit chain verified (**2 events**); production build passed (**215 routes/pages**). No live browser acceptance was performed. Patient portal accounts remain disabled pending identity-proofing approval; communications, external providers, security gates, and the broader development backlog remain incomplete. Synthetic data only.
 
@@ -1577,87 +1581,87 @@ Verification addendum (2026-11-01): Draft-cancellation route coverage now includ
 
 PostgreSQL verification addendum (2026-11-01): A dedicated disposable-schema integration test now exercises draft cancellation through the actual API route. It replayed the migrations and verified the microsecond-timestamp case, committed status update, append-only lifecycle, audit-chain integrity, and rejection of history mutation; **1/1 passed**. The first fixture name failed the migration safety allowlist and was corrected to the required `p2_09a_` prefix. Final full suite **512/512 across 121 files**, lint and TypeScript passed. Production build passed on the same application source (215 routes/pages); the later change only added integration-test source. The Communications wave remains partial and there is no message delivery provider. Patient accounts remain disabled pending approved identity proofing. Synthetic data only.
 
-### 2026-11-01 â€” Role workspace permission overlap
+### 2026-11-01 Ã¢â‚¬â€ Role workspace permission overlap
 
 Combined workflow links and panels now appear only when the necessary centre-scoped grants overlap, including Lead/Report follow-ups, approval queues, and Support task creation. Organization-level grants overlap centre-specific grants. Focused tests **21/21**; full suite **514/514 across 121 files**; lint, TypeScript and production build (**215 routes/pages**) passed. No persistence or migration change; live role/browser acceptance remains deferred. Patient accounts remain disabled pending identity-proofing approval. Centre & Staff Operations and later development waves remain in progress; synthetic-data development only.
 
-### 2026-11-01 â€” Patient account identity-proofing gate
+### 2026-11-01 Ã¢â‚¬â€ Patient account identity-proofing gate
 
-The Owner selected â€œkeep accounts disabled until approvedâ€ for patient identity proofing. `/account` now clearly states that the page is informational only, patient accounts have no sign-in/registration/demo access, and family relationships alone do not grant access to another person's records. The page is marked `noindex` and `nofollow`. A regression test confirms that no form, input, or button is exposed while the gate remains closed.
+The Owner selected Ã¢â‚¬Å“keep accounts disabled until approvedÃ¢â‚¬Â for patient identity proofing. `/account` now clearly states that the page is informational only, patient accounts have no sign-in/registration/demo access, and family relationships alone do not grant access to another person's records. The page is marked `noindex` and `nofollow`. A regression test confirms that no form, input, or button is exposed while the gate remains closed.
 
 Verification: focused account-page test **1/1**; default suite **515/515 across 122 files**; lint, TypeScript, and production build (**215 routes/pages**) passed. No database migration, authentication endpoint, external provider, or persistent-data change. This does not implement identity proofing or enable patient accounts. Public-site and portal implementation, live/browser acceptance, key recovery/rotation, configured malware scanning, approved policy text, and production qualification remain open. Synthetic-data development only.
 
-### 2026-11-01 â€” Approval reviewer independence
+### 2026-11-01 Ã¢â‚¬â€ Approval reviewer independence
 
 Task approval submissions now freeze only eligible reviewers who are independent of the task creator and assignee. If configuration includes either participant, those entries are excluded for that specific task; if no independent reviewer remains, the action fails closed. Decision authorization consistently rejects creator/assignee self-decisions, including old approval snapshots.
 
 Verification: focused policy/task route tests **27/27**; populated PostgreSQL task-approval integration **30/30**, including a database-backed creator self-approval attempt denied with `403 separation_of_duties` and no task state/version change; default suite **516/516 across 122 files**; lint, TypeScript, and production build (**215 routes/pages**) passed. No schema migration or persistent data change. This does not expand approval authority beyond operational task completion. Financial/clinical policies, live role/MFA and browser/mobile acceptance, remaining P2-09 security gates, and later development waves remain open. Synthetic-data development only.
 
-### 2026-11-01 â€” Centre-scoped embedded role actions
+### 2026-11-01 Ã¢â‚¬â€ Centre-scoped embedded role actions
 
 Embedded patient registration, appointment create, walk-in token, and diagnostic order create controls now require their relevant read and mutation grants to overlap at a centre. The appointment read/update queue no longer mounts for users whose grants are split across different centres. Direct routes and APIs retain their existing server-side authorization.
 
 Verification: role-workspace tests **22/22**; default suite **517/517 across 122 files**; TypeScript, lint, and production build (**215 routes/pages**) passed. No schema migration or API change; live role/MFA authorization and visual browser acceptance remain deferred. Centre & Staff Operations remains in progress. Patient accounts remain disabled pending approved identity proofing; synthetic-data development only.
 
-### 2026-11-01 â€” Public enquiry contact-data cache control
+### 2026-11-01 Ã¢â‚¬â€ Public enquiry contact-data cache control
 
 The authenticated public-enquiry review directory now marks successful responses containing decrypted contact/request details `Cache-Control: private, no-store`. A route regression verifies the cache policy and empty result response. Focused tests **9/9**; default suite **518/518 across 122 files**; lint, TypeScript and production build (**215 routes/pages**) passed. No schema or persistent-data changes. This is a bounded privacy improvement, not public-site completion. Patient portal accounts remain disabled until identity proofing is approved; live role/browser acceptance, key lifecycle, scanner configuration and production qualification remain open. Synthetic data only.
 
-### 2026-11-01 â€” Application-wide API cache privacy policy
+### 2026-11-01 Ã¢â‚¬â€ Application-wide API cache privacy policy
 
 Added a Next.js response-header rule for all `/api/*` routes: `Cache-Control: private, no-store`. This applies to private API payloads across clinical and operational modules and the auth handlers. It reduces accidental browser/shared-cache retention but does not replace session, MFA, RBAC, centre authorization or response minimization. Route-level authorization remains required.
 
 Verification: config/public-enquiry focused tests **10/10**; default suite **519/519 across 123 files**; lint, TypeScript and production build (**215 routes/pages**) passed; build manifest confirms the header rule; `db:integration` replayed **79 migrations** with runtime-role/append-only checks; audit-chain verification passed (**2 events**). No schema or persistent-data changes. Live proxy/CDN behavior and authenticated browser roles were not tested. Security acceptance remains open: key recovery/rotation, configured malware scanning, live authorization, desktop/mobile review and policy/production gates. Patient accounts remain disabled pending identity-proofing approval. Synthetic data only.
 
-### 2026-11-01 â€” Assigned collection jobs as task/escalation references
+### 2026-11-01 Ã¢â‚¬â€ Assigned collection jobs as task/escalation references
 
 Phlebotomists with `collections.visit.record` but no centre-wide `collections.read` can now resolve their own assigned collection jobs in the shared task/escalation reference workflow. Organization, centre and assigned-worker restrictions remain enforced; coworkers' job details remain hidden. No permission was added.
 
 Focused tests **9/9**; default suite **522/522 across 124 files**; lint, TypeScript and production build (**215 routes/pages**) passed. No migration or persistent-data change. This fixes one Centre Operations integration gap; live role/MFA and browser acceptance remain deferred. Patient accounts remain disabled pending approved identity proofing; the overall Centre & Staff Operations wave and security gates remain open. Synthetic data only.
 
-### 2026-11-01 â€” Sample-exception reference visibility alignment
+### 2026-11-01 Ã¢â‚¬â€ Sample-exception reference visibility alignment
 
 The shared task/escalation reference resolver now applies the same centre and assignment scope as the sample directory and Centre Operations exception summary. Assigned field staff can resolve exceptions only for their own collection jobs; staff with the applicable centre-wide sample permission can resolve the centre queue. Out-of-scope centres and unauthorized callers are rejected before exception details are queried. No permissions were expanded.
 
 Verification: focused task-reference, assignment-visibility, Centre Operations and route tests **22/22**; default suite **523/523 across 124 files**; lint and TypeScript passed; production build passed (**215 routes/pages**). No migration or persistent-data change. The resolver join/filter has unit/policy coverage but no dedicated PostgreSQL query test; live role/MFA and browser/mobile acceptance remain pending. Centre & Staff Operations and P2-09 remain open. Patient portal accounts remain disabled pending approved identity proofing. Synthetic data only.
 
-### 2026-11-01 â€” PostgreSQL qualification of sample-exception references
+### 2026-11-01 Ã¢â‚¬â€ PostgreSQL qualification of sample-exception references
 
-The disposable PostgreSQL route integration now validates the actual sample-exception â†’ specimen â†’ collection-job visibility join using encrypted synthetic exception records. It verifies assigned-worker access, coworker denial, and centre isolation. The first fixture attempt exposed stale use of the removed plaintext `reason` field; the corrected fixture writes encrypted `private_data_ciphertext` with the application's operational encryption helper. No persistent data or schema change.
+The disposable PostgreSQL route integration now validates the actual sample-exception Ã¢â€ â€™ specimen Ã¢â€ â€™ collection-job visibility join using encrypted synthetic exception records. It verifies assigned-worker access, coworker denial, and centre isolation. The first fixture attempt exposed stale use of the removed plaintext `reason` field; the corrected fixture writes encrypted `private_data_ciphertext` with the application's operational encryption helper. No persistent data or schema change.
 
 Verification: targeted PostgreSQL test **30/30**; full default suite **523/523 across 124 files**; lint and TypeScript passed. The narrow database-query evidence is now present; live MFA/role and browser/mobile acceptance remain deferred. Overall Centre & Staff Operations and P2-09 are still open. Patient portal accounts remain disabled pending approved identity proofing. Synthetic data only.
 
-### 2026-11-01 â€” Task reference picker and resolver parity
+### 2026-11-01 Ã¢â‚¬â€ Task reference picker and resolver parity
 
 The task-reference picker and server-side resolver now share the collection assignment boundaries. Visit-only field staff can select assigned collection jobs; sample-exception choices are constrained by the same centre/job assignment scope as linked-reference resolution. Database-backed coverage verifies own-job access, coworker denial, centre-wide manager access and cross-centre denial using encrypted synthetic sample exceptions.
 
 Verification: targeted PostgreSQL integration **30/30**; default suite **523/523 across 124 files**; lint, TypeScript and production build (**215 routes/pages**) passed. Live browser and authenticated MFA/role acceptance are deferred. Centre & Staff Operations and the broader roadmap remain open. Patient portal accounts remain disabled pending approved identity proofing. Synthetic data only.
 
-### 2026-11-01 â€” Role-scoped task reference selection
+### 2026-11-01 Ã¢â‚¬â€ Role-scoped task reference selection
 
 The task reference picker now applies the same collection job and sample exception visibility boundaries as the reference resolver. Visit-only staff can select their assigned collection jobs. Sample exception options join through the specimen and collection job, enforcing per-centre assigned-only or centre-wide visibility and preventing unrelated exception labels from appearing.
 
 Verification: PostgreSQL integration **30/30**; full default suite **523/523 across 124 files**; lint, TypeScript, and production build (**215 routes/pages**) passed. No migration or persistent-data change. Broader Centre & Staff Operations and P2-09 gates remain open; authenticated browser acceptance remains pending. Patient accounts remain disabled pending identity-proofing approval. Synthetic data only.
 
-### 2026-11-01 â€” Centre-overlap gate for support-task creation
+### 2026-11-01 Ã¢â‚¬â€ Centre-overlap gate for support-task creation
 
 The Reception/Support service-request form now uses a shared-centre capability check for the required `tasks.create` and `tasks.support.create` grants. This resolves a presentation defect where disjoint centre grants could display a create button that the API would reject. Organization-level grants still correctly overlap centre-level grants; server authorization is unchanged.
 
 Verification: focused role-workspace tests **23/23**; full default suite **524/524 across 124 files**; lint, TypeScript, and production build (**215 routes/pages**) passed. No migration or persistent-data change. This is an incremental workspace correction, not completion of Centre & Staff Operations or Rudra OS. Live role/browser acceptance and P2-09 security gates remain open; patient accounts remain disabled pending identity-proofing approval. Synthetic data only.
 
-### 2026-11-01 â€” Public enquiry contact submission quota
+### 2026-11-01 Ã¢â‚¬â€ Public enquiry contact submission quota
 
 Public enquiry intake now permits up to five submissions per matching phone or email during a rolling 24-hour period across the organization. It uses existing purpose-specific blind indexes and transaction advisory locks for concurrent quota checks. Idempotent retries are resolved before the quota check and return the prior accepted result. The form explains HTTP 429 as a wait-and-retry condition. No caller-supplied forwarding header or external anti-bot service is trusted.
 
 Verification: populated PostgreSQL integration **9/9**, including concurrent quota contention and idempotent replay; full suite **525/525 across 124 files**; lint, TypeScript and production build (**215 routes/pages**) passed. No migration or persistent development-data change. This limits repeated submissions for the same contact but is not network/IP-wide rate limiting or full bot defense. Patient accounts remain disabled pending approved identity proofing. Public-site/portal work, legal/privacy copy approval, browser/mobile acceptance, external provider authorization, P2-09 and production gates remain open. Synthetic data only.
 
-### 2026-11-01 â€” Verified catalogue detail to booking request handoff
+### 2026-11-01 Ã¢â‚¬â€ Verified catalogue detail to booking request handoff
 
 Service-detail and centre-service links now preserve the selected catalogue item and version into `/book`. The form verifies the current publicly eligible item and selected centre before attaching it to the request. Stale or mismatched links are not silently treated as current catalogue selections. A booking request remains unconfirmed until staff review; patient portal accounts remain disabled pending approved identity proofing.
 
 Verification: focused tests **10/10**; default suite **527/527 across 124 files**; lint, TypeScript and production build passed (**215 routes/pages**). No migration or persistent-data change. Desktop/mobile and live browser acceptance, portal identity proofing, security gates and production qualification remain pending. Synthetic data only.
 
-### 2026-11-01 â€” Public patient-account status labels
+### 2026-11-01 Ã¢â‚¬â€ Public patient-account status labels
 
 The public header, footer, and home-page call to action now identify `/account` as patient-account status information; they no longer imply that patient login or account access is open. The informational route remains disabled until identity proofing is approved. No authentication or patient-account capability was added.
 
@@ -1669,7 +1673,7 @@ Verification: focused account/navigation tests **2/2**; full default suite **528
 **Task lifecycle checkpoint (2026-11-01):** Reopening completed or cancelled operational tasks now requires a reason. The task API validates before accessing records and persists the reason inside the existing encrypted append-only event. The workbench exposes reopen only to authorized task editors. Focused PostgreSQL lifecycle test **1/1**, focused API/policy suite **28/28**, default suite **533/533 across 125 files**, lint, TypeScript, and production build (**215 routes/pages**) passed. No migration. This is a bounded workflow improvement; Centre & Staff Operations, browser/live-role acceptance, and security gates remain incomplete. Synthetic data only.
 
 
-### 2026-11-01 â€” Internal communication template management
+### 2026-11-01 Ã¢â‚¬â€ Internal communication template management
 
 The Communications workspace now includes centre-scoped template management for users with the existing lead-follow-up management permission. It supports encrypted draft creation/editing, internal activation, archiving, and append-only version/decision history. Supported merge variables are allowlisted. Updates use expected versions and idempotency keys; content is encrypted with the existing operational-data scheme, while audit details contain no copy. `communication_templates` and `communication_template_events` were added in forward-only migration **0080**. Runtime grants permit template read/create/update, deny delete, and permit history append only.
 
@@ -1679,43 +1683,43 @@ Verification: focused validator/API authorization tests **6/6**; full suite befo
 
 
 
-### 2026-11-01 â€” Escalation reassignment permission boundary
+### 2026-11-01 Ã¢â‚¬â€ Escalation reassignment permission boundary
 
 The escalation details panel now requests assignee candidates from the dedicated escalation endpoint, which requires centre-scoped `escalations.manage` and filters to active same-organization staff with escalation-reader roles in that centre. Previously the panel used the task-assignee endpoint, which could deny an otherwise authorized escalation manager who lacks unrelated task-assignment grants. The server-side escalation mutation still revalidates the target; no permission grants changed.
 
 Verification: focused endpoint/route/helper tests **12/12**; full default suite **540/540 across 128 files**; lint and TypeScript passed. Production build passed (**217 generated routes/pages**). No schema or database changes. This fixes one role-workspace defect, not completion of Centre & Staff Operations. Live authenticated role/MFA and browser acceptance, remaining P2-09 gates, identity proofing, and production qualification stay open. Patient portal accounts remain disabled. Synthetic data only.
 
 
-### 2026-11-01 â€” Public website CMS slug persistence alignment
+### 2026-11-01 Ã¢â‚¬â€ Public website CMS slug persistence alignment
 
 The content editor/API's 13 supported page slugs are now aligned with PostgreSQL's page-slug constraint by forward-only migration **0081**. The isolated integration fixture now inserts every supported slug and verifies the constraint. Migration 0081 was applied locally; PostgreSQL integration and replay passed at **81 migrations**. Focused CMS/content tests **8/8**, full default suite **540/540 across 128 files**, lint, TypeScript, and production build (**217 routes/pages**) passed. Patient account creation and sign-in remain disabled pending approved identity proofing. The public website/portal, browser/mobile review, P2-09 security gates, Centre & Staff Operations, and production qualification remain incomplete. Synthetic data only.
 
-### 2026-11-01 â€” Durable idempotency for suppressed duplicate escalations
+### 2026-11-01 Ã¢â‚¬â€ Durable idempotency for suppressed duplicate escalations
 
-Escalation duplicate-source suppression now persists an encrypted append-only receipt keyed by the idempotency key and request hash, so retrying the same request returns the original generic outcome and mismatched reuse conflicts. It does not disclose the existing escalation ID. Audit history records the suppression. Forward-only migrations **0082â€“0083** add the event type and fit it to the existing 20-character column. Local development migration and disposable PostgreSQL integration/replay/runtime-role checks passed at **83 migrations**. Route integration: **30/30**; full default suite **541/541 across 128 files**; lint, TypeScript, and production build (**217 routes/pages**) passed. A doctor-pagination integration fixture was made independent of records seeded by another test. This does not complete Centre & Staff Operations or the broader backlog. Patient portal accounts remain disabled pending approved identity proofing; P2-09 gates, browser/mobile acceptance, and production qualification remain open. Synthetic data only.
+Escalation duplicate-source suppression now persists an encrypted append-only receipt keyed by the idempotency key and request hash, so retrying the same request returns the original generic outcome and mismatched reuse conflicts. It does not disclose the existing escalation ID. Audit history records the suppression. Forward-only migrations **0082Ã¢â‚¬â€œ0083** add the event type and fit it to the existing 20-character column. Local development migration and disposable PostgreSQL integration/replay/runtime-role checks passed at **83 migrations**. Route integration: **30/30**; full default suite **541/541 across 128 files**; lint, TypeScript, and production build (**217 routes/pages**) passed. A doctor-pagination integration fixture was made independent of records seeded by another test. This does not complete Centre & Staff Operations or the broader backlog. Patient portal accounts remain disabled pending approved identity proofing; P2-09 gates, browser/mobile acceptance, and production qualification remain open. Synthetic data only.
 
 **Escalation suppression replay follow-up (2026-11-01):** PostgreSQL route integration now verifies suppression receipt persistence, same-request replay, mismatched payload conflict, single escalation per source, and stable replay after the source escalation is cancelled. Focused route integration **30/30**; default suite **541/541 across 128 files**; lint and TypeScript passed. No schema or application-code change. Centre & Staff Operations and overall Rudra development remain in progress. Patient accounts remain disabled pending approved identity proofing; security/browser/production gates remain open. Synthetic data only.
 
-### 2026-11-01 â€” Server-rendered public CMS sections
+### 2026-11-01 Ã¢â‚¬â€ Server-rendered public CMS sections
 
 Published CMS content now renders through shared server components instead of a client fetch after hydration. The reader decrypts and validates the one published organization-scoped page; drafts are never selected. Ambiguous tenant matches, database/key failures and malformed/tampered ciphertext keep the page's static fallback. Next.js request-time database reads are isolated behind Suspense with a static shell. Tests cover published content, no/ambiguous publication, database outage and ciphertext tampering.
 
 Verification: CMS/content/sitemap tests **15/15**; full suite **544/544 across 129 files**; lint, TypeScript and production build (**217 generated routes/pages**) passed. No migration or persistent-data change. The end-user rendering and SEO result still needs final browser review. Patient portal accounts remain disabled pending identity-proofing approval; Centre & Staff Operations, remaining P2-09 gates, later roadmap waves and production qualification remain open. Synthetic data only.
 
-### 2026-11-01 â€” Public verified-catalogue service finder
+### 2026-11-01 Ã¢â‚¬â€ Public verified-catalogue service finder
 
 Added a public homepage service finder backed by the existing verified catalogue. The POST endpoint accepts only a bounded service query, rejects wildcard characters and unexpected fields, returns limited service details with `no-store`, and does not save or log searches. Visitors can open service details, booking information, or contact staff. The UI states that the finder is informational, not medical advice or a booking. No AI or external provider is claimed.
 
 Verification: focused assistant/catalogue tests **8/8** and final assistant-route tests **4/4**; full default suite **548/548 across 130 files**; TypeScript, lint and production build (**218 generated routes/pages**) passed. No migration or persistent-data change. Patient portal accounts remain disabled until identity proofing is approved. External communications, full portal auth, security/browser acceptance gates and production qualification remain open. Synthetic data only.
 
-### Current-state reconciliation â€” Centre & Staff Operations (2026-11-01)
+### Current-state reconciliation Ã¢â‚¬â€ Centre & Staff Operations (2026-11-01)
 
 The historical entries above describe earlier implementation slices. Current source now composes database-backed, permission-checked daily workbenches for Reception, Phlebotomist, Centre Manager, Accounts, Sales, Support and Owner/Admin, reusing the existing patient, appointment, order, collection, finance, CRM, report, task, approval, escalation and roster modules. The Centre & Staff Operations functional implementation may proceed to the next development wave. Focused role-workspace/operations/approval/task/escalation tests passed **63/63**; latest full default suite **548/548 across 130 files**, TypeScript, lint and build (**218 routes/pages**) passed.
 
 This is an engineering checkpoint, not final acceptance. Live authenticated role/MFA and cross-centre HTTP checks plus desktop/mobile review remain for the consolidated campaign. The deadline processor has no production scheduler configured. Approval authority is limited to operational task completion; no financial, clinical, report-release, invoice or security action types are enabled. Patient accounts remain disabled until identity proofing is approved. Key recovery/rotation, configured malware scanning, and production qualification remain open. Synthetic-data development only.
 
 **Next dependency-ready development wave:** continue public website and patient/family portal foundations. Keep account creation/sign-in and patient record access disabled while the identity-proofing approach is unapproved.
-## Development checkpoint â€” internal campaign registry â€” 2026-11-01
+## Development checkpoint Ã¢â‚¬â€ internal campaign registry Ã¢â‚¬â€ 2026-11-01
 
 An internal centre-scoped campaign registry is available to authorized sales/marketing, administrator and Owner roles (centre managers have read access). Campaign names/descriptions are encrypted; records have append-only event history and audited status changes. CRM leads can reference an active campaign in the same organization and centre, and the campaign workspace shows aggregate attributed lead counts. This is internal attribution only: publishing, patient messaging, advertising spend and live providers are disabled.
 
@@ -1724,61 +1728,61 @@ Migration 0084 was applied locally. Verification recorded on final code: 555/555
 Patient portal accounts remain disabled until identity proofing is approved. Keep synthetic-data-only restrictions. Security gates still include scanner qualification, key recovery/rotation, live authenticated cross-centre/API verification, browser acceptance, and policy approvals; this does not establish production readiness.
 
 
-## 2026-11-01 â€” Private-data-safe idempotency fingerprints
+## 2026-11-01 Ã¢â‚¬â€ Private-data-safe idempotency fingerprints
 
 Removed sensitive free text from SHA-256 idempotency request hashes for task creation, task actions, and escalation creation/actions. Hashes now cover only operational fields; authorized replay validates private title/description/comment/reason against the existing encrypted record/event. Legacy request hashes remain accepted only when the encrypted private payload also matches, preserving retries without returning stale private data. Added focused fingerprint and route coverage. No migration or persistent database change.
 
 Verification: focused task/escalation suite **33/33 tests across 6 files**; full default `npm test -- --reporter=dot` **557/557 tests across 133 files**; PostgreSQL integration/replay and runtime-role checks **84 migrations passed**; lint, TypeScript, production build (**221 routes/pages**), `npm audit --omit=dev` (**0 vulnerabilities**) and `npm ls --depth=0` passed. The build and tests do not complete the broader Centre & Staff Operations wave or production security acceptance. Patient accounts remain disabled pending approved identity proofing. Key recovery/rotation, malware scanning, live authenticated authorization, browser/mobile review and policy approvals remain open. Synthetic-data development only.
 
-## 2026-11-01 â€” Final verification after private task-action replay snapshots
+## 2026-11-01 Ã¢â‚¬â€ Final verification after private task-action replay snapshots
 
 Follow-up to the fingerprint checkpoint: task action hashes also exclude title, description, comment and reason. Each new encrypted task event now stores a private request snapshot for idempotent replay comparison; old rows are accepted only through the legacy full-request hash path. Focused task/escalation tests **35/35 across 7 files**; final full default suite **559/559 across 134 files**. `npm run db:integration` passed with 84 migrations replayed and runtime-role checks; lint, TypeScript, production build (**221 generated routes/pages**), production dependency audit (**0 vulnerabilities**) and dependency tree check passed. No migration or persistent database change.
 
 This closes the idempotency-hash privacy defect only. It does not complete the full Rudra development programme or P2-09 qualification. Patient portal accounts remain disabled pending identity-proofing approval; key recovery/rotation, scanner qualification, live role/MFA and cross-centre acceptance, desktop/mobile review, clinical/business approvals and production qualification remain outstanding. Synthetic-data development only.
 
-## 2026-11-01 â€” Corporate and partner idempotency privacy
+## 2026-11-01 Ã¢â‚¬â€ Corporate and partner idempotency privacy
 
 Removed names, legal/contact information, addresses, agreement references and private notes from corporate/partner create and update request hashes. New encrypted append-only relationship events retain a private request snapshot for replay validation. Same-request retries replay; reusing an idempotency key with changed private data conflicts. Existing rows continue through an exact legacy-hash compatibility check. No schema migration or persistent development-data change.
 
 Verification: focused corporate/partner PostgreSQL lifecycle integration and helper tests **2 passed** (29 unrelated cases filtered from the large integration file); final full default suite **560/560 across 135 files**; TypeScript, lint and production build (**221 generated routes/pages**) passed. The integration test uses its disposable synthetic PostgreSQL schema and applies migrations there. This is another sensitive-idempotency privacy fix, not completion of the development backlog. Patient portal accounts remain disabled pending approved identity proofing. Key recovery/rotation, configured malware scanning, live authorization, browser/mobile acceptance and production qualification remain open. Synthetic-data development only.
 
-## 2026-11-01 â€” Roster and shift-handover idempotency privacy
+## 2026-11-01 Ã¢â‚¬â€ Roster and shift-handover idempotency privacy
 
 Private staff roster notes, handover notes, and cancellation reasons are no longer included in SHA-256 idempotency hashes. Roster and handover creation retries compare the submitted note with encrypted stored data; handover action retries compare cancellation reasons with the encrypted event. Legacy full-request hashes remain accepted for existing records. Added synthetic helper tests plus PostgreSQL handover replay tests for same-request success and changed-private-payload conflicts. No migration or persistent development-data change.
 
 Verification: focused roster/handover suite **10/10 tests**, including PostgreSQL lifecycle/replay integration; final full default suite **563/563 across 136 files**; TypeScript, lint, and production build (**221 generated routes/pages**) passed. No dependency or schema changes. The Rudra development backlog remains active; this closes only private-data idempotency leaks. Patient accounts remain disabled pending identity-proofing approval; key recovery/rotation, malware scanning, live authorization, browser/mobile acceptance and production qualification remain open. Synthetic-data development only.
 
-## 2026-11-01 â€” Business relationship activity fingerprint follow-up
+## 2026-11-01 Ã¢â‚¬â€ Business relationship activity fingerprint follow-up
 
 Corporate/partner activity idempotency now excludes private service references and notes from SHA-256 hashes. New events keep those values in authenticated-encrypted event data and validate them when replaying; existing full-request hashes retain an exact legacy compatibility check. PostgreSQL integration now proves identical replay succeeds while changing the private note with the same key conflicts. No migration or persistent development-data change.
 
 Verification on the final tree: focused relationship PostgreSQL integration **1 passed** (29 unrelated cases filtered); full default suite **563/563 across 136 files**; TypeScript, lint, and production build (**221 generated routes/pages**) passed. This concludes this set of private-text idempotency fixes only. The full application backlog and security qualification remain active. Patient accounts stay disabled pending identity-proofing approval. Synthetic data only.
 
-## 2026-11-01 â€” Appointment private idempotency fingerprint hardening
+## 2026-11-01 Ã¢â‚¬â€ Appointment private idempotency fingerprint hardening
 
 Appointment create and update retries now persist keyed HMAC fingerprints scoped to organization, centre, record and operation, instead of unkeyed SHA-256 hashes of request bodies containing addresses, service names/references, instructions, reasons or communication evidence. Replay verification accepts retained encryption-key versions to remain stable through key rotation. Exact legacy SHA-256 retries remain compatible. Appointment detail responses no longer include internal idempotency keys or request hashes. Added PostgreSQL regression coverage for home-collection replay, changed private payload conflict, hash non-disclosure, and encrypted storage; crypto tests cover wrong payload and retained-key verification after rotation. No migration or persistent development-data change.
 
 Verification on final implementation: default `npm test -- --reporter=dot` **565/565 tests across 136 files**; focused appointment and crypto tests **39/39**; `npm run db:integration` passed with **84 migrations replayed** and runtime-role checks; TypeScript and lint passed; production build passed with **221 generated routes/pages**; `npm audit --omit=dev` reported **0 vulnerabilities**; `npm ls --depth=0` passed. A regression test initially exposed a missing decrypt-helper import in the new replay code; the import was fixed and the database suite then passed.
 
-### 2026-11-01 â€” Collection assignment idempotency privacy
+### 2026-11-01 Ã¢â‚¬â€ Collection assignment idempotency privacy
 
 Collection reassignment now stores a purpose-scoped keyed HMAC request fingerprint bound to its organization, centre, assignment and operation context, with legacy exact-retry compatibility. The PostgreSQL test checks successful identical replay and verifies the stored fingerprint is not the raw SHA-256 of the assignment payload. No schema or persistent data changes.
 
 Verification after the collection change: focused PostgreSQL reassignment test **1/1** (30 unrelated cases filtered); full default suite **565/565 across 136 files**; typecheck and lint passed; PostgreSQL integration replayed **84 migrations** and passed runtime-role/append-only checks; production build passed (**221 generated routes/pages**). Synthetic-data development only. Patient portal accounts remain disabled until identity proofing is approved; live authorization, browser/mobile review, key recovery/rotation, malware scanning and production qualification remain open.
 
-## 2026-11-01 â€” Internal marketing content calendar
+## 2026-11-01 Ã¢â‚¬â€ Internal marketing content calendar
 
 Added a private, centre-scoped content calendar with encrypted draft content, edit, independent review/approval, request-changes, planned scheduling, cancellation, and immutable event history. Migration **0085** is applied locally and runtime privileges were verified. Scheduling is an internal planned date only; there is no publishing or sending path.
 
 Evidence: disposable PostgreSQL lifecycle integration **1/1**, policy tests **3/3**, default suite **570/570 across 138 files**, PostgreSQL migration replay/runtime-role checks **85 migrations**, typecheck, lint, production build (**223 routes/pages**), dependency audit (**0 vulnerabilities**) and lockfile dependency check passed. Manual desktop/mobile/browser acceptance remains deferred. This is a working internal marketing slice, not completion of the marketing or full Rudra backlog. Patient portal accounts remain disabled pending approved identity proofing; key recovery/rotation, configured scanner, live authorization, external integrations and production qualification remain open. Synthetic-data development only.
 
-## 2026-11-01 â€” Permission-scoped Owner operational analytics
+## 2026-11-01 Ã¢â‚¬â€ Permission-scoped Owner operational analytics
 
 Added date-filtered aggregate counts for leads, appointments, orders, collection jobs and registered reports. The API requires organization access and separately applies the corresponding module read grant for each centre and metric; unauthorized metrics and centres are omitted. The result is explicitly a count of records created in UTC, not completed clinical work, delivered reports or revenue. No schema or integration changes.
 
 Verification: focused filter and route tests **4/4**; disposable PostgreSQL authorization/aggregation integration **2/2**; full default suite **576/576 across 141 files**; `npm run db:integration` replayed **85 migrations** with runtime-role checks; typecheck, lint and production build passed (**225 generated pages**). Browser review remains deferred; patient portal accounts remain disabled pending approved identity proofing. P2-09 key/scanner, live authorization and production gates remain open. Synthetic data only.
 
-## 2026-11-01 â€” Catalogue price-review audit minimization
+## 2026-11-01 Ã¢â‚¬â€ Catalogue price-review audit minimization
 
 Catalogue price-review audit events now retain only the version, decision, amount and review ID. Source reference and reviewer reason remain in the restricted review record; their unkeyed SHA-256 digests were removed from the general audit chain. A unit regression guards against adding the values or their digests back.
 
@@ -1786,7 +1790,7 @@ Verification: catalogue policy tests **6/6**, default suite **566/566 across 136
 
 This checkpoint addresses appointment idempotency privacy only. The full application development programme remains incomplete. Patient portal accounts remain disabled pending approved identity-proofing; key recovery/rotation, configured malware scanning, live authorization and browser/mobile acceptance, clinical/business policies, and production qualification remain outstanding. Synthetic-data development only.
 
-## 2026-11-01 â€” Private idempotency fingerprints extended to communications
+## 2026-11-01 Ã¢â‚¬â€ Private idempotency fingerprints extended to communications
 
 Applied the keyed request-fingerprint scheme to appointment creation/updates and communication-template creation/updates. New fingerprints are HMAC-SHA-256 using a purpose-derived key from the operational encryption keyring, with organization/centre/record/operation context binding; validation tries retained key versions so rotation does not invalidate replays. Legacy unkeyed request hashes remain supported for exact pre-change retries. Appointment detail responses omit idempotency internals. Communication template names, bodies and edit/activation reasons are no longer persisted as guessable unkeyed request hashes. No migration or persistent development-data change. Patient portal accounts remain disabled pending the Owner-approved identity-proofing approach.
 
@@ -1794,57 +1798,57 @@ Final-tree verification: default suite **565/565 across 136 files**; focused app
 
 This closes a private request-hash leak in these workflows only. Doctor, other communications, and any remaining payload-hash uses still require inventory/review; the complete implementation programme and P2-09 qualification remain incomplete. Key recovery/rotation qualification, configured malware scanning, live authenticated authorization, browser/mobile acceptance, unresolved clinical/business approvals, and production qualification remain open. Synthetic-data development only.
 
-## 2026-11-01 â€” Doctor profile and referral idempotency privacy
+## 2026-11-01 Ã¢â‚¬â€ Doctor profile and referral idempotency privacy
 
 Doctor profile creation/updates and referral activity no longer persist unkeyed SHA-256 hashes of names, contact data, registration references, affiliations, notes, service references or referral descriptions. They now use purpose-scoped keyed HMAC fingerprints through the existing operational keyring, bind the actor and request context, verify against retained key versions, and retain exact legacy-hash retry compatibility. Reusing an idempotency key from another staff actor or with changed private values conflicts. PostgreSQL regression verifies identical replay, changed-private-payload rejection, and that stored hashes are not the raw request SHA-256. No migration or persistent data change.
 
 Verification: focused doctor lifecycle PostgreSQL integration **1/1** (30 unrelated cases skipped); default suite **565/565 across 136 files**; TypeScript and lint passed; `npm run db:integration` replayed **84 migrations** and passed runtime-role/append-only checks; production build passed (**221 generated routes/pages**); `npm audit --omit=dev` reported **0 vulnerabilities**. The overall application backlog and P2-09 acceptance remain open. Patient accounts stay disabled pending approved identity proofing; real patient data and production use remain prohibited.
 
-## 2026-11-01 â€” Public website editorial review and publish gate
+## 2026-11-01 Ã¢â‚¬â€ Public website editorial review and publish gate
 
 Added encrypted, append-only review events for structured public website drafts. Submission, independent approval, and request-changes actions are version-bound; saving another draft invalidates earlier review. The Owner publish action now requires current-version approval. Migration **0086** was applied locally, additive to existing records; previously published versions remain public and are recognized only for their own historical version. Editorial approval does not replace legal, clinical, pricing, privacy, or franchise authorization. Patient portal account routes remain informational and account creation/sign-in remain disabled.
 
 Verification: focused unit/API/server tests **12/12**; synthetic PostgreSQL lifecycle integration **1/1**; default suite **580/580 across 142 files**; PostgreSQL migration replay/runtime-role checks **86 migrations**; `npm run db:migrate` applied one migration (**86 total**) locally; typecheck, lint, production build (**225 generated pages**), dependency audit (**0 vulnerabilities**) and lockfile dependency-tree check passed. Desktop/mobile and authenticated browser acceptance remain pending. Patient portal identity proofing remains unapproved; key recovery/rotation, malware scanner qualification, live authorization, external content/provider approvals and production qualification remain open. Synthetic data only.
 
-## 2026-11-01 â€” Public enquiry replay fingerprint compatibility
+## 2026-11-01 Ã¢â‚¬â€ Public enquiry replay fingerprint compatibility
 
 Public enquiry request fingerprints now use the operational keyring and are bound to organization, centre, operation, and idempotency key. Retained operational keys preserve retries through key rotation; exact legacy HMAC fingerprints remain accepted for existing rows. A synthetic PostgreSQL test covers old-row replay, while unit tests cover key rotation, changed payload rejection and context binding. Verification: focused tests **12/12**, full suite **583/583 across 143 files**, `npm run db:integration` (**86 migrations**), typecheck, lint and production build (**225 generated pages**) passed; dependency audit found **0 vulnerabilities**, and the lockfile dependency tree passed. No schema change or persistent development-data modification.
 
 Owner decision: patient portal account creation and sign-in stay **disabled until an identity-proofing approach is approved**. Browser/mobile acceptance, live authorization, scanner qualification, key recovery/rotation, and production approval remain pending. Synthetic-data development only.
 
-## 2026-11-01 â€” Public guided service and booking assistant
+## 2026-11-01 Ã¢â‚¬â€ Public guided service and booking assistant
 
 Added a public `/chat` guided service assistant with fixed-choice help for service discovery, visit requests, home collection and human contact. Service search reuses the verified catalogue endpoint; booking/contact choices route to existing forms and do not claim to create appointments. It does not take free-form chat, save conversations, send messages, access patient records, or provide clinical advice. No model/provider integration is enabled; the feature is labeled as a deterministic guide, not an AI chatbot. Patient portal accounts remain disabled pending the approved identity-proofing method.
 
 Verification: focused UI/API tests **5/5**; full suite **584/584 across 144 files**; typecheck, lint and production build (**226 generated pages/routes**) passed. No database or dependency changes; PostgreSQL replay was not needed for this UI-only slice. Browser/mobile visual acceptance remains deferred. Public website/portal and AI communications waves remain incomplete; provider and legal approvals, security gates, and production qualification remain open. Synthetic-data development only.
 
-## 2026-11-01 â€” Unified staff communications inbox
+## 2026-11-01 Ã¢â‚¬â€ Unified staff communications inbox
 
 The staff `/communications` workspace now combines pending public website enquiries and unsent CRM communication drafts. Website enquiry list rows expose only a centre-scoped internal reference, status and timestamp; contact details and enquiry messages remain in the existing authorized review flow. Drafts have no sending action. No external provider delivery is implemented or claimed. Patient account creation and sign-in remain disabled until identity proofing is approved.
 
 Verification: focused unit/PostgreSQL route tests **21/21**; full test suite **587/587 across 145 files**; TypeScript, lint, production build (**226 generated pages/routes**), dependency audit (**0 vulnerabilities**) and dependency-tree check passed. No migration was needed. Authenticated browser acceptance and desktop/mobile visual review remain deferred. Existing security and production gates, including key recovery/rotation and malware scanner qualification, remain open. Synthetic data only.
 
-## 2026-11-01 â€” Owner analytics patient and lead conversion funnel
+## 2026-11-01 Ã¢â‚¬â€ Owner analytics patient and lead conversion funnel
 
 Owner analytics now includes patient registrations and lead conversions in each centre's aggregate operational metrics. Patient counts require `patients.read`; lead and conversion counts require `leads.read`. The populated synthetic PostgreSQL test checks scoped counts and verifies that the response remains aggregate-only. It also uncovered a latent ORM mapping defect: lead-conversion timestamps were mapped to `created_at` instead of the actual `converted_at`; the Drizzle mapping is corrected, with no migration required.
 
 Verification: focused tests **4/4**; full suite **587/587 across 145 files**; PostgreSQL migration/runtime-role integration (**86 migrations**), TypeScript, lint, production build (**226 generated pages/routes**), dependency audit (**0 vulnerabilities**) and dependency-tree check passed. No browser review was performed. Patient account creation/sign-in remain disabled pending approved identity proofing; external integrations and other P2-09/browser/production gates remain open. Synthetic data only.
-# 2026-11-01 â€” Drizzle timestamp mapping regression
+# 2026-11-01 Ã¢â‚¬â€ Drizzle timestamp mapping regression
 
-## 2026-11-01 â€” Drizzle timestamp mapping regression
+## 2026-11-01 Ã¢â‚¬â€ Drizzle timestamp mapping regression
 
 Corrected five ORM timestamp mappings whose database columns differ from `created_at`: catalogue import (`imported_at`), catalogue price-review (`reviewed_at`), procedure approval (`approved_at`), specimen collection (`collected_at`), and dispatch-batch item (`added_at`). A disposable PostgreSQL integration test applies the migrations, inserts and reads the import timestamp through Drizzle, then verifies ORM queries resolve each adjacent timestamp column. No new migration or persistent development data change.
 
 Verification: focused PostgreSQL test **1/1**; full default test suite **588/588 across 146 files**; typecheck, lint and production build passed (**226 generated paths**). Dependency audit was not rerun. This corrects schema/ORM compatibility only and does not close Centre Operations or broader security acceptance. Patient portal account creation/sign-in remain disabled until identity proofing is approved; browser/mobile review, live authorization, key recovery/rotation, malware scanning and production qualification remain outstanding. Synthetic-data development only.
 
-## 2026-11-01 â€” Owner current work-queue analytics
+## 2026-11-01 Ã¢â‚¬â€ Owner current work-queue analytics
 
 Owner analytics now presents current per-centre counts for appointments awaiting confirmation, active staff tasks, open escalations, reports needing verification/exception handling, and report follow-ups past due. Queue counts are separate from date-range creation/conversion metrics. Each value is included only when the session has the matching centre-scoped permission; unauthorized metrics are omitted, not represented as zero. Responses contain aggregate counts without record IDs or private data. No migration or persistent development data changed.
 
 Verification: populated synthetic PostgreSQL route integration **2/2**, including nonzero appointment/task/escalation counts, denied report-metric omission, and centre isolation; full default suite **588/588 across 146 files**; lint, build (**226 generated paths**), and post-build TypeScript passed. The focused integration applies migrations in a disposable test schema; full `db:integration` and dependency audit were not rerun because schema and dependencies were unchanged. No browser review was performed. Patient portal accounts remain disabled until identity proofing is approved. Owner Control remains in development; live role authorization, browser/mobile acceptance, key recovery/rotation, malware scanning and production qualification remain outstanding. Synthetic data only.
 
 
-## 2026-11-01 â€” Public service and centre detail metadata
+## 2026-11-01 Ã¢â‚¬â€ Public service and centre detail metadata
 
 Dynamic public test/package detail pages now use names and centre labels from the same currently verified, public catalogue read used by the page. Public centre detail metadata is emitted only for centres with an eligible published catalogue service. Missing, ineligible, mismatched or unavailable records use neutral non-indexable metadata. Tests cover the metadata projection and fail-closed behavior. No database migration or persistence change.
 
@@ -1852,13 +1856,13 @@ Verification: focused tests **6/6**; full default suite **594/594 across 149 fil
 
 Patient portal accounts remain disabled pending an approved identity-proofing approach, per Owner decision. The public website and portal wave remains incomplete; key recovery/rotation, configured malware scanning, live authorization, approved legal/privacy content, manual browser/mobile acceptance, later development waves and production qualification remain open. Synthetic-data development only.
 
-## 2026-11-01 â€” Operational encryption key rotation
+## 2026-11-01 Ã¢â‚¬â€ Operational encryption key rotation
 
-Migrations **0088â€“0089** and `rotateOperationalDataKey` add restartable operational ciphertext rotation for the ten appointment/sample payload tables. A disposable populated PostgreSQL qualification passed interruption/resume, value parity, all-table active-key verification, repeat-run idempotency, and immutable custody-field protection. `npm.cmd run db:integration` replayed **89 migrations** with runtime-role/append-only checks; default test suite **595/595 across 149 files**, lint, typecheck, and production build (**226 pages/routes**) passed. Migrations 0088â€“0089 were applied additively to local `rudra_health_dev`; no records or configured keys were rotated. The local rotation command requires explicit terminal confirmation and was not run.
+Migrations **0088Ã¢â‚¬â€œ0089** and `rotateOperationalDataKey` add restartable operational ciphertext rotation for the ten appointment/sample payload tables. A disposable populated PostgreSQL qualification passed interruption/resume, value parity, all-table active-key verification, repeat-run idempotency, and immutable custody-field protection. `npm.cmd run db:integration` replayed **89 migrations** with runtime-role/append-only checks; default test suite **595/595 across 149 files**, lint, typecheck, and production build (**226 pages/routes**) passed. Migrations 0088Ã¢â‚¬â€œ0089 were applied additively to local `rudra_health_dev`; no records or configured keys were rotated. The local rotation command requires explicit terminal confirmation and was not run.
 
 Coverage is limited to appointment/sample operational payloads. Patient/family/lead/blind-index and report-document key rotations, coordinated populated database-plus-document restore, scanner deployment, live authorization, browser/mobile review, approved policies, and production qualification remain open. Patient accounts stay disabled pending approved identity proofing; synthetic data only.
 
-## 2026-11-01 â€” Centre reconciliation close repair and non-cash snapshot
+## 2026-11-01 Ã¢â‚¬â€ Centre reconciliation close repair and non-cash snapshot
 
 The cash-reconciliation close transaction was still writing to `finance_reconciliations.reason`, which migration 0040 had removed when that private value moved into encrypted storage. That stale write caused close to fail. Removed the stale-column assignment and added an additive JSONB snapshot for non-cash payment entries at close (UPI/card/bank/other), grouped by internal ledger status using integer minor-unit totals. Open-session summaries are live; closed-session snapshots are immutable and unaffected by later payments. Pre-migration closed sessions without a snapshot are labeled as unavailable. The UI clearly distinguishes internal ledger status from external provider settlement verification.
 
@@ -1866,19 +1870,19 @@ Migration **0087** was applied locally to the development database (87 total); e
 
 This repairs a finance reconciliation workflow and adds internal non-cash summaries; it does not establish provider settlement or production finance qualification. Patient account creation/sign-in remain disabled pending approved identity proofing. Key recovery/rotation, malware scanning, live authorization, browser/mobile acceptance and production gates remain open. Synthetic-data development only.
 
-## 2026-11-01 â€” Development checkpoint: campaign conversion metrics
+## 2026-11-01 Ã¢â‚¬â€ Development checkpoint: campaign conversion metrics
 
 The campaign workspace now reports centre-scoped attributed leads, recorded patient conversions, and conversion percentage from CRM conversion events. It does not estimate revenue or service completion. No schema migration or persistent development-data change was made.
 
 Verification: 597/597 tests across 150 files; campaign PostgreSQL metric integration 1/1 with centre-isolation fixture; migration/runtime-role integration replayed 89 migrations; TypeScript, lint, production build (226 generated paths), production dependency audit (0 vulnerabilities), and dependency-tree check passed. Public website/patient portal and marketing waves remain in progress. Patient portal sign-in and account creation remain disabled pending an approved identity-proofing approach. Manual browser/mobile acceptance, key recovery/rotation, malware scanning, live authorization and production qualification remain pending. Synthetic data only.
 
-## 2026-11-01 â€” Patient field-key rotation checkpoint
+## 2026-11-01 Ã¢â‚¬â€ Patient field-key rotation checkpoint
 
 Added a guarded patient/contact encryption-key rotation tool and populated synthetic interruption/resume/replay coverage. The disposable drill verified phone, email, profile and name value preservation, tamper and missing-history-key rejection, unchanged blind indexes, and 89-migration replay. The local persistent database and encryption configuration were not rotated. Blind-index, family/lead and document-key rotations remain separate open work.
 
 Checks on the final tree: 597 tests across 150 files; populated patient encryption/rotation qualification passed; PostgreSQL integration replayed 89 migrations with runtime-role checks; TypeScript, lint, production build (226 pages/routes), production dependency audit (0 vulnerabilities), and dependency-tree check passed. Patient portal accounts remain disabled pending approved identity proofing. Key recovery/restore, malware scanner qualification, live authorization, browser/mobile acceptance and production gates remain open. Synthetic data only.
 
-## 2026-11-01 â€” Family/CRM field-key rotation qualification
+## 2026-11-01 Ã¢â‚¬â€ Family/CRM field-key rotation qualification
 
 Added `rotateFamilyLeadDataKey` and an explicitly confirmed local wrapper for family and CRM encrypted fields, including append-only activity and conversion evidence. Migration 0090 permits ciphertext-only updates in the history trigger under a transaction-local setting; non-ciphertext history edits remain blocked and runtime-role UPDATE remains denied. A populated disposable schema verified interruption/resume, idempotent replay, active-key coverage, value parity, blind-index preservation, append-only protection and double replay of 90 migrations. The persistent development key and encrypted records were not rotated. The integration run applied migration 0090 additively without rewriting application rows.
 
@@ -1886,13 +1890,13 @@ Verification: `npm.cmd run db:qualify-patient-backfill` passed populated Patient
 
 Remaining: blind-index key rotation, persistent-key rotation, coordinated database/document restore, malware-scanner qualification, live authorization, browser/mobile acceptance, policy approvals and production qualification. Patient portal account creation and sign-in remain disabled pending an approved identity-proofing approach. Synthetic data only.
 
-## 2026-11-01 â€” Concurrent approval deadline processing
+## 2026-11-01 Ã¢â‚¬â€ Concurrent approval deadline processing
 
 Added a PostgreSQL regression for two concurrent approval-deadline workers competing over the same synthetic expired-approval and overdue-escalation records. It verifies exactly one `APPROVAL_EXPIRED` and one `ESCALATED` system event, one state transition per task, and no duplicate processing. Synthetic records created by the scenario are closed before subsequent queue assertions. No schema or application workflow change.
 
 Verification: focused database integration **31/31**; default suite **597/597 across 150 files**; lint and TypeScript passed. The first targeted attempt found test-only fixture contamination from still-active synthetic queue records; the fixture was corrected and rerun successfully. This verifies concurrent worker behavior, not scheduler installation or production invocation. Approval authority remains limited to task completion; sensitive domain approvals remain disabled pending policy approval. Patient accounts remain disabled pending approved identity proofing. Live authorization, browser/mobile acceptance and production qualification remain open. Synthetic data only.
 
-## 2026-11-01 â€” Doctor profile to CRM referral capture
+## 2026-11-01 Ã¢â‚¬â€ Doctor profile to CRM referral capture
 
 Added an in-profile `Register a referred enquiry` workflow in the Doctor relationship workbench. It posts to the existing protected CRM lead API with the selected doctor attribution, existing idempotency key handling, contact-value normalization/encryption, duplicate check, active doctor/centre validation and audit history. Contact permission remains pending and marketing consent is not requested. The form is unavailable for inactive profiles. No migration, credentials or external integration changed.
 
@@ -1900,11 +1904,11 @@ Verification: lead-policy test **8/8**; doctor/referral PostgreSQL integration *
 
 This closes one doctor-to-CRM capture handoff only. The doctor/corporate/partner development wave remains partial. Patient portal account creation/sign-in remain disabled pending an approved identity-proofing approach. Legal/privacy text approval, key recovery/rotation, malware scanner qualification, live role/browser acceptance and production qualification remain open. Synthetic data only.
 
-### 2026-11-01 addendum â€” corporate and partner attribution
+### 2026-11-01 addendum Ã¢â‚¬â€ corporate and partner attribution
 
 Extended the same CRM lead-capture handoff to active Corporate and Partner relationship profiles. A lead is attributed to the selected profile and created through `/api/leads`; relationship read/create and centre checks remain server-enforced. Duplicate detection, idempotency, encrypted private data, audit history, pending contact permission and unrequested marketing consent are retained. Regression verification after these UI additions: full default suite **598/598 across 150 files**, typecheck, changed-file ESLint, doctor/referral PostgreSQL integration **1/1** and production build (**226 generated pages/routes**) passed. No schema changes or live browser review. The broader relationship wave remains incomplete.
 
-## 2026-11-01 â€” Published CMS content drives public page metadata
+## 2026-11-01 Ã¢â‚¬â€ Published CMS content drives public page metadata
 
 Public route metadata now reads the approved current website-content publication for its title and description, using existing static fallback metadata if the publication is absent, ambiguous, unavailable or fails decryption. Covered routes: home, About, home collection, FAQ, Corporate, Doctors, Partners, Centres, Service Areas, Tests, Packages, Booking and Contact. The generic static `/information/[slug]` page retains generic static metadata because dynamic encrypted DB metadata is incompatible with its generated static params under the current Next.js cache-component build; canonical public routes use the CMS metadata. No schema/dependency change.
 
@@ -1912,44 +1916,44 @@ Verification: public website content test **4/4**; full default suite **599/599 
 **Current development note (2026-11-01):** Doctor, Corporate and Partner directories now show centre-scoped lead and recorded-conversion totals only to users with `leads.read`. Authorized staff can cancel their unsent communications drafts through the versioned cancellation API; the action is audited and does not send a message. Verification: full suite 600/600 across 150 files, targeted PostgreSQL and communications checks 8/8, lint, TypeScript and production build passed. Patient portal accounts remain disabled pending approved identity proofing. This does not close the remaining development waves or browser/mobile, security and production acceptance gates.
 
 
-## 2026-11-01 â€” Communication template draft handoff
+## 2026-11-01 Ã¢â‚¬â€ Communication template draft handoff
 
-Implemented a protected handoff from active centre-specific communication templates to encrypted CRM lead drafts. Template selection requires scoped draft/template permissions; current contact permission, Do Not Contact, preferred channel and separate marketing consent are checked server-side. Rendering uses allowlisted merge fields and fails closed when required synthetic lead/appointment data is unavailable. The resulting draft stores encrypted content and template ID/version provenance, is reviewable/discardable, and is never sent by this workflow. Migrations 0090â€“0091 were applied locally; existing records were preserved.
+Implemented a protected handoff from active centre-specific communication templates to encrypted CRM lead drafts. Template selection requires scoped draft/template permissions; current contact permission, Do Not Contact, preferred channel and separate marketing consent are checked server-side. Rendering uses allowlisted merge fields and fails closed when required synthetic lead/appointment data is unavailable. The resulting draft stores encrypted content and template ID/version provenance, is reviewable/discardable, and is never sent by this workflow. Migrations 0090Ã¢â‚¬â€œ0091 were applied locally; existing records were preserved.
 
 Verification: 13 focused unit/API tests; 2/2 populated PostgreSQL communication-draft lifecycle integrations; 91-migration PostgreSQL replay and runtime-role checks; typecheck, lint and production build (226 generated pages/routes) passed. The first full suite had one unrelated transient timeout in a finance boundary test; its isolated rerun passed and the next default suite passed 603/603 across 150 files. Dependency audit was not rerun. No manual browser review.
 
 Status: internal draft workflow only. Provider delivery is disabled; the larger Communications/AI and website/portal waves are not complete. Patient portal accounts remain disabled pending an approved identity-proofing method. Malware-scanner qualification, key recovery/rotation and restore qualification, live authorization, browser/mobile acceptance, remaining roadmap waves and production qualification remain open. Synthetic data only.
-## 2026-11-01 â€” Escalation response minimization
+## 2026-11-01 Ã¢â‚¬â€ Escalation response minimization
 
 Escalation queue responses no longer include raw assignee staff UUIDs. Escalation detail returns the assignee UUID only to users with centre-scoped manage/reassignment permission. Event history is projected from an explicit field allowlist and displays assignment recipients by name/code while withholding actor and assignee UUIDs. Existing centre authorization and append-only encrypted event storage remain unchanged. No migration or persistent data change.
 
 Verification: populated escalation PostgreSQL checks **3/3**; focused escalation and appointment check-in API tests **8/8**; typecheck, lint and production build (226 generated pages/routes) passed. Full default suite reported **603 passed, 1 timeout** in an unrelated appointment check-in cross-origin test; that test passed by itself in the focused run. No database migration replay or dependency audit was needed. Browser/mobile and live role acceptance remain pending; synthetic data only.
-### 2026-11-01 addendum â€” final Centre Operations regression
+### 2026-11-01 addendum Ã¢â‚¬â€ final Centre Operations regression
 
 Adjusted the appointment check-in test to import the route at module setup, outside the 5-second test timer. No timeout was raised and no assertions were removed. The cross-origin check completed in 143 ms; the full default Vitest suite then passed **605/605 across 150 files**. TypeScript, lint and production build (226 generated pages/routes) passed. Escalation response projection PostgreSQL tests passed **3/3**. Centre Operations still needs the remaining role workflows and final live browser/role acceptance; security and production gates remain open. Synthetic-data development only.
-## 2026-11-01 â€” Public catalogue booking handoff
+## 2026-11-01 Ã¢â‚¬â€ Public catalogue booking handoff
 
 A test/package detail link now carries the precise catalogue record and version into the public booking request form. The form verifies the current published record and centre before preserving that selection, so changed or unpublished catalogue entries are not presented as currently selected. This remains a staff-reviewed enquiry only; it does not confirm an appointment. Verification: default suite **606/606**, typecheck, lint, production build (**226 generated pages/routes**). No schema or dependency change. Patient accounts stay disabled until an identity-proofing method is approved. Browser/mobile acceptance and remaining security, policy and production gates remain open. Synthetic data only.
 
-**2026-11-01 development checkpoint â€” public catalogue and test reliability:** The public catalogue detail-to-booking handoff now preserves the selected current published item/version/centre and revalidates it in the booking request form; this is an enquiry and does not confirm an appointment. Catalogue directory requests now disregard stale response/error/loading updates after newer searches or unmount. Route test imports were moved out of short test timers, and affected PostgreSQL setup/cleanup hooks received targeted time budgets. Focused tests: public booking/prefill 9/9, route regressions 18/18, affected PostgreSQL integration 7/7. Default suite: 606/606 across 150 files. TypeScript, lint and production build passed; build generated 226 page entries. No migration or dependency change. No ClamAV installation/listener is present, so report-file clearance remains fail-closed. Patient portal accounts remain disabled until identity proofing is approved. Browser/mobile and live authorization acceptance, key recovery/rotation/restore, scanner qualification, policy approvals and production qualification remain pending. Synthetic-data development only.
+**2026-11-01 development checkpoint Ã¢â‚¬â€ public catalogue and test reliability:** The public catalogue detail-to-booking handoff now preserves the selected current published item/version/centre and revalidates it in the booking request form; this is an enquiry and does not confirm an appointment. Catalogue directory requests now disregard stale response/error/loading updates after newer searches or unmount. Route test imports were moved out of short test timers, and affected PostgreSQL setup/cleanup hooks received targeted time budgets. Focused tests: public booking/prefill 9/9, route regressions 18/18, affected PostgreSQL integration 7/7. Default suite: 606/606 across 150 files. TypeScript, lint and production build passed; build generated 226 page entries. No migration or dependency change. No ClamAV installation/listener is present, so report-file clearance remains fail-closed. Patient portal accounts remain disabled until identity proofing is approved. Browser/mobile and live authorization acceptance, key recovery/rotation/restore, scanner qualification, policy approvals and production qualification remain pending. Synthetic-data development only.
 
-**2026-11-02 development checkpoint â€” Owner sample operations queues:** Owner analytics now includes centre-scoped aggregate queue counts for collected specimens awaiting Rudra receiving, received specimens awaiting dispatch, preparing dispatch batches, dispatched batches awaiting recorded receipt, and open/recollection-requested exceptions. Counts are permission-gated independently; no patient identifiers are returned and recorded external receipt is not inferred. Disposable PostgreSQL integration passed 3/3, including encrypted synthetic fixtures, centre isolation and permission omissions. Default suite passed 607/607 across 150 files; TypeScript, lint and production build (226 generated page entries) passed. No migration/dependency change. Patient portal accounts remain disabled pending approved identity proofing. Malware scanner, key lifecycle/restore, live authorization, browser/mobile acceptance, remaining development waves and production qualification remain open. Synthetic data only.
+**2026-11-02 development checkpoint Ã¢â‚¬â€ Owner sample operations queues:** Owner analytics now includes centre-scoped aggregate queue counts for collected specimens awaiting Rudra receiving, received specimens awaiting dispatch, preparing dispatch batches, dispatched batches awaiting recorded receipt, and open/recollection-requested exceptions. Counts are permission-gated independently; no patient identifiers are returned and recorded external receipt is not inferred. Disposable PostgreSQL integration passed 3/3, including encrypted synthetic fixtures, centre isolation and permission omissions. Default suite passed 607/607 across 150 files; TypeScript, lint and production build (226 generated page entries) passed. No migration/dependency change. Patient portal accounts remain disabled pending approved identity proofing. Malware scanner, key lifecycle/restore, live authorization, browser/mobile acceptance, remaining development waves and production qualification remain open. Synthetic data only.
 
-## 2026-11-02 checkpoint â€” Public catalogue pagination
+## 2026-11-02 checkpoint Ã¢â‚¬â€ Public catalogue pagination
 
 The public service finder and guided assistant now support additional pages of verified catalogue matches, with POST-based queries, stale-request cancellation and de-duplicated appended results. Focused tests passed 6/6; the default suite passed 608/608 across 150 files; typecheck, lint and production build (226 generated page entries) passed. No migration or dependency change. This advances one public-site workflow and does not complete the Website/Patient Portal wave. Patient account creation and sign-in remain disabled until an identity-proofing method is approved. Legal/privacy approval, scanner configuration, key recovery/rotation/restore, live authorization, browser/mobile acceptance, the rest of the development backlog and production qualification remain open. Synthetic data only.
 
-## 2026-11-02 checkpoint â€” Relationship booking activity
+## 2026-11-02 checkpoint Ã¢â‚¬â€ Relationship booking activity
 
 Corporate and Partner relationship workbenches now show centre-scoped appointment activity for attributed CRM leads when the staff session independently has `appointments.read`. The list omits patient names, IDs, contacts and private appointment data; detail links recheck permission. A populated disposable PostgreSQL test passed for authorization gating and 26-record pagination; the full suite passed 608/608 across 150 files; typecheck, lint and production build (226 generated page entries) passed. No migration/dependency change. This is staff-only booking coordination metadata, not employee portal access or corporate contract approval. Patient accounts remain disabled pending identity-proofing approval. Browser/mobile acceptance, external policies, security recovery/scanning gates and production qualification remain pending. Synthetic data only.
 
-## 2026-11-02 Ã¢â‚¬â€ Converted lead to appointment handoff
+## 2026-11-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Converted lead to appointment handoff
 
-Lead 360Ã‚Â° now shows a Create Appointment Request action only when the lead is already linked to a patient, and the staff member has both patient-read and centre-scoped appointment-create permission. The link carries only the opaque lead and centre IDs. The existing appointment form still requires staff to search/select the patient, and the appointment API continues to validate the conversion link; booking is not automatic. Added an explicit centre-boundary policy assertion. No migration, account, key, dependency, or persistent data change.
+Lead 360Ãƒâ€šÃ‚Â° now shows a Create Appointment Request action only when the lead is already linked to a patient, and the staff member has both patient-read and centre-scoped appointment-create permission. The link carries only the opaque lead and centre IDs. The existing appointment form still requires staff to search/select the patient, and the appointment API continues to validate the conversion link; booking is not automatic. Added an explicit centre-boundary policy assertion. No migration, account, key, dependency, or persistent data change.
 
 Verification: focused lead-policy tests **8/8**; TypeScript and lint passed. No PostgreSQL behavior changed; the existing appointment API remains authoritative. Browser acceptance was not performed. Patient portal accounts remain disabled pending approved identity proofing. Remaining security, browser/mobile, policy and production gates stay open. Synthetic-data development only.
 
-### 2026-11-02 verification addendum Ã¢â‚¬â€ converted-lead booking handoff
+### 2026-11-02 verification addendum ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â converted-lead booking handoff
 
 The booking form now resolves the converted patient through the protected Lead and Patient APIs and preselects it only when patient-read access and the matching authorized centre are confirmed. The centre can be changed, which clears the patient selection; appointment creation still revalidates the CRM lead/patient association server-side. A populated PostgreSQL integration assertion confirms the detail API exposes the converted patient and appointment-create capability only within the granted scope. The first test attempt found an encryption-key mismatch in the shared synthetic fixture; it was replaced with a separate patient fixture encrypted under that test's synthetic key and rerun successfully. No application key or persistent development data was changed.
 
@@ -1968,7 +1972,7 @@ Added the permission-scoped `/quality/service` staff page and aggregate API over
 
 Verification: full default suite **613/613 across 152 files** (PostgreSQL integration suites included); typecheck, lint, and production build passed (228 generated page entries). An earlier run caught and led to a fix for replay compatibility with older task-event snapshots; the completed full run was after the fix. Browser/mobile and live role acceptance are still pending. This feature does not establish patient satisfaction, clinical appropriateness, real contact, or service-policy approval. Patient accounts remain disabled pending the approved identity-proofing approach. Synthetic-data development only; security recovery/scanning and production qualification gates remain open.
 
-## 2026-11-02 â€” Doctor visit field-log engineering slice
+## 2026-11-02 Ã¢â‚¬â€ Doctor visit field-log engineering slice
 
 Implemented `/relationships/doctor-visits` and protected `/api/doctors/[id]/visits` read/write operations over encrypted append-only doctor relationship events. Added migration 0092 and applied it to the local development database. Staff can plan, record a staff-attested check-in, log a meeting summary/follow-up note, and cancel an unstarted plan. Invalid state transitions, past dates, idempotency conflicts and unauthorized centre scope are rejected. Follow-up content is only a recorded note and does not create a task or external communication. Synthetic data only.
 
@@ -2033,7 +2037,7 @@ Moved three API route imports outside timed assertions and extended only the com
 
 ### Verification correction - PostgreSQL test pool cleanup (2026-11-02)
 
-Disposable integration schemas had left the applicationâ€™s process-global PostgreSQL pool bound to dropped schemas, which caused connection failures late in long full-suite runs. Added explicit close-and-clear cleanup for the cached Drizzle pool and restored the dedicated test database URL after schema teardown; bounded only the slow roster-handover teardown hook. Route imports were moved outside short request assertion timers. Final default suite passed **627/627 across 155 files**. Website metadata/content review tests passed **11/11**; roster handover passed **6/6**. TypeScript, lint, and production build passed (**231 page entries**). No database migration or dependency change. This verifies automated development checks only. Centre & Staff Operations and later waves remain incomplete; portal account creation/sign-in remain disabled pending approved identity proofing. Browser/mobile and live authorization acceptance, recovery/rotation, malware scanning, policy approvals, and production qualification remain open. Synthetic data only.
+Disposable integration schemas had left the applicationÃ¢â‚¬â„¢s process-global PostgreSQL pool bound to dropped schemas, which caused connection failures late in long full-suite runs. Added explicit close-and-clear cleanup for the cached Drizzle pool and restored the dedicated test database URL after schema teardown; bounded only the slow roster-handover teardown hook. Route imports were moved outside short request assertion timers. Final default suite passed **627/627 across 155 files**. Website metadata/content review tests passed **11/11**; roster handover passed **6/6**. TypeScript, lint, and production build passed (**231 page entries**). No database migration or dependency change. This verifies automated development checks only. Centre & Staff Operations and later waves remain incomplete; portal account creation/sign-in remain disabled pending approved identity proofing. Browser/mobile and live authorization acceptance, recovery/rotation, malware scanning, policy approvals, and production qualification remain open. Synthetic data only.
 
 
 **Current development note (2026-11-02):** The Communications inbox now offers a CRM follow-up tab behind the combined `leads.read` and `leads.followups.manage` capability, reusing the existing protected follow-up workflow; no external message is sent. Component tests passed 2/2; TypeScript and lint passed. Patient portal accounts and sign-in remain disabled until an identity-proofing approach/provider is approved. This does not complete the communications, portal, browser acceptance or production gates.
@@ -2078,7 +2082,7 @@ Verification: focused helper and route tests **3/3**; full default suite **641/6
 
 ## 2026-11-02 checkpoint - Guided assistant enquiry handoff
 
-The public fixed-choice service guide now embeds Rudra's existing public enquiry form when the visitor chooses â€œContact the Rudra team.â€ Submission uses the established public enquiry endpoint and its centre validation, rate limiting, idempotency and staff review. Response-request permission remains separate from marketing consent. The guide does not store chat transcripts, send messages, book appointments, claim to be AI, or accept clinical details.
+The public fixed-choice service guide now embeds Rudra's existing public enquiry form when the visitor chooses Ã¢â‚¬Å“Contact the Rudra team.Ã¢â‚¬Â Submission uses the established public enquiry endpoint and its centre validation, rate limiting, idempotency and staff review. Response-request permission remains separate from marketing consent. The guide does not store chat transcripts, send messages, book appointments, claim to be AI, or accept clinical details.
 
 Verification: focused assistant and public-enquiry route tests **12/12**; full default suite **642/642 across 160 files**; TypeScript and lint passed; production build passed with **231 generated page entries**. No schema, migration, dependency, provider or persistent-data change. This advances one public handoff only. Patient portal accounts remain disabled pending the Owner's identity-proofing approval. Centre Operations and later development waves remain in progress; live authorization and browser/mobile acceptance, key recovery/rotation/restore, malware scanning, approved policy/content decisions and production qualification remain open. Synthetic-data development only.
 
@@ -2174,7 +2178,7 @@ Verification: focused projection/API/PostgreSQL integration **15/15**; full defa
 Visit-only field staff can open `/field/handover`; the API restricts this view to collected specimens linked to their assigned jobs and granted centres, returning a minimal specimen/status projection. Other sample views still require `samples.read`. The workspace and daily collection page link to the assigned handover queue.
 
 Verification: focused route/scope/role tests **35/35**; full default suite **704/704 across 175 files**; TypeScript and full lint passed; production build passed (**235 generated page entries**). This route fallback test uses a mocked database query, not live authenticated authorization or a sample-specific populated PostgreSQL integration test. No migration or dependency change. Centre & Staff Operations and the broader development waves remain incomplete; browser/mobile and live role acceptance, patient identity proofing, key recovery/rotation/restore, scanner qualification, unresolved policies, external providers and production qualification remain open. Synthetic data only.
-# 2026-11-03 engineering checkpoint — Sample directory projection
+# 2026-11-03 engineering checkpoint â€” Sample directory projection
 
 Authorized sample directory reads now decrypt specimen type and requirement reference using the existing record-bound encryption context. Field handover remains a separate minimum-data projection; patient identity is returned only with the existing patient-read grant. Added route and PostgreSQL integration coverage. Default suite: **705/705 across 175 files**; typecheck, lint and production build passed (**235 page entries**). This is a local synthetic-data engineering result, not live role acceptance or production qualification. Broader 178-screen reconciliation and outstanding security/browser gates remain open.
 
@@ -2232,7 +2236,7 @@ New collection records now require a separate append-only collector submission b
 
 ## 2026-11-03 checkpoint - Reception queue and handover inventory reconciliation
 
-Proposed screens R002–R012 and R018 now have source-validated mappings to the existing patient, family, appointment, order, queue, check-in and handover workflows. The matrix retains limitations for fuzzy search/merge, legal identity or consent verification, slot guarantees, downstream order lifecycles, QR check-in, queue no-show/redirect, and automatic handover transfer. Inventory tests passed **7/7**; default suite passed **721/721 across 177 files**. Centre & Staff Operations remains incomplete; manual role/browser acceptance and security/production gates remain separate. Synthetic data only.
+Proposed screens R002â€“R012 and R018 now have source-validated mappings to the existing patient, family, appointment, order, queue, check-in and handover workflows. The matrix retains limitations for fuzzy search/merge, legal identity or consent verification, slot guarantees, downstream order lifecycles, QR check-in, queue no-show/redirect, and automatic handover transfer. Inventory tests passed **7/7**; default suite passed **721/721 across 177 files**. Centre & Staff Operations remains incomplete; manual role/browser acceptance and security/production gates remain separate. Synthetic data only.
 
 ## 2026-11-03 checkpoint - Reception CRM, communication and catalogue mapping
 
@@ -2244,7 +2248,7 @@ R017 now has a partial implementation: authorized staff can persist and review a
 
 ## 2026-11-03 checkpoint - Approval-policy mutation PostgreSQL qualification
 
-Added populated disposable-PostgreSQL coverage for centre task-approval policy updates: verified writes and named approver, idempotent replay, stale concurrent version conflict, and fail-closed rejection of an approver lacking `tasks.read`. Policy integration passed 2/2; the complete default suite passed 730/730 across 179 files; typecheck and lint passed. No migration or persistent-data change. The existing build remains the preceding checkpoint’s successful 239-page build; no application source changed in this test-only checkpoint. This does not finish Centre & Staff Operations or qualify live/browser acceptance. Sensitive approval types remain disabled pending policy authorization; a deployment scheduler is not configured. Synthetic data only.
+Added populated disposable-PostgreSQL coverage for centre task-approval policy updates: verified writes and named approver, idempotent replay, stale concurrent version conflict, and fail-closed rejection of an approver lacking `tasks.read`. Policy integration passed 2/2; the complete default suite passed 730/730 across 179 files; typecheck and lint passed. No migration or persistent-data change. The existing build remains the preceding checkpointâ€™s successful 239-page build; no application source changed in this test-only checkpoint. This does not finish Centre & Staff Operations or qualify live/browser acceptance. Sensitive approval types remain disabled pending policy authorization; a deployment scheduler is not configured. Synthetic data only.
 
 ## 2026-11-03 checkpoint - Lead quote runtime database privileges
 
@@ -2275,7 +2279,7 @@ Shift handover preparation captures encrypted centre-wide counts for open appoin
 Verification: focused unit and PostgreSQL handover checks **11/11**; full default suite **753/753 across 185 files**; TypeScript and targeted ESLint passed; production build completed **240/240** static-generation steps. The database integration used a disposable schema with synthetic records. No manual browser acceptance was performed. This is one Centre & Staff Operations workflow improvement; the operations wave and full 178-screen backlog remain incomplete. Identity proofing, key recovery/restore qualification, configured malware scanning, live authorization, desktop/mobile acceptance, unresolved business/clinical policies, external-provider qualification and production readiness remain open. Synthetic data only.
 ## 2026-11-04 checkpoint - Include unsuccessful collections in Centre Operations
 
-- Centre Operations counts unsuccessful collection jobs as open work and surfaces them with a follow-up label, using the existing centre-scoped and assignment-scoped access rules. The dashboard metric now says “Open collection jobs.”
+- Centre Operations counts unsuccessful collection jobs as open work and surfaces them with a follow-up label, using the existing centre-scoped and assignment-scoped access rules. The dashboard metric now says â€œOpen collection jobs.â€
 - Verification: focused tests **17/17**; default suite **755/755 across 185 files**, including PostgreSQL integration tests; TypeScript, ESLint, and production build passed (**240/240 static-generation steps**). No migration, persistent data, external service, or browser state changed.
 - This closes one Centre Operations queue gap only. Centre & Staff Operations, the 178-screen plan, P2-09 key lifecycle/restore, malware scanner configuration, patient identity proofing, live authorization, browser/mobile acceptance, business/clinical approvals, and production qualification remain open. Synthetic data only.
 ## 2026-11-04 checkpoint - Scope roster conflict flags to visible schedules
@@ -2369,7 +2373,7 @@ Added `/field/support` using encrypted support tasks, with role navigation gated
 
 Added `/field/schedule` as a read-only, centre-timezone weekly view of the signed-in phlebotomist's shifts and recorded unavailability. Requests explicitly ask for the current staff ID; the roster API rejects coworker schedule queries for self-scoped accounts. Attendance and leave approval remain outside this feature. F014 is mapped to the new route but is still partial. Current inventory counts: 40 exact route matches, 21 grouped mappings, 38 page/API/test candidates, 21 grouped partial, 93 unresolved partial, 26 policy/external blocked, 0 fully verified. Verification: focused checks 44/44; full suite 821/821 across 199 files; TypeScript and ESLint passed (full lint before final route wrapper, changed-file lint after); production build passed with 246 generated entries. No migration or persistent data change. Browser/mobile and security/production acceptance gates remain open. Synthetic data only.
 
-## 2026-11-04 — Personal field route board
+## 2026-11-04 â€” Personal field route board
 
 Added `/field/route`, a date-filtered, appointment-time-ordered view of only the signed-in field worker's assigned collection visits. The route requests `assignedToMe=1`; the collection API applies the staff ID as a SQL predicate in addition to existing organization, centre and session authorization. Each item opens the existing protected visit details where authorized address/instructions are shown. No GPS provider, geolocation, travel estimate, ETA, external contact or route optimization is provided. Role workspace/navigation visibility requires `collections.visit.record`. F005 remains partial. Inventory: 41 exact routes, 21 explicit grouped mappings, 116 unresolved mappings, 39 page/API/test candidates, 92 unresolved partial, 26 blocked, 0 fully verified. Focused route/query/role/inventory checks passed 45/45; non-integration test selection passed 722/722 across 176 files; typecheck, changed-file ESLint and production build passed (247 generated entries). The default full suite did not finish because a PostgreSQL integration setup stalled for more than 35 minutes before the run was interrupted; database integration remains unverified for this slice. No schema migration or persistent data change. Manual desktop/mobile acceptance remains pending; synthetic data only.
 
@@ -2399,13 +2403,13 @@ Verification on this tree: default Vitest **828/828 across 200 files**; focused 
 
 A collector must acknowledge the latest assignment before starting the visit. The acknowledgement is recorded as an encrypted append-only event, scoped to the current assignee and invalidated by reassignment; start-before-accept is rejected. Existing idempotency, optimistic concurrency, audit and authorization controls are retained. Migration `0096_collection_assignment_acceptance.sql` passed disposable PostgreSQL replay and integration. Default Vitest: **828/828 across 200 files**; focused PostgreSQL tests: **34/34**; TypeScript, full ESLint and production build (**247/247 static entries**) passed. The persistent development database was not migrated. Field workflow development advanced, but Centre & Staff Operations and the screen inventory are still partial. Browser/mobile, live session/MFA, key recovery/rotation, scanner qualification, approval-policy decisions and production gates remain pending. Synthetic-data development only.
 
-## 2026-11-04 — Synthetic PostgreSQL and report-file recovery compatibility
+## 2026-11-04 â€” Synthetic PostgreSQL and report-file recovery compatibility
 
 A disposable-schema test now verifies that the authenticated local key backup restores decryption for a populated encrypted PostgreSQL content row and a privately encrypted synthetic report file. Keys are ephemeral; the test fails closed when removed and restores successfully from the backup envelope. The test schema and file are cleaned up. Focused test 1/1; full suite 829/829 (201 files); TypeScript, lint, production build (247 generated entries), production dependency audit (0 vulnerabilities), and dependency-tree consistency passed. This does not qualify operational backups, off-device key custody, rotation, scanner deployment, live authorization, browser/mobile workflows or production readiness. P2-09 remains open; synthetic-data development only.
 
 The recovery fixture includes a synthetic patient row and persisted exact-match phone/email/name blind indexes. After the key backup is restored, encrypted patient fields decrypt and the phone/full-name search tokens reproduce the stored values; token generation fails closed when the blind-index key is absent. Blind-index-key rotation remains unqualified.
 
-## 2026-11-04 — Public website content management allowlist integration
+## 2026-11-04 â€” Public website content management allowlist integration
 
 Migration 0097 aligns the database constraint with the already enumerated public informational-page CMS slugs. A PostgreSQL route test now covers encrypted synthetic Corporate-page draft, independent editorial approval, separate Owner publication and public API retrieval; arbitrary/legal-policy `privacy` content remains denied. Focused tests 9/9; full suite 830/830 across 201 files; typecheck, full lint, production build (247 generated entries), 97-migration test-database integration/runtime-role checks, and production dependency audit (0 vulnerabilities) passed. This does not qualify published real-world claims, legal content or browser/mobile presentation. Patient accounts remain disabled pending approved identity proofing. Synthetic-data development only.
 ## 2026-11-04 development checkpoint - Explicit collection travel start
@@ -2425,14 +2429,33 @@ Implemented responsive live-page layouts for home-collection information and cor
 
 Verification: targeted public-page tests **6/6**; full Vitest **835/835 across 201 files** plus separate preview safety tests **2/2**; lint, typecheck, production build (**249 generated entries**) and `git diff --check` passed. No migration or PostgreSQL integration run was needed for this presentation-only change. Browser/mobile visual review remains pending. Patient account creation/login and report access remain disabled pending approved identity verification and security gates; booking requests are not confirmations and live payment is inactive. Generated imagery is illustrative; exact photo/pixel matching is not verified. Synthetic data only.
 
-## 2026-11-05 � Public support/content/portal reference slice
+## 2026-11-05 ï¿½ Public support/content/portal reference slice
 
 Implemented responsive Contact and FAQ page layouts, the live published-package Offers page, and approved-CMS Health Info/article rendering. Added a development-only synthetic visual preview for Contact, FAQs, Health Info/article, Offers, Policies, and Patient/Family Portal dashboard/profile/member references. Synthetic values are display examples only; these screens do not create patient records or grant access. Patient accounts remain disabled pending approved identity proofing; report delivery, live payments and confirmed public booking remain inactive. Existing contact enquiry remains staff-reviewed, and FAQs retain search/filter plus a fixed-choice service-guide link.
 
 Checks: Vitest **839/839** (203 files), focused public/reference/inventory tests **17/17**, ESLint, TypeScript and production build (**251 generated entries**) passed; `git diff --check` passed. No migration or PostgreSQL integration run was needed. Preview production HTML contained no synthetic marker. Manual desktop/mobile visual comparison is still pending, so screenshot-level fidelity is not yet verified. These changes complete a public design/content slice only; they do not complete the Public Website or Patient/Family Portal wave. Do not use real patient data or enable live external operations.
 
-## 2026-11-05 � Patient Portal operational reference layouts
+## 2026-11-05 ï¿½ Patient Portal operational reference layouts
 
 Added a synthetic Patient Portal Operations view to `/design-preview/support-portal` for the supplied order timeline, bookings/calendar, change request, orders/sample history, report list, billing history, addresses/collection preferences, health calendar, support requests and notifications screens. The desktop preview includes patient-style navigation, a portal header, status panels, event history, tables and calendar; responsive CSS stacks these for mobile. All example names, IDs, amounts, dates, events, addresses and family statuses are fictional. No patient login, account creation, report access/download, payment, notification, support message, booking change or collection request is active. No schema migration was added.
 
 Verification: full Vitest **840/840** (203 files), focused preview tests **3/3**, lint, TypeScript, production build (**251 generated entries**), and `git diff --check` passed. Production preview HTML was checked for synthetic patient/order sample values and contains none. Browser screenshot review remains pending; screen-level operational behavior is design-preview only. Identity verification, portal authentication, real data, laboratory events, report release, payments and booking confirmation remain gated. The Patient/Family Portal development wave remains incomplete.
+## Phase 05 â€” Branch, Sample Logistics, Lab & Reports (L001â€“L017)
+
+Phase 05 route and source checkpoint is recorded in [`PHASE_05_BRANCH_ACCEPTANCE.md`](PHASE_05_BRANCH_ACCEPTANCE.md). The canonical L001â€“L017 routes are present and existing branch/sample/report workflows are reused. Manual Metropolis reference and status evidence has encrypted persistence and second-person review; it is never provider-confirmed. CSV imports and clinical critical-result actions remain restricted. All 17 screens remain partial or restricted, with final manual acceptance pending. Focused tests passed 30/30; full Vitest passed 916/916; ESLint and TypeScript passed. Isolated PostgreSQL integration replayed 99 migrations in its test database. The runtime-role check found the separate local database behind at 0093, which was not changed. Build has required one Suspense correction and is rerunning; visual/browser acceptance remains open.
+
+Phase 05/06 follow-up: local database migration readiness is documented in [`PHASE_05_06_READINESS.md`](PHASE_05_06_READINESS.md). The local database was inspected in read-only transactions and remains at 0093; do not apply 0094â€“0099 until backup/restore and data preflight controls are qualified. Phase 05 Metropolis concurrency coverage passed in an isolated PostgreSQL schema. Phase 06 B001â€“B015 routes now exist, but only internal finance workflows backed by current contracts are developed; invoice issuance, external settlement, partner billing, expenses and export remain restricted. All B screens remain pending acceptance. See [`PHASE_06_FINANCE_ACCEPTANCE.md`](PHASE_06_FINANCE_ACCEPTANCE.md).
+
+## Phase 07 checkpoint â€” Relationships & B2B CRM (C001â€“C012)
+
+Added the safely supportable canonical paths for doctor onboarding and corporate account/intake/profile/camp, partner portal gate and aggregate relationship pipeline. Existing centre-scoped, encrypted Doctor/Corporate/Partner APIs and workbenches are reused. The partner directory is explicitly mapped to `/relationships/partners`; public `/partners` remains W020 and `/partner` remains its existing redirect. The partner portal reveals no account or patient data. Corporate camp, credential verification, legal contracts, special rates, corporate employee medical access and partner tenancy are not modeled/authorized, so those actions remain gated. See [`PHASE_07_RELATIONSHIPS_ACCEPTANCE.md`](PHASE_07_RELATIONSHIPS_ACCEPTANCE.md).
+
+The new aggregate API reports only authorized status/category counts and has an isolated PostgreSQL test proving centre filtering and no private contact/ciphertext values in the response. Focused relationships, route boundary, public redirect and inventory tests passed **24/24 across six files**. Full suite, lint, typecheck, build and browser acceptance are being rechecked for this checkpoint; none of C001â€“C012 is finally accepted.
+
+## Phase 08 â€” Communications, Support & AI (A001â€“A013)
+
+Phase 08 has canonical route coverage and reuses existing internal workflows where a supported model exists. A002/A003 add encrypted, centre-scoped, versioned non-secret governance drafts; A008 adds encrypted knowledge drafts with source and expiry metadata. External messaging/calls, provider imports, conversation storage, knowledge approval/expiry enforcement/publication and AI evaluation remain unavailable. Migration 0100 was applied only to a disposable synthetic test schema; read-only audit confirms the persistent database remains at 0093 and 0094â€“0100 are pending. Full Vitest passed 942/942 across 235 files, ESLint and TypeScript passed, production build generated 377 pages, and the focused governance/inventory run passed 22/22 across four files. All 13 screens remain partial/restricted and pending manual visual, keyboard, responsive and screen-specific functional acceptance. See `docs/PHASE_08_COMMUNICATIONS_ACCEPTANCE.md`.
+
+## Phase 09 â€” Social Media, Content & Digital Marketing (M001â€“M018)
+
+Preserved `SCREEN_SPEC_178.md` as the authority for all 18 IDs, names and routes. Added [`MARKETING_SCREEN_CROSSWALK_M001_M018.md`](MARKETING_SCREEN_CROSSWALK_M001_M018.md) to record the screenshot-reference mismatch across M008â€“M016; preview labels remain design alternatives and do not redefine screen IDs. All 18 canonical route patterns now resolve. M001 uses live, centre-scoped campaign/content records; M003/M005/M006/M007 reuse encrypted draft/review/planned-date APIs; M012/M017 use internal campaign and cohort attribution APIs. Connected social/search/ad platforms, media rights storage, external interactions, paid budgets/spend, and publication adapters remain unavailable or gated. No new migration or provider was added, and the local database was not changed. Phase 09 focused checks passed 31/31 across seven files (inventory/crosswalk 15/15); full Vitest passed 943/943 across 235 files; ESLint and TypeScript passed; production build generated 380 pages. See [`PHASE_09_MARKETING_ACCEPTANCE.md`](PHASE_09_MARKETING_ACCEPTANCE.md); all 18 screens remain partial/restricted and 0/18 finally accepted pending manual visual, responsive, keyboard and workflow acceptance.

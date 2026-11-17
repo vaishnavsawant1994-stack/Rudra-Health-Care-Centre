@@ -2,10 +2,12 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { SupportTicketDetail } from "@/components/support/support-ticket-detail";
+import { Phase08RouteNavigation } from "@/components/communications/phase08-route-support";
 
 async function TicketDetails({ params, staffId, grants }: { params: Promise<{ id: string }>; staffId: string; grants: Array<{ key: string; centreId: string | null }> }) {
   const { id } = await params;
   return <>
+    <Phase08RouteNavigation current="A007" />
     <p className="admin-card"><Link href="/support/tickets">Back to support requests</Link></p>
     <SupportTicketDetail key={id} id={id} staffId={staffId} grants={grants} />
   </>;

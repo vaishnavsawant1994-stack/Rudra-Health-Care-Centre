@@ -1,0 +1,3 @@
+import { AdminShell } from "@/components/admin/admin-shell";
+import { BusinessRelationshipWorkbench } from "@/components/relationships/business-relationship-workbench";
+export default function CorporateDirectoryAliasPage() { return <AdminShell permission="corporate.read" title="Corporate accounts">{staff => { const manage = staff.grants.filter(grant => grant.key === "corporate.manage"); return <BusinessRelationshipWorkbench type="CORPORATE" staffId={staff.staffUserId} grants={staff.grants} manageableCentreIds={manage.flatMap(grant => grant.centreId ? [grant.centreId] : [])} manageAllCentres={manage.some(grant => grant.centreId === null)} />; }}</AdminShell>; }

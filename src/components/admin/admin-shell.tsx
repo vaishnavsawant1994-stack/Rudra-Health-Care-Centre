@@ -7,7 +7,11 @@ import { StaffSignOut } from "@/components/auth/staff-sign-out";
 
 const links = [["/staff/workspace", "Workspace"], ["/branch/operations", "Centre operations"], ["/quality/service", "Service quality"], ["/actions", "Action centre"], ["/tasks", "Staff tasks"], ["/escalations", "Escalations"], ["/tasks/approvals", "Task approvals"], ["/roster", "Staff roster"], ["/roster/handovers", "Shift handover"], ["/owner", "Owner dashboard"], ["/owner/website-content", "Website content"], ["/patients", "Patients"], ["/families", "Families"], ["/relationships/doctors", "Doctors & referrals"], ["/relationships/referrals", "Referral attribution"], ["/relationships/doctor-visits", "Doctor visit plans"], ["/relationships/corporate", "Corporate clients"], ["/relationships/partners", "Partners"], ["/leads", "Leads & CRM"], ["/staff/quotes", "Internal quote drafts"], ["/communications", "Communications inbox"], ["/leads/analytics", "CRM acquisition overview"], ["/leads/public-enquiries", "Website enquiries"], ["/leads/followups", "Follow-ups"], ["/appointments", "Appointments"], ["/appointments/calendar", "Calendar"], ["/appointments/team", "Staff schedule"], ["/appointments/home-collection", "Home collection"], ["/collections", "Collection operations"], ["/field/today", "My collection jobs"], ["/field/handover", "My sample handover"], ["/field/exceptions", "My collection exceptions"], ["/samples", "Samples"], ["/branch/receiving", "Sample receiving"], ["/branch/dispatch", "Sample dispatch"], ["/samples/exceptions", "Sample exceptions"], ["/samples/procedures", "Procedure references"], ["/catalogue/tests", "Diagnostic tests"], ["/catalogue/packages", "Packages"], ["/catalogue/import", "Catalogue import"], ["/catalogue/prices", "Price review"], ["/orders", "Diagnostic orders"], ["/orders/directory", "Orders directory"], ["/reports", "Reports"], ["/reports/followups", "Report follow-ups"], ["/finance", "Finance"], ["/owner/settings", "Organization"], ["/owner/centres", "Centres"], ["/owner/staff", "Staff directory"], ["/owner/roles", "Roles & permissions"], ["/owner/assignments", "Role assignments"], ["/owner/sessions", "Active sessions"], ["/owner/audit", "Audit activity"], ["/owner/system", "System setup"]];
 links.splice(3, 0, ["/support/tickets", "Support requests"]);
+links.push(["/manage", "Centre manager dashboard"], ["/manage/centres", "Centre directory"], ["/manage/capacity", "Service area & capacity"], ["/manage/roster", "Staffing & work allocation"], ["/manage/slas", "SLA governance"], ["/quality/incidents", "Quality incidents"], ["/quality/sops", "SOPs & training"], ["/inventory", "Inventory"], ["/inventory/purchasing", "Procurement"], ["/analytics/operations", "Operations analytics"], ["/analytics/business", "Business analytics"], ["/manage/audit", "Operations audit"], ["/manage/health", "Business continuity"]);
+links.push(["/admin/users", "Users & staff"], ["/admin/access", "Roles & access control"], ["/admin/privacy", "Consent & privacy"], ["/admin/config", "System configuration"], ["/admin/integrations", "Metropolis configuration"], ["/admin/integration-events", "Integration event review"], ["/admin/catalogue", "Catalogue governance"], ["/admin/documents", "Document & issuer governance"], ["/admin/recovery", "Backup & recovery"], ["/admin/automation", "Automation governance"], ["/admin/releases", "Release acceptance"]);
 links.splice(32, 0, ["/field/route", "My visit route"]);
+links.splice(15, 0, ["/relationships/doctors/new", "Doctor onboarding"], ["/corporates", "Corporate accounts"], ["/corporates/new", "Corporate intake"], ["/relationships/pipeline", "B2B relationship pipeline"]);
+links.push(["/marketing", "Social media & marketing"]);
 
 type AdminShellProps = { permission: string; title: string; children?: ReactNode | ((staff: StaffContext) => ReactNode) };
 
@@ -49,6 +53,7 @@ async function AdminShellContent({ permission, title, children }: AdminShellProp
     .filter(([href]) => href !== "/roster/handovers" || has("roster.handover"))
     .filter(([href]) => href !== "/owner" || has("organization.read"))
     .filter(([href]) => href !== "/owner/website-content" || has("website.content.manage"))
+    .filter(([href]) => href !== "/marketing" || has("marketing.read"))
     .filter(([href]) => href !== "/owner/settings" || has("organization.read"))
     .filter(([href]) => href !== "/owner/centres" || has("centres.read"))
     .filter(([href]) => !href.startsWith("/owner/staff") || has("staff.read"))
@@ -57,13 +62,40 @@ async function AdminShellContent({ permission, title, children }: AdminShellProp
     .filter(([href]) => href !== "/owner/sessions" || has("sessions.read"))
     .filter(([href]) => href !== "/owner/audit" || has("audit.read"))
     .filter(([href]) => href !== "/owner/system" || has("configuration.read"))
+    .filter(([href]) => href !== "/manage" || has("workspace.read"))
+    .filter(([href]) => href !== "/manage/centres" || has("centres.read"))
+    .filter(([href]) => href !== "/manage/capacity" || has("centres.read"))
+    .filter(([href]) => href !== "/manage/roster" || has("roster.read") || has("roster.manage"))
+    .filter(([href]) => href !== "/manage/slas" || has("tasks.policy.manage"))
+    .filter(([href]) => href !== "/quality/incidents" || has("tasks.support.read"))
+    .filter(([href]) => href !== "/quality/sops" || has("configuration.read"))
+    .filter(([href]) => href !== "/inventory" || has("configuration.read"))
+    .filter(([href]) => href !== "/inventory/purchasing" || has("configuration.read"))
+    .filter(([href]) => href !== "/analytics/operations" || has("organization.read"))
+    .filter(([href]) => href !== "/analytics/business" || has("organization.read"))
+    .filter(([href]) => href !== "/manage/audit" || has("audit.read"))
+    .filter(([href]) => href !== "/manage/health" || has("configuration.read"))
+    .filter(([href]) => href !== "/admin/users" || has("staff.read"))
+    .filter(([href]) => href !== "/admin/access" || has("roles.read"))
+    .filter(([href]) => href !== "/admin/privacy" || has("configuration.read"))
+    .filter(([href]) => href !== "/admin/config" || has("configuration.read"))
+    .filter(([href]) => href !== "/admin/integrations" || has("samples.read"))
+    .filter(([href]) => href !== "/admin/integration-events" || has("samples.read"))
+    .filter(([href]) => href !== "/admin/catalogue" || has("catalogue.price.verify"))
+    .filter(([href]) => href !== "/admin/documents" || has("configuration.read"))
+    .filter(([href]) => href !== "/admin/recovery" || has("configuration.read"))
+    .filter(([href]) => href !== "/admin/automation" || has("configuration.manage"))
+    .filter(([href]) => href !== "/admin/releases" || has("configuration.read"))
     .filter(([href]) => href !== "/patients" || has("patients.read"))
     .filter(([href]) => href !== "/families" || has("families.read"))
     .filter(([href]) => href !== "/relationships/doctors" || has("doctors.read"))
+    .filter(([href]) => href !== "/relationships/doctors/new" || has("doctors.read"))
     .filter(([href]) => href !== "/relationships/referrals" || (has("leads.read") && ["doctors.read", "corporate.read", "partners.read"].some(has)))
     .filter(([href]) => href !== "/relationships/doctor-visits" || has("doctors.manage"))
     .filter(([href]) => href !== "/relationships/corporate" || has("corporate.read"))
+    .filter(([href]) => !href.startsWith("/corporates") || has("corporate.read"))
     .filter(([href]) => href !== "/relationships/partners" || has("partners.read"))
+    .filter(([href]) => href !== "/relationships/pipeline" || has("leads.read"))
     .filter(([href]) => href !== "/leads" || has("leads.read"))
     .filter(([href]) => href !== "/staff/quotes" || has("leads.read") && has("finance.read") && has("catalogue.read") && has("orders.create"))
     .filter(([href]) => href !== "/communications" || has("leads.read") || has("leads.followups.manage"))

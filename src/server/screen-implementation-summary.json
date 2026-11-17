@@ -1,0 +1,34 @@
+{
+  "screenCount": 178,
+  "exactRouteEvidence": 177,
+  "missingRouteEvidence": 1,
+  "implementation": {
+    "fullyImplemented": 0,
+    "partiallyImplemented": 151,
+    "restricted": 27,
+    "previewOnly": 0,
+    "missing": 0
+  },
+  "acceptance": {
+    "manuallyAccepted": 0,
+    "pendingManual": 178
+  },
+  "phases": {
+    "W": 26,
+    "P": 16,
+    "R": 18,
+    "F": 15,
+    "L": 17,
+    "B": 15,
+    "C": 12,
+    "A": 13,
+    "M": 18,
+    "O": 16,
+    "S": 12
+  },
+  "evidenceSource": {
+    "generator": "scripts/reconcile-screen-inventory.mjs",
+    "sourceRevision": "96169c12238d3c53127af198bd3b9d0719c06f73",
+    "matrixSha256": "ef2c310f15cb0ffd07bc86eb9691ac919e60e6e6cd28af6bce3ab0c517954d31"
+  }
+}
