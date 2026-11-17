@@ -28,7 +28,7 @@
   },
   "evidenceSource": {
     "generator": "scripts/reconcile-screen-inventory.mjs",
-    "sourceRevision": "96169c12238d3c53127af198bd3b9d0719c06f73",
-    "matrixSha256": "ef2c310f15cb0ffd07bc86eb9691ac919e60e6e6cd28af6bce3ab0c517954d31"
+    "sourceRevision": "4efa93ea5792f52dda6209d91124aa7543d2719f",
+    "matrixSha256": "a0d53c3b9385f9d3db828ba96f714fef86a6e424f1bedd65741f4d40fa1133a8"
   }
 }

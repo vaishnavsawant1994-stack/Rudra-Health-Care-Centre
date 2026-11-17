@@ -1,3 +1,11 @@
+## 2026-11-18 current checkpoint — L006 browser verification and dependency advisory
+
+- In a disposable rudra_health_test schema, 100 migrations replayed under the least-privilege rudra_test_runner identity. A synthetic centre-scoped staff user completed Better Auth sign-in and TOTP setup in Chromium, then opened canonical L006 /branch/handover.
+- L006 queue browser evidence: pages 1–5 each requested pageSize=25; all 105 seeded synthetic batches appeared exactly once; page 5 contained 5 records; an unauthorized centre query returned HTTP 403; at 390px document width remained 390px and the queue table scrolled within its container; zero browser JS errors and zero HTTP 5xx. Screenshot and restricted synthetic test files are outside the repository in Rudra Health OS Audit/Field_Branch_Browser_2026-11-18_R1.
+- This verifies L006 queue rendering, pagination and centre denial only. It does not verify field-job actions, collection, specimen receipt, packing or dispatch mutations. No approved transport procedure was created and no external receipt/Metropolis event was recorded. L006 remains partial; manual desktop/mobile, accessibility and Owner/QA acceptance remain pending.
+- The 178-screen matrix remains 151 partial, 27 restricted and 0 accepted; route mapping remains 177 exact plus one reviewed semantic mapping.
+- Fresh main-checkout npm audit on 18 November exited 1 with 14 high-severity package nodes (0 critical). They trace to the newly published picomatch ReDoS advisory; the registry still reports picomatch 4.0.7 and no fixed release. Keep release qualification blocked pending a supported patched dependency path; do not force-downgrade unrelated tooling. [GitHub Advisory GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf).
+- No persistent development database, production data, external provider or clinical workflow was changed.
 ## 2026-11-13 Phase 04 field operations checkpoint
 
 - Canonical field routes were added for F002-F004, F006-F010 and F012, reusing the authenticated collection workflow; F015 is an explicit restricted page. Workflow links now use canonical field job URLs, with finance access gated by centre-scoped `finance.read`. No database migration or production operation occurred.
