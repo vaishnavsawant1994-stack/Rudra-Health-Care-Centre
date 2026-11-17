@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { getApiAccess } from "@/server/access";
 import { getDb } from "@/db/client";
-import { dispatchBatches, dispatchBatchItems, sampleCustodyEvents, sampleProcedureApprovals, specimens } from "@/db/schema";
+import { centres, dispatchBatches, dispatchBatchItems, sampleCustodyEvents, sampleProcedureApprovals, specimens } from "@/db/schema";
 import { appendAuditEvent } from "@/server/audit";
 import { csrfRejected, isSameOriginRequest } from "@/server/csrf";
 import { dispatchCreateSchema } from "@/server/sample-policy";
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   const where = [eq(dispatchBatches.organizationId, access.staff.organizationId)];
   if (requestedCentreId) where.push(eq(dispatchBatches.centreId, requestedCentreId));
   if (!scopes.includes(null)) where.push(scopes.length ? inArray(dispatchBatches.centreId, scopes.filter((id): id is string => Boolean(id))) : eq(dispatchBatches.centreId, "00000000-0000-0000-0000-000000000000"));
-  const rows = await getDb().select({ id: dispatchBatches.id,organizationId:dispatchBatches.organizationId,centreId: dispatchBatches.centreId, batchNumber: dispatchBatches.batchNumber, status: dispatchBatches.status,privateDataCiphertext:dispatchBatches.privateDataCiphertext, handedOverAt: dispatchBatches.handedOverAt, versionNumber: dispatchBatches.versionNumber, createdAt: dispatchBatches.createdAt }).from(dispatchBatches).where(and(...where)).orderBy(desc(dispatchBatches.createdAt), desc(dispatchBatches.id)).limit(pageSize + 1).offset((page - 1) * pageSize);
+  const rows = await getDb().select({ id: dispatchBatches.id,organizationId:dispatchBatches.organizationId,centreId: dispatchBatches.centreId,centreName:centres.name, batchNumber: dispatchBatches.batchNumber, status: dispatchBatches.status,privateDataCiphertext:dispatchBatches.privateDataCiphertext, handedOverAt: dispatchBatches.handedOverAt, versionNumber: dispatchBatches.versionNumber, createdAt: dispatchBatches.createdAt }).from(dispatchBatches).innerJoin(centres,and(eq(centres.id,dispatchBatches.centreId),eq(centres.organizationId,dispatchBatches.organizationId))).where(and(...where)).orderBy(desc(dispatchBatches.createdAt), desc(dispatchBatches.id)).limit(pageSize + 1).offset((page - 1) * pageSize);
   const hasMore = rows.length > pageSize;
   const batches=rows.slice(0, pageSize).map(({privateDataCiphertext,...batch})=>({...batch,...decryptOperationalData<{carrierReference:string|null;externalLabReference:string|null}>(privateDataCiphertext,operationalContext({organizationId:batch.organizationId,centreId:batch.centreId,recordId:batch.id},"dispatch-batch"))}));
   return Response.json({ batches, page, pageSize, hasMore });
