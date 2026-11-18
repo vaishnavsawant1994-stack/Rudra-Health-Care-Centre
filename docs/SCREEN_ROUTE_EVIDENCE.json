@@ -5,7 +5,7 @@
     "path": "docs/SCREEN_SPEC_178.md",
     "sha256": "27c93e0b94a375a252b5ca784c6445eb63299f66285b863249883b097bfa11ed"
   },
-  "repositoryHead": "8055f48a473a030c6a4c8ea33c88f1d6f613c05c",
+  "repositoryHead": "cbd61e8723e42bf191a0f8f524632998449496a9",
   "evidenceScope": "source-reference and route-mapping only; not functional, QA, visual or acceptance proof",
   "screens": [
     {
@@ -1231,8 +1231,8 @@
         },
         {
           "path": "src/components/public/rudra-booking-flow.tsx",
-          "sha256": "298fd21faf94a0701db38e5d0d1b7615b50499c7a8d5d762cc1400a82baa0a38",
-          "sourceModifiedAt": "2026-11-15T07:23:08.862Z"
+          "sha256": "340614453657c5d6223613cf38cb588f6997297e1a322fda81d6a476a0e95866",
+          "sourceModifiedAt": "2026-11-18T15:24:10.612Z"
         }
       ]
     },
@@ -3450,13 +3450,13 @@
         },
         {
           "path": "src/app/faq/page.test.ts",
-          "sha256": "e331e76b0a5b61856aab48a998967ac614003398db0f286cc6ae5d29dc903e89",
-          "sourceModifiedAt": "2026-11-02T19:39:30.337Z"
+          "sha256": "9f54979356b8c0e2f915122de10d519042af2d63051af6e8e023316eb6bc5ff9",
+          "sourceModifiedAt": "2026-11-18T12:24:30.894Z"
         },
         {
           "path": "src/app/faq/page.tsx",
-          "sha256": "73b06033a9caedbd0f49a10da1fb29ef7927a08226574bfb75c6a273e268d41f",
-          "sourceModifiedAt": "2026-11-13T04:01:08.539Z"
+          "sha256": "630b7e44167fcb844480d4cb5d5812d4cdc760bf4cd25fcd6852d7085e671ddf",
+          "sourceModifiedAt": "2026-11-18T12:38:03.151Z"
         },
         {
           "path": "src/server/public-website-content.test.ts",

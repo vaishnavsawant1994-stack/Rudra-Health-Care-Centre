@@ -3096,3 +3096,10 @@ Batch 1 exercised W007, W008, W010, S001, R015, R014, R007 and R010 in Playwrigh
 - Production-mode Playwright/Chromium with isolated synthetic PostgreSQL fixtures: W004 showed a simulated HTTP 503, then keyboard focus + Enter on ?Retry details? retried successfully (HTTP 200) and rendered ?125.00. W006 rendered a ?450.00 synthetic package and one linked included test. Desktop 1280px and mobile 390px had no horizontal overflow for the package detail; W004/W006 mobile screenshots were captured. Zero browser JavaScript errors.
 - Targeted ESLint, TypeScript and isolated production build passed; build generated 406 routes. Full Vitest was not rerun after this component patch. W004/W006 remain partial; visual-reference, manual accessibility and Owner/QA acceptance remain pending. Evidence: `F:\Rudra Health Care Centre\Rudra Health OS Audit\Public_Catalogue_Detail_Browser_2026-11-18_R1\result.json`.
 - Isolated schema and temporary keys were removed via an allowlisted cleanup procedure after verifying `rudra_health_test` / `rudra_test_runner`. Persistent development DB untouched.
+
+## 2026-11-18 — Phase 01 connected browser checkpoint
+
+- Production-mode Chromium rendered all W001–W026 public routes. Desktop/tablet/mobile overflow checks passed 78/78; no browser exceptions or HTTP 5xx responses.
+- Verified catalogue retry retention, exact service/version booking prefill, package comparison limit, linked package test, synthetic enquiry submission and safe acknowledgement, payment restriction, and keyboard FAQ navigation.
+- Fixed exact catalogue deep-link restoration, same-origin Referer fallback for Chromium writes that omit Origin, and shared tablet filter overflow. Isolated production build passed; focused tests, lint and TypeScript passed.
+- Phase 01 screen classifications remain unchanged: technical completion is not established for the full functionality of every screen, and Owner/QA acceptance remains pending. Evidence: `docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md`.
