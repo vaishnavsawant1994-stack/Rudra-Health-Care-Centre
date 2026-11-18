@@ -41,7 +41,7 @@ Data used: synthetic fixtures only
 | W019 | Doctors & referrals landing | `/doctors` | Partial; enquiry path; doctor CRM conversion and audit tested with synthetic data. | No referral qualification or provider integration claimed. | Pending |
 | W020 | Partner/franchise enquiry | `/partner` | Partial; intentional redirect to `/partners`; partner enquiry and gated inactive conversion tested synthetically. | No approval/agreement implied; authorized partner review required. | Pending |
 | W021 | Contact & help centre | `/contact` | Partial; centre-routed enquiry; staff task assignment uses `tasks.assign` and centre scope. | No external communications provider; verify staff assignment in browser. | Pending |
-| W022 | Frequently asked questions | `/faq` | Partial; FAQ/search and safe request wording; route coverage. | Content review and screen-level keyboard/responsive checks. | Pending |
+| W022 | Frequently asked questions | `/faq` | Partial; FAQ search/topic filters, safe request wording, and common-question links now target their matching answer headings; SSR regression test verifies link/target pairs. | Public content review and browser keyboard/responsive checks. | Pending |
 | W023 | Health education / blog | `/health-guides` | Restricted; limited educational content marked pending clinical review and noindex. | Clinical sign-off before public discoverability. | Pending |
 | W024 | Health article detail | `/health-guides/[slug]` | Restricted; finite allow-list; unknown slug 404; noindex. | Clinical review and approval of each article. | Pending |
 | W025 | Promotions & offers | `/offers` | Restricted; displays only published catalogue packages; no unapproved promotion claim. | Approved pricing, promotions and catalogue publication. | Pending |

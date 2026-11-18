@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { filterPublicFaq, type PublicFaqItem } from "@/lib/public-faq";
+import { filterPublicFaq, publicFaqAnswerId, type PublicFaqItem } from "@/lib/public-faq";
 
 export function PublicFaq({ items }: { items: PublicFaqItem[] }) {
   const [query, setQuery] = useState("");
@@ -15,6 +15,6 @@ export function PublicFaq({ items }: { items: PublicFaqItem[] }) {
       <label>Topic<select value={topic} onChange={(event) => setTopic(event.target.value)}><option value="ALL">All topics</option>{topics.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
     </div>
     <p role="status" aria-live="polite">{visible.length} {visible.length === 1 ? "answer" : "answers"} found.</p>
-    {visible.length ? <dl className="public-faq">{visible.map((item) => <div key={`${item.topic}:${item.question}`}><dt>{item.question}</dt><dd>{item.answer}</dd></div>)}</dl> : <p className="public-faq-empty">No answers match those filters. Try another topic or search term.</p>}
+    {visible.length ? <dl className="public-faq">{visible.map((item) => <div key={`${item.topic}:${item.question}`}><dt id={publicFaqAnswerId(item, items)} tabIndex={-1}>{item.question}</dt><dd>{item.answer}</dd></div>)}</dl> : <p className="public-faq-empty">No answers match those filters. Try another topic or search term.</p>}
   </section>;
 }
