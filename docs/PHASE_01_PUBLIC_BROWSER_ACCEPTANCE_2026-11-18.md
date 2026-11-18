@@ -11,6 +11,7 @@ This checkpoint records evidence from an isolated production-mode application bu
 - W005 enforced the three-package comparison limit; W006 showed its synthetic included test.
 - W007/W008 submitted a real synthetic enquiry to the isolated API; the submitted catalogue version remained selected, and W010 showed a privacy-safe acknowledgement that did not expose contact details or claim a confirmed appointment.
 - W009 remained unavailable for payment. W022’s FAQ shortcut worked with keyboard focus and Enter.
+- W018 corporate, W019 doctor, W020 partner, and W021 contact forms each accepted a synthetic submission with HTTP 202 and rendered a staff-review receipt. The receipt explicitly said no message, call, or marketing communication was sent automatically.
 - Browser checks reported zero JavaScript exceptions and zero HTTP 5xx responses.
 - Full Vitest: **990 tests passed across 251 files**. Focused booking/CSRF tests: **12 passed**. ESLint and TypeScript passed.
 - Production build in the isolated runtime passed with **406 generated route entries**. The browser runtime used the same Next.js 16.4.6 source and an isolated test schema; no persistent development database was used.
