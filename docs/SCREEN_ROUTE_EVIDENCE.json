@@ -5,7 +5,7 @@
     "path": "docs/SCREEN_SPEC_178.md",
     "sha256": "27c93e0b94a375a252b5ca784c6445eb63299f66285b863249883b097bfa11ed"
   },
-  "repositoryHead": "cbd61e8723e42bf191a0f8f524632998449496a9",
+  "repositoryHead": "32fca5c250a0d5e7062e35bfcd77f2a541e3c495",
   "evidenceScope": "source-reference and route-mapping only; not functional, QA, visual or acceptance proof",
   "screens": [
     {
@@ -456,8 +456,8 @@
         },
         {
           "path": "src/app/tests/page.tsx",
-          "sha256": "e46445486b40c949851eee19c80e3e9df156df0ebadcb9f655629c9703436845",
-          "sourceModifiedAt": "2026-11-13T03:07:35.976Z"
+          "sha256": "33178bcdd318d2d20187783b4398bde49a783776e4c503312210eb44ef327449",
+          "sourceModifiedAt": "2026-11-18T18:52:48.198Z"
         }
       ]
     },
@@ -773,8 +773,8 @@
         },
         {
           "path": "src/app/packages/page.tsx",
-          "sha256": "2d4fd3d51d138c8007594fe635a5bba0a2e6177bb5009c90743aa8f019701cf9",
-          "sourceModifiedAt": "2026-11-13T03:07:36.381Z"
+          "sha256": "ababe6ac535b14e8e3864aef3ed5dfcfe41c9484933fc460ae5cf067ae2996cc",
+          "sourceModifiedAt": "2026-11-18T18:52:48.199Z"
         }
       ]
     },
@@ -1231,8 +1231,8 @@
         },
         {
           "path": "src/components/public/rudra-booking-flow.tsx",
-          "sha256": "340614453657c5d6223613cf38cb588f6997297e1a322fda81d6a476a0e95866",
-          "sourceModifiedAt": "2026-11-18T15:24:10.612Z"
+          "sha256": "b8ffbc3425fc8d3b720da5acf489dfc0efce5e843e77c2e79bf5db16e635cd2a",
+          "sourceModifiedAt": "2026-11-18T19:00:18.643Z"
         }
       ]
     },
@@ -1382,8 +1382,8 @@
         },
         {
           "path": "src/app/checkout/[order]/page.tsx",
-          "sha256": "cb69c31e7d925c6e6293986e87ea098fc3dc1d4bf644290c43c06984b8e38d39",
-          "sourceModifiedAt": "2026-11-13T03:21:47.468Z"
+          "sha256": "6eed8d8571e48c87877408159fe4516e98d6c85b2563e8f6fbccbe691e58557d",
+          "sourceModifiedAt": "2026-11-18T18:52:48.201Z"
         }
       ]
     },
@@ -1528,8 +1528,8 @@
         },
         {
           "path": "src/app/booking/success/[id]/page.tsx",
-          "sha256": "bb412c97a6e59a30ef0d13831ee72a265a89f528ce758f86f925dc2fd70c35bc",
-          "sourceModifiedAt": "2026-11-15T08:25:18.294Z"
+          "sha256": "42394d18904d839c0001ce4ba7f0add0a4817d9976f3a6f4b777634a69520c82",
+          "sourceModifiedAt": "2026-11-18T18:52:48.252Z"
         },
         {
           "path": "src/components/public/public-enquiry-receipt.test.ts",
@@ -1684,8 +1684,8 @@
         },
         {
           "path": "src/app/home-collection/page.tsx",
-          "sha256": "228500c0039e8c155e3396c5386e073fd1f553d2650522a30faa461d2aa3545f",
-          "sourceModifiedAt": "2026-11-13T07:37:42.672Z"
+          "sha256": "26b039a40eb28d350cf57a42c6f108255c8f38df8cb1089e95f1871cda9399fd",
+          "sourceModifiedAt": "2026-11-18T18:52:48.203Z"
         },
         {
           "path": "src/server/public-website-content.test.ts",
@@ -1865,8 +1865,8 @@
         },
         {
           "path": "src/app/centres/page.tsx",
-          "sha256": "cf588ed41eb3eefbce4da12cf593cfd622bc38ddbdd486b6328a6cc47476be62",
-          "sourceModifiedAt": "2026-11-07T17:59:19.980Z"
+          "sha256": "06c0a5f87ad0929d7e2f81cb2f8984b6c48162bf52f8563d05e005efa5da88ef",
+          "sourceModifiedAt": "2026-11-18T18:52:48.211Z"
         },
         {
           "path": "src/components/centres/public-centres-directory.test.tsx",
@@ -2046,8 +2046,8 @@
         },
         {
           "path": "src/app/centres/[id]/page.tsx",
-          "sha256": "82a2f643b792191ade4f26bf3131a793dd725cbe959c9fdcc95479453733bc01",
-          "sourceModifiedAt": "2026-11-13T05:06:20.923Z"
+          "sha256": "e75943c0ec1c5374e935d525dba73aa49326b2b21df7e5102eb960b57ba0f0ee",
+          "sourceModifiedAt": "2026-11-18T18:52:48.216Z"
         },
         {
           "path": "src/app/centres/page.test.ts",
@@ -2373,8 +2373,8 @@
         },
         {
           "path": "src/components/public/rudra-access-pages.tsx",
-          "sha256": "a6d5a826b1db1b01f46ac1c29f67ff74d43c9f0dc0ce796a224cdb9b0732fc47",
-          "sourceModifiedAt": "2026-11-07T17:55:57.499Z"
+          "sha256": "98dd74439c76e89a0393218aae6855a8401f68e2b40f3ec498b862e165e2fdc6",
+          "sourceModifiedAt": "2026-11-18T18:52:48.244Z"
         }
       ]
     },
@@ -3299,8 +3299,8 @@
         },
         {
           "path": "src/app/contact/page.tsx",
-          "sha256": "d9b604ec85eea6b9945d2ed79280329caf3d5ad0729b14b2da16f1fd17462907",
-          "sourceModifiedAt": "2026-11-04T19:20:58.351Z"
+          "sha256": "532f06c35afd60f6a71cd1df62ddd124a8a5f377fb66081c3af2f135346ac20f",
+          "sourceModifiedAt": "2026-11-18T18:52:48.220Z"
         },
         {
           "path": "src/server/public-website-content.test.ts",
@@ -3455,8 +3455,8 @@
         },
         {
           "path": "src/app/faq/page.tsx",
-          "sha256": "630b7e44167fcb844480d4cb5d5812d4cdc760bf4cd25fcd6852d7085e671ddf",
-          "sourceModifiedAt": "2026-11-18T12:38:03.151Z"
+          "sha256": "1f9d6dd00f834023cee11b5206490af159ab1c2c915643f252a936c2822d0d7c",
+          "sourceModifiedAt": "2026-11-18T18:52:48.231Z"
         },
         {
           "path": "src/server/public-website-content.test.ts",
@@ -3933,8 +3933,8 @@
         },
         {
           "path": "src/app/offers/page.tsx",
-          "sha256": "fa6ed6120e8d89f3798a85bbec9d9389f9fdc18fee520b7b40428dedf291641c",
-          "sourceModifiedAt": "2026-11-04T18:55:11.813Z"
+          "sha256": "0d34085e389f014c0f8f3482efd91203739375a6eefb53e14f2d1fbe18210336",
+          "sourceModifiedAt": "2026-11-18T18:52:48.218Z"
         }
       ]
     },
