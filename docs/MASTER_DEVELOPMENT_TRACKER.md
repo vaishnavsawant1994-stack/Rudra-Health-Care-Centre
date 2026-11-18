@@ -3082,3 +3082,10 @@ Established an isolated local Playwright/Chromium runtime outside the repository
 # Acceptance Batch 1 — 17 November 2026
 
 Batch 1 exercised W007, W008, W010, S001, R015, R014, R007 and R010 in Playwright/Chromium against a disposable synthetic PostgreSQL runtime. Both browser journeys passed after fixing the R007 date formatter. The full Vitest suite passed 981/981, inventory regression 23/23, ESLint and TypeScript passed. The production build compiled and generated 406 routes but exited at the Next.js security advisory gate. All eight screens remain partial and Owner/QA pending; see `docs/ACCEPTANCE_BATCH1_2026-11-17.md` and the screen evidence columns in `docs/SCREEN_IMPLEMENTATION_MATRIX.csv`.
+
+## 2026-11-18 — Public catalogue retry and pagination
+
+- Fixed the shared W003/W005 catalogue directory: append requests now expose an in-progress state, prevent duplicate load-more actions, preserve existing results on append failure, and retry the failed next page instead of resetting to page 1. Added focused retry-selection coverage (3/3).
+- Isolated synthetic Playwright/Chromium check: W003 loaded 24 entries, retained them after an injected page-2 HTTP 503, then retried page 2 to 31 unique entries without duplicates. W005 rendered four synthetic packages and enforced the three-item comparison cap. At 390px there was no horizontal overflow; zero browser JavaScript errors.
+- Targeted ESLint and TypeScript passed. Full Vitest and production build have not been rerun after this source change. W003/W005 remain partial; visual-reference, keyboard/screen-reader, desktop manual and Owner/QA acceptance are pending. Evidence: `F:\Rudra Health Care Centre\Rudra Health OS Audit\Public_Catalogue_Browser_2026-11-18_R1\result.json` and `W003-W005-mobile.png`.
+- Picomatch advisory remains unresolved: audit findings trace to one advisory across dependency paths; application exposure is not established, and the vendored Next.js matcher remains unqualified. No advisory suppression or unsafe override was applied.

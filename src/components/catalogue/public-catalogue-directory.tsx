@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { catalogueRetryRequest } from "@/lib/catalogue-retry";
 
 type Centre = { id: string; code: string; name: string };
 type PublicItem = { id: string; centreId: string; centreName: string; serviceType: "TEST" | "PACKAGE"; serviceCode: string; version: number; displayName: string; specimenRequirements: string | null; preparationInstructions: string | null; priceAmount: string; currency: string; effectiveFrom: string; effectiveUntil: string | null };
@@ -15,6 +16,7 @@ export function PublicCatalogueDirectory({ serviceType }: { serviceType: "TEST" 
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [appendFailed, setAppendFailed] = useState(false);
   const [compareItems, setCompareItems] = useState<PublicItem[]>([]);
   const [state, setState] = useState("Loading currently published services…");
   const requestSequence = useRef(0);
@@ -22,6 +24,8 @@ export function PublicCatalogueDirectory({ serviceType }: { serviceType: "TEST" 
   const load = useCallback(async (pageNumber = 1, append = false) => {
     const requestId = ++requestSequence.current;
     setState("Loading currently published services…");
+    setLoadingMore(append);
+    setAppendFailed(false);
     if (!append) setItems([]);
     try {
       const params = new URLSearchParams({ serviceType, page: String(pageNumber), pageSize: "24" });
@@ -33,11 +37,13 @@ export function PublicCatalogueDirectory({ serviceType }: { serviceType: "TEST" 
       const nextItems: PublicItem[] = body.items ?? [];
       setItems((current) => append ? [...current, ...nextItems.filter((item) => !current.some((existing) => existing.id === item.id))] : nextItems);
       setPage(pageNumber); setHasMore(body.hasMore ?? false);
-      setState(append ? "" : nextItems.length ? "" : "No currently published, verified services match this view.");
+      setState(append
+        ? nextItems.length ? `Loaded ${nextItems.length} more published services.` : "No more published services are available."
+        : nextItems.length ? "" : "No currently published, verified services match this view.");
     } catch {
       if (requestId !== requestSequence.current) return;
       if (!append) { setItems([]); setState("The service catalogue is temporarily unavailable. Try again later."); }
-      else setState("More catalogue items could not be loaded. Retry to continue.");
+      else { setAppendFailed(true); setState("More catalogue items could not be loaded. Retry to continue."); }
     } finally { if (requestId === requestSequence.current) setLoadingMore(false); }
   }, [appliedQuery, centreId, serviceType]);
 
@@ -76,7 +82,7 @@ export function PublicCatalogueDirectory({ serviceType }: { serviceType: "TEST" 
         </form>
         <div className="ref-results-head"><h2>{items.length ? `${items.length}${hasMore ? "+" : ""} published ${serviceType === "TEST" ? "tests" : "packages"}` : "Published services"}</h2><span>Verified and in effect for the selected centre</span></div>
         {state && <p role="status" className="ref-inline-state">{state}</p>}
-        {(state.includes("temporarily unavailable") || state.includes("could not be loaded")) && <button type="button" className="button button-secondary" onClick={() => void load()} disabled={loading}>Retry catalogue</button>}
+        {(state.includes("temporarily unavailable") || state.includes("could not be loaded")) && <button type="button" className="button button-secondary" onClick={() => { const retry = catalogueRetryRequest(page, appendFailed); void load(retry.page, retry.append); }} disabled={loading}>Retry catalogue</button>}
         {serviceType === "PACKAGE" && <p className="public-catalogue-note">Compare up to three published package entries. Demographic filters are not shown because approved demographic variant metadata is not available.</p>}
         {serviceType === "PACKAGE" && compareItems.length > 0 && <section className="ref-directory-compare" aria-label="Package comparison"><h3>Package comparison ({compareItems.length}/3)</h3><div className="ref-directory-grid">{compareItems.map((item) => <article key={item.id}><h4>{item.displayName}</h4><p>{item.centreName}</p><p>{item.serviceCode} · Version {item.version}</p><strong>{item.currency === "INR" ? "₹" : `${item.currency} `}{item.priceAmount}</strong><button className="button button-secondary" type="button" onClick={() => toggleCompare(item)}>Remove from comparison</button></article>)}</div></section>}
         {items.length > 0 && <div className="ref-directory-grid">{items.map((item, index) => <article className="ref-directory-card" key={item.id}>
@@ -87,7 +93,7 @@ export function PublicCatalogueDirectory({ serviceType }: { serviceType: "TEST" 
             <div className="ref-actions"><Link className="button button-secondary" href={`/${serviceType === "TEST" ? "tests" : "packages"}/${encodeURIComponent(item.id)}`}>View details</Link><Link className="button button-primary" href={`/book?centreId=${encodeURIComponent(item.centreId)}&catalogueItemId=${encodeURIComponent(item.id)}&catalogueVersion=${item.version}&service=${encodeURIComponent(`${item.displayName} (${item.serviceCode})`)}`}>Request this service</Link>{serviceType === "PACKAGE" && <button className="button button-secondary" type="button" aria-pressed={compareItems.some((entry) => entry.id === item.id)} onClick={() => toggleCompare(item)} disabled={!compareItems.some((entry) => entry.id === item.id) && compareItems.length >= 3}>{compareItems.some((entry) => entry.id === item.id) ? "Remove comparison" : "Compare package"}</button>}</div>
           </div>
         </article>)}</div>}
-        {hasMore && <button type="button" className="button button-secondary" disabled={loadingMore} onClick={() => void load(page + 1, true)}>{loadingMore ? "Loading more services…" : "Load more services"}</button>}
+        {hasMore && <button type="button" className="button button-secondary" disabled={loadingMore || loading} onClick={() => void load(page + 1, true)}>{loadingMore ? "Loading more services…" : "Load more services"}</button>}
         <p className="public-catalogue-note">Prices shown are published, source-reviewed catalogue prices for the selected centre and effective dates. Rudra home-collection service charges, if applicable, are separate.</p>
       </div>
     </div>
