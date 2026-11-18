@@ -22,32 +22,48 @@ type ServiceDetail = {
 };
 
 export function PublicCatalogueDetail({ id, serviceType }: { id: string; serviceType: "TEST" | "PACKAGE" }) {
-  const [item, setItem] = useState<ServiceDetail | null>(null);
-  const [state, setState] = useState("Loading verified service details…");
+  type LoadState = { key: string; status: "loading" | "unavailable" | "unpublished" | "ready" };
+  const requestKey = `${serviceType}:${id}`;
+  const [itemState, setItemState] = useState<{ key: string; item: ServiceDetail } | null>(null);
+  const [loadState, setLoadState] = useState<LoadState | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const currentState = loadState?.key === requestKey ? loadState.status : "loading";
+  const item = itemState?.key === requestKey ? itemState.item : null;
+  const loading = currentState === "loading";
+  const retryable = currentState === "unavailable";
+  const message = currentState === "loading"
+    ? "Loading verified service details…"
+    : currentState === "unavailable"
+      ? "The catalogue is temporarily unavailable. Try again."
+      : currentState === "unpublished"
+        ? "This service is not currently published with a verified, effective price."
+        : "";
 
   useEffect(() => {
     const controller = new AbortController();
     void fetch(`/api/public/catalogue/${encodeURIComponent(id)}`, { cache: "no-store", signal: controller.signal })
       .then(async (response) => ({ response, body: await response.json() }))
       .then(({ response, body }) => {
+        if (controller.signal.aborted) return;
         if (!response.ok || body.item?.serviceType !== serviceType) {
-          setItem(null);
-          setState(response.status === 503 ? "The catalogue is temporarily unavailable. Try again later." : "This service is not currently published with a verified, effective price.");
+          setItemState(null);
+          setLoadState({ key: requestKey, status: response.status === 503 ? "unavailable" : "unpublished" });
           return;
         }
-        setItem(body.item as ServiceDetail);
-        setState("");
+        setItemState({ key: requestKey, item: body.item as ServiceDetail });
+        setLoadState({ key: requestKey, status: "ready" });
       })
       .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        setItem(null);
-        setState("The catalogue is temporarily unavailable. Try again later.");
+        if (controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")) return;
+        setItemState(null);
+        setLoadState({ key: requestKey, status: "unavailable" });
       });
     return () => controller.abort();
-  }, [id, serviceType]);
+  }, [attempt, id, requestKey, serviceType]);
 
-  if (!item) return <section className="public-catalogue-detail" aria-live="polite">
-    <p role="status">{state}</p>
+  if (!item) return <section className="public-catalogue-detail" aria-live="polite" aria-busy={loading}>
+    <p role="status">{message}</p>
+    {retryable && <button className="button button-primary" type="button" onClick={() => { setLoadState({ key: requestKey, status: "loading" }); setAttempt((current) => current + 1); }} disabled={loading}>Retry details</button>}
     <Link className="button button-secondary" href={serviceType === "TEST" ? "/tests" : "/packages"}>Back to {serviceType === "TEST" ? "tests" : "packages"}</Link>
   </section>;
 
