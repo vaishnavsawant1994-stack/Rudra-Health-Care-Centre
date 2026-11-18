@@ -5,7 +5,7 @@ export const metadata = { title: "Enquiry Receipt | Rudra Health Care Centre", r
 
 export default function BookingSuccessPage({ params }: { params: Promise<{ id: string }> }) {
   return (
-    <Suspense fallback={<main className="mx-auto max-w-3xl p-8" aria-live="polite">Loading enquiry receipt…</main>}>
+    <Suspense fallback={<div className="mx-auto max-w-3xl p-8" role="status">Loading enquiry receipt…</div>}>
       <ReceiptFromParams params={params} />
     </Suspense>
   );

@@ -69,7 +69,7 @@ export function PublicCatalogueDetail({ id, serviceType }: { id: string; service
 
   return <article className="public-catalogue-detail">
     <p className="eyebrow">{serviceType === "TEST" ? "Diagnostic test" : "Diagnostic package"} · {item.serviceCode} · Catalogue version {item.version}</p>
-    <h2>{item.displayName}</h2>
+    <h1>{item.displayName}</h1>
     <p>{item.centreName}</p>
     <p className="public-catalogue-price">{item.currency === "INR" ? "₹" : `${item.currency} `}{item.priceAmount}</p>
     <p>Verified catalogue price effective {item.effectiveFrom}{item.effectiveUntil ? ` through ${item.effectiveUntil}` : " until further notice"}.</p>

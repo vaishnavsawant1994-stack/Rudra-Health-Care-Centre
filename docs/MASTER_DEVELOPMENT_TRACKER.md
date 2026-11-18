@@ -3104,3 +3104,11 @@ Batch 1 exercised W007, W008, W010, S001, R015, R014, R007 and R010 in Playwrigh
 - Fixed exact catalogue deep-link restoration, same-origin Referer fallback for Chromium writes that omit Origin, and shared tablet filter overflow. Isolated production build passed; focused tests, lint and TypeScript passed.
 - Phase 01 screen classifications remain unchanged: technical completion is not established for the full functionality of every screen, and Owner/QA acceptance remains pending. Evidence: `docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md`.
 - Additional Chromium submissions for W018–W021 (corporate, doctors, partner and contact) each returned HTTP 202 with the explicit staff-review receipt; no automatic messaging claim was shown. Evidence: `phase01-business-enquiries-results.json` in the external Phase 01 evidence folder.
+# 2026-11-19 checkpoint — Phase 01 accessibility structure
+
+- Corrected nested `<main>` landmarks across Phase 01 public route components; the root layout now remains the single main landmark for those pages. Catalogue detail titles are page-level `h1` headings; the catalogue embedded on offers uses `h2`.
+- Added SSR regression tests for catalogue heading levels. Focused Phase 01 tests: 8/8 across 7 files; full Vitest: 990/990 across 251 files; ESLint and TypeScript passed; production build passed with 406 route entries.
+- Reused the existing 26-route/78-viewport and 13-screen interaction evidence; no new Chromium functional campaign was run after the semantic markup change. Full keyboard/assistive technology verification and paired approved-image comparison remain pending because approved Phase 01 master images and an accessibility audit tool were unavailable.
+- Phase 01 remains 0/26 technically complete and 0/26 Owner/QA accepted; existing 13 interaction-verified and 26 responsive-route results are retained as separate evidence counts. No screen is promoted from these source and SSR checks.
+- Dropped the identified disposable schema in `rudra_health_test`; the external test-only `.env.local` remains because the authorized cleanup was rejected by execution policy. Its restricted ACL remains in place. Persistent development DB unchanged.
+- Picomatch security advisory remains unresolved; no provider, payment, clinical or report-release restriction changed.

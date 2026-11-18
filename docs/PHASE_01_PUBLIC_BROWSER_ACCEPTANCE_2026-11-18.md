@@ -18,13 +18,22 @@ This checkpoint records evidence from an isolated production-mode application bu
 
 Evidence JSON and screenshots are stored outside the repository at `F:\Rudra Health Care Centre\Rudra Health OS Audit\Public_Phase01_Acceptance_2026-11-18_R1\evidence`.
 
-The isolated Next.js server is stopped. Cleanup of this run's disposable schema and external test-only `.env.local` was attempted after verifying the intended target, but the command was rejected by the execution policy; those isolated test artifacts remain for now. No persistent development database was used or modified.
+The isolated Next.js server is stopped. The disposable schema created for this run was verified in `rudra_health_test` and dropped; the persistent development database was not touched. Removal of the external test-only `.env.local` remains blocked because the approved PowerShell cleanup command was rejected by the execution policy. Its ACL still limits access to SYSTEM, Administrators and the current user. The file has not been read into output or copied into the repository.
 
 ## Source changes prompted by browser testing
 
 - Catalogue detail links now initialize the booking form from the exact centre, item and version. The server catalogue detail endpoint revalidates that exact selection; unavailable or stale links are not silently replaced by another item.
 - Same-origin write protection now accepts a matching `Referer` when Chromium omits `Origin`; explicit cross-site fetch metadata and nonmatching origins/referers remain rejected.
 - Shared catalogue filters switch to a two-column tablet layout, eliminating the measured 24px overflow on W003, W005 and W025 at 768px.
+
+## 19 November accessibility correction
+
+- Source inspection found public child pages rendering nested `<main>` landmarks inside the root layout's `main#main-content`. Replaced those child landmarks with neutral `div` containers across the affected Phase 01 routes and shared public components, preserving the root skip-navigation landmark.
+- Catalogue detail content now uses an `h1`; the package directory supports an `h2` when embedded under the offers page's own `h1`, avoiding duplicate page-level headings.
+- Regression tests cover the catalogue directory's page-heading and embedded-section-heading variants. Focused checks passed: 8 tests across 7 files; ESLint and TypeScript passed.
+- This source-level correction has not yet had a fresh full Playwright run against populated synthetic catalogue data. Prior 78 route/viewport measurements remain valid for the unchanged layout but do not test the new semantic markup.
+- No approved W001–W026 design master images were found in the repository or available attachment set. Pixel/visual-reference comparison remains unverified. Axe/assistive-technology audit was not run; the source corrections and tests do not constitute full accessibility acceptance.
+- The Picomatch advisory remains unresolved and visible as a release qualification issue.
 
 ## Disposition and limits
 

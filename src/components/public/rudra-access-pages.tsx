@@ -12,7 +12,7 @@ const pageCopy: Record<AccessKind, { eyebrow: string; title: string; subtitle: s
 function AccessPanel({ kind }: { kind: AccessKind }) {
   const copy = pageCopy[kind];
   const patientAccount = kind === "login" || kind === "register";
-  return <main className={`rp-access rp-access-${kind}`}>
+  return <div className={`rp-access rp-access-${kind}`}>
     <section className="rp-access-hero">
       <div className="rp-access-copy"><span className="r-eyebrow">{copy.eyebrow}</span><h1>{copy.title}</h1><h2>{copy.subtitle}</h2><p>{copy.description}</p><div className="rp-access-points"><span><b>✓</b> Privacy first</span><span><b>✓</b> Verified information</span><span><b>✓</b> Rudra support</span></div></div>
       <div className="rp-access-photo" role="img" aria-label="Illustrative Rudra patient support"/>
@@ -33,7 +33,7 @@ function AccessPanel({ kind }: { kind: AccessKind }) {
         <article className="rp-panel"><h2>Need help?</h2><p>Contact Rudra for general service questions. Please do not send patient identifiers or report contents through a public enquiry.</p><div className="ref-actions"><Link className="button button-secondary" href="/contact">Contact Rudra</Link><Link className="button button-secondary" href="/faq">Frequently asked questions</Link>{kind === "login" && <Link className="button button-secondary" href="/register">Registration information</Link>}{kind === "register" && <Link className="button button-secondary" href="/login">Sign-in information</Link>}</div></article>
       </section>
     </div>
-  </main>;
+  </div>;
 }
 
 export function RudraAccessPage({ kind }: { kind: AccessKind }) { return <AccessPanel kind={kind}/>; }

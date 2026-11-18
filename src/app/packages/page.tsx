@@ -3,5 +3,5 @@ import { PublicCatalogueDirectory } from "@/components/catalogue/public-catalogu
 export const metadata = { title: "Health Checkup Packages" };
 
 export default function PackagesPage() {
-  return <main className="inner-page"><PublicCatalogueDirectory serviceType="PACKAGE" /></main>;
+  return <div className="inner-page"><PublicCatalogueDirectory serviceType="PACKAGE" /></div>;
 }

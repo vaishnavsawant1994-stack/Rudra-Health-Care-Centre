@@ -6,7 +6,7 @@ export function PublicEnquiryReceipt({ receiptId }: { receiptId: string }) {
   const validReceiptId = receiptIdPattern.test(receiptId);
   const safeReceiptId = validReceiptId ? receiptId.toUpperCase() : null;
 
-  return <main className="r-public r-booking-page">
+  return <div className="r-public r-booking-page">
     <div className="r-demo-note"><b>Enquiry acknowledgement only</b><span>This page never loads enquiry details, appointment records, collection slots or payment information.</span></div>
     <section className="r-confirmation" aria-labelledby="receipt-title">
       <div className="r-confirmation-hero">
@@ -25,5 +25,5 @@ export function PublicEnquiryReceipt({ receiptId }: { receiptId: string }) {
         <Link className="r-button r-button-outline" href="/report-access">Report access information</Link>
       </div>
     </section>
-  </main>;
+  </div>;
 }

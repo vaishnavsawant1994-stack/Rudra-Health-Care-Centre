@@ -7,7 +7,7 @@ import { catalogueRetryRequest } from "@/lib/catalogue-retry";
 type Centre = { id: string; code: string; name: string };
 type PublicItem = { id: string; centreId: string; centreName: string; serviceType: "TEST" | "PACKAGE"; serviceCode: string; version: number; displayName: string; specimenRequirements: string | null; preparationInstructions: string | null; priceAmount: string; currency: string; effectiveFrom: string; effectiveUntil: string | null };
 
-export function PublicCatalogueDirectory({ serviceType }: { serviceType: "TEST" | "PACKAGE" }) {
+export function PublicCatalogueDirectory({ serviceType, headingLevel = "h1" }: { serviceType: "TEST" | "PACKAGE"; headingLevel?: "h1" | "h2" }) {
   const [centres, setCentres] = useState<Centre[]>([]);
   const [centreId, setCentreId] = useState("");
   const [query, setQuery] = useState("");
@@ -71,7 +71,7 @@ export function PublicCatalogueDirectory({ serviceType }: { serviceType: "TEST" 
 
   const loading = state.startsWith("Loading") || loadingMore;
   return <section className="public-catalogue ref-catalogue" aria-label={serviceType === "TEST" ? "Diagnostic tests" : "Diagnostic packages"} aria-busy={loading}>
-    <div className="ref-catalogue-banner"><div><span className="eyebrow">Rudra Health Care Centre</span><h1>{serviceType === "TEST" ? "Diagnostic Tests" : "Health Checkup Packages"}</h1><p>{serviceType === "TEST" ? "Explore published diagnostic test details and review centre-specific information." : "Browse published diagnostic packages and their current verified details."}</p><div className="ref-hero-points"><span>Current published records</span><span>Centre-specific details</span><span>Effective catalogue prices</span></div></div><div className={`ref-catalogue-art ${serviceType === "TEST" ? "is-test" : "is-package"}`} aria-hidden="true"/></div>
+    <div className="ref-catalogue-banner"><div><span className="eyebrow">Rudra Health Care Centre</span>{headingLevel === "h1" ? <h1>{serviceType === "TEST" ? "Diagnostic Tests" : "Health Checkup Packages"}</h1> : <h2>{serviceType === "TEST" ? "Diagnostic Tests" : "Health Checkup Packages"}</h2>}<p>{serviceType === "TEST" ? "Explore published diagnostic test details and review centre-specific information." : "Browse published diagnostic packages and their current verified details."}</p><div className="ref-hero-points"><span>Current published records</span><span>Centre-specific details</span><span>Effective catalogue prices</span></div></div><div className={`ref-catalogue-art ${serviceType === "TEST" ? "is-test" : "is-package"}`} aria-hidden="true"/></div>
     <div className="ref-catalogue-layout">
       <aside className="ref-catalogue-aside"><h2>Browse</h2><Link href="/tests" aria-current={serviceType === "TEST" ? "page" : undefined}>Diagnostic tests</Link><Link href="/packages" aria-current={serviceType === "PACKAGE" ? "page" : undefined}>Health packages</Link><Link href="/centres">Choose a centre</Link><div><strong>Pricing information</strong><p>Prices shown in results come from the currently published catalogue record for that centre. Home-collection charges, if any, are separate.</p></div></aside>
       <div className="ref-catalogue-results">

@@ -27,5 +27,5 @@ async function PublicCentrePageContent({ params }: { params: Promise<{ id: strin
 }
 
 export default function PublicCentrePage({ params }: { params: Promise<{ id: string }> }) {
-  return <Suspense fallback={<main className="inner-page" role="status">Loading centre information…</main>}><PublicCentrePageContent params={params} /></Suspense>;
+  return <Suspense fallback={<div className="inner-page" role="status">Loading centre information…</div>}><PublicCentrePageContent params={params} /></Suspense>;
 }
