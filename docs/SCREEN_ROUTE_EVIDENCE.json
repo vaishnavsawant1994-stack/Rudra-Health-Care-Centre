@@ -5,7 +5,7 @@
     "path": "docs/SCREEN_SPEC_178.md",
     "sha256": "27c93e0b94a375a252b5ca784c6445eb63299f66285b863249883b097bfa11ed"
   },
-  "repositoryHead": "9631e6f26b88e2affa74e4b1839b250acb441b12",
+  "repositoryHead": "47bab1f5b0886a8b9512c10a8a4c837da2f15a06",
   "evidenceScope": "source-reference and route-mapping only; not functional, QA, visual or acceptance proof",
   "screens": [
     {
@@ -5362,8 +5362,8 @@
         },
         {
           "path": "src/components/patients/patient-workbench.tsx",
-          "sha256": "da81008f4a3aeab0b0e4e6e4484c0a257493b832bed1b4fa0229a4ac2ecbdce1",
-          "sourceModifiedAt": "2026-11-13T16:11:56.447Z"
+          "sha256": "aa53fbce32075f3ac47e9686f784ecfad5163f034be496f312ef0df2671674df",
+          "sourceModifiedAt": "2026-11-19T05:45:35.253Z"
         }
       ]
     },
@@ -5793,8 +5793,8 @@
         },
         {
           "path": "src/components/patients/patient-workbench.tsx",
-          "sha256": "da81008f4a3aeab0b0e4e6e4484c0a257493b832bed1b4fa0229a4ac2ecbdce1",
-          "sourceModifiedAt": "2026-11-13T16:11:56.447Z"
+          "sha256": "aa53fbce32075f3ac47e9686f784ecfad5163f034be496f312ef0df2671674df",
+          "sourceModifiedAt": "2026-11-19T05:45:35.253Z"
         }
       ]
     },
@@ -6224,8 +6224,8 @@
         },
         {
           "path": "src/components/patients/patient-workbench.tsx",
-          "sha256": "da81008f4a3aeab0b0e4e6e4484c0a257493b832bed1b4fa0229a4ac2ecbdce1",
-          "sourceModifiedAt": "2026-11-13T16:11:56.447Z"
+          "sha256": "aa53fbce32075f3ac47e9686f784ecfad5163f034be496f312ef0df2671674df",
+          "sourceModifiedAt": "2026-11-19T05:45:35.253Z"
         }
       ]
     },
@@ -7086,8 +7086,8 @@
         },
         {
           "path": "src/components/patients/patient-workbench.tsx",
-          "sha256": "da81008f4a3aeab0b0e4e6e4484c0a257493b832bed1b4fa0229a4ac2ecbdce1",
-          "sourceModifiedAt": "2026-11-13T16:11:56.447Z"
+          "sha256": "aa53fbce32075f3ac47e9686f784ecfad5163f034be496f312ef0df2671674df",
+          "sourceModifiedAt": "2026-11-19T05:45:35.253Z"
         }
       ]
     },
