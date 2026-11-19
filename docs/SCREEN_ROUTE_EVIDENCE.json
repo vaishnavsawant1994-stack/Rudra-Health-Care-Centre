@@ -5,7 +5,7 @@
     "path": "docs/SCREEN_SPEC_178.md",
     "sha256": "27c93e0b94a375a252b5ca784c6445eb63299f66285b863249883b097bfa11ed"
   },
-  "repositoryHead": "32fca5c250a0d5e7062e35bfcd77f2a541e3c495",
+  "repositoryHead": "9631e6f26b88e2affa74e4b1839b250acb441b12",
   "evidenceScope": "source-reference and route-mapping only; not functional, QA, visual or acceptance proof",
   "screens": [
     {
@@ -4115,8 +4115,8 @@
         },
         {
           "path": "src/components/patient/patient-portal-preview.test.ts",
-          "sha256": "4c5556a0d64037a016eb656c46264768ad4ecde0ffa27636f891585c0ba2c0fe",
-          "sourceModifiedAt": "2026-11-13T14:04:49.413Z"
+          "sha256": "10ab3394b6765487b366be72d7b880f7beea8e1b07818717e1ef7198a37fa907",
+          "sourceModifiedAt": "2026-11-19T03:05:57.511Z"
         }
       ]
     },
@@ -4141,8 +4141,8 @@
         },
         {
           "path": "src/components/patient/patient-portal-preview.test.ts",
-          "sha256": "4c5556a0d64037a016eb656c46264768ad4ecde0ffa27636f891585c0ba2c0fe",
-          "sourceModifiedAt": "2026-11-13T14:04:49.413Z"
+          "sha256": "10ab3394b6765487b366be72d7b880f7beea8e1b07818717e1ef7198a37fa907",
+          "sourceModifiedAt": "2026-11-19T03:05:57.511Z"
         }
       ]
     },
@@ -4167,8 +4167,8 @@
         },
         {
           "path": "src/components/patient/patient-portal-preview.test.ts",
-          "sha256": "4c5556a0d64037a016eb656c46264768ad4ecde0ffa27636f891585c0ba2c0fe",
-          "sourceModifiedAt": "2026-11-13T14:04:49.413Z"
+          "sha256": "10ab3394b6765487b366be72d7b880f7beea8e1b07818717e1ef7198a37fa907",
+          "sourceModifiedAt": "2026-11-19T03:05:57.511Z"
         }
       ]
     },
@@ -4193,8 +4193,8 @@
         },
         {
           "path": "src/components/patient/patient-portal-preview.test.ts",
-          "sha256": "4c5556a0d64037a016eb656c46264768ad4ecde0ffa27636f891585c0ba2c0fe",
-          "sourceModifiedAt": "2026-11-13T14:04:49.413Z"
+          "sha256": "10ab3394b6765487b366be72d7b880f7beea8e1b07818717e1ef7198a37fa907",
+          "sourceModifiedAt": "2026-11-19T03:05:57.511Z"
         }
       ]
     },
@@ -4219,8 +4219,8 @@
         },
         {
           "path": "src/components/patient/patient-portal-preview.test.ts",
-          "sha256": "4c5556a0d64037a016eb656c46264768ad4ecde0ffa27636f891585c0ba2c0fe",
-          "sourceModifiedAt": "2026-11-13T14:04:49.413Z"
+          "sha256": "10ab3394b6765487b366be72d7b880f7beea8e1b07818717e1ef7198a37fa907",
+          "sourceModifiedAt": "2026-11-19T03:05:57.511Z"
         }
       ]
     },
@@ -4245,8 +4245,8 @@
         },
         {
           "path": "src/components/patient/patient-portal-preview.test.ts",
-          "sha256": "4c5556a0d64037a016eb656c46264768ad4ecde0ffa27636f891585c0ba2c0fe",
-          "sourceModifiedAt": "2026-11-13T14:04:49.413Z"
+          "sha256": "10ab3394b6765487b366be72d7b880f7beea8e1b07818717e1ef7198a37fa907",
+          "sourceModifiedAt": "2026-11-19T03:05:57.511Z"
         }
       ]
     },
@@ -4271,8 +4271,8 @@
         },
         {
           "path": "src/components/patient/patient-portal-preview.test.ts",
-          "sha256": "4c5556a0d64037a016eb656c46264768ad4ecde0ffa27636f891585c0ba2c0fe",
-          "sourceModifiedAt": "2026-11-13T14:04:49.413Z"
+          "sha256": "10ab3394b6765487b366be72d7b880f7beea8e1b07818717e1ef7198a37fa907",
+          "sourceModifiedAt": "2026-11-19T03:05:57.511Z"
         }
       ]
     },
@@ -4297,8 +4297,8 @@
         },
         {
           "path": "src/components/patient/patient-portal-preview.test.ts",
-          "sha256": "4c5556a0d64037a016eb656c46264768ad4ecde0ffa27636f891585c0ba2c0fe",
-          "sourceModifiedAt": "2026-11-13T14:04:49.413Z"
+          "sha256": "10ab3394b6765487b366be72d7b880f7beea8e1b07818717e1ef7198a37fa907",
+          "sourceModifiedAt": "2026-11-19T03:05:57.511Z"
         }
       ]
     },
@@ -4323,8 +4323,8 @@
         },
         {
           "path": "src/components/patient/patient-portal-preview.test.ts",
-          "sha256": "4c5556a0d64037a016eb656c46264768ad4ecde0ffa27636f891585c0ba2c0fe",
-          "sourceModifiedAt": "2026-11-13T14:04:49.413Z"
+          "sha256": "10ab3394b6765487b366be72d7b880f7beea8e1b07818717e1ef7198a37fa907",
+          "sourceModifiedAt": "2026-11-19T03:05:57.511Z"
         }
       ]
     },
@@ -4349,8 +4349,8 @@
         },
         {
           "path": "src/components/patient/patient-portal-preview.test.ts",
-          "sha256": "4c5556a0d64037a016eb656c46264768ad4ecde0ffa27636f891585c0ba2c0fe",
-          "sourceModifiedAt": "2026-11-13T14:04:49.413Z"
+          "sha256": "10ab3394b6765487b366be72d7b880f7beea8e1b07818717e1ef7198a37fa907",
+          "sourceModifiedAt": "2026-11-19T03:05:57.511Z"
         }
       ]
     },
@@ -4375,8 +4375,8 @@
         },
         {
           "path": "src/components/patient/patient-portal-preview.test.ts",
-          "sha256": "4c5556a0d64037a016eb656c46264768ad4ecde0ffa27636f891585c0ba2c0fe",
-          "sourceModifiedAt": "2026-11-13T14:04:49.413Z"
+          "sha256": "10ab3394b6765487b366be72d7b880f7beea8e1b07818717e1ef7198a37fa907",
+          "sourceModifiedAt": "2026-11-19T03:05:57.511Z"
         }
       ]
     },
@@ -4401,8 +4401,8 @@
         },
         {
           "path": "src/components/patient/patient-portal-preview.test.ts",
-          "sha256": "4c5556a0d64037a016eb656c46264768ad4ecde0ffa27636f891585c0ba2c0fe",
-          "sourceModifiedAt": "2026-11-13T14:04:49.413Z"
+          "sha256": "10ab3394b6765487b366be72d7b880f7beea8e1b07818717e1ef7198a37fa907",
+          "sourceModifiedAt": "2026-11-19T03:05:57.511Z"
         }
       ]
     },
@@ -4427,8 +4427,8 @@
         },
         {
           "path": "src/components/patient/patient-portal-preview.test.ts",
-          "sha256": "4c5556a0d64037a016eb656c46264768ad4ecde0ffa27636f891585c0ba2c0fe",
-          "sourceModifiedAt": "2026-11-13T14:04:49.413Z"
+          "sha256": "10ab3394b6765487b366be72d7b880f7beea8e1b07818717e1ef7198a37fa907",
+          "sourceModifiedAt": "2026-11-19T03:05:57.511Z"
         }
       ]
     },
@@ -4453,8 +4453,8 @@
         },
         {
           "path": "src/components/patient/patient-portal-preview.test.ts",
-          "sha256": "4c5556a0d64037a016eb656c46264768ad4ecde0ffa27636f891585c0ba2c0fe",
-          "sourceModifiedAt": "2026-11-13T14:04:49.413Z"
+          "sha256": "10ab3394b6765487b366be72d7b880f7beea8e1b07818717e1ef7198a37fa907",
+          "sourceModifiedAt": "2026-11-19T03:05:57.511Z"
         }
       ]
     },
@@ -4479,8 +4479,8 @@
         },
         {
           "path": "src/components/patient/patient-portal-preview.test.ts",
-          "sha256": "4c5556a0d64037a016eb656c46264768ad4ecde0ffa27636f891585c0ba2c0fe",
-          "sourceModifiedAt": "2026-11-13T14:04:49.413Z"
+          "sha256": "10ab3394b6765487b366be72d7b880f7beea8e1b07818717e1ef7198a37fa907",
+          "sourceModifiedAt": "2026-11-19T03:05:57.511Z"
         }
       ]
     },
@@ -4505,8 +4505,8 @@
         },
         {
           "path": "src/components/patient/patient-portal-preview.test.ts",
-          "sha256": "4c5556a0d64037a016eb656c46264768ad4ecde0ffa27636f891585c0ba2c0fe",
-          "sourceModifiedAt": "2026-11-13T14:04:49.413Z"
+          "sha256": "10ab3394b6765487b366be72d7b880f7beea8e1b07818717e1ef7198a37fa907",
+          "sourceModifiedAt": "2026-11-19T03:05:57.511Z"
         }
       ]
     },
