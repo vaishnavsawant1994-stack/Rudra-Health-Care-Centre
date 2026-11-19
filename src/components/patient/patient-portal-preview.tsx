@@ -90,7 +90,7 @@ function ViewContent({ view }: { view: PortalView }) {
 export function PatientPortalPreview({ view }: { view: PortalView }) {
   const [showSynthetic, setShowSynthetic] = useState(false);
   const screen = viewDetails[view];
-  return <main className={`pt-portal pt-${view}`}>
+  return <div className={`pt-portal pt-${view}`}>
     <div className="pt-ribbon"><b>Patient access unavailable</b><span>{PATIENT_PORTAL_GATE_NOTICE}</span><Link href="/login">Sign-in information</Link></div>
     <div className="pt-shell">
       <nav className="pt-nav" aria-label="Patient portal screens"><b>RUDRA <small>PATIENT & FAMILY PORTAL</small></b>{nav.map(([id,label,href])=><Link className={screen.id===id?"active":""} aria-current={screen.id===id?"page":undefined} key={id} href={href}><span aria-hidden="true">{id.slice(1)}</span>{label}</Link>)}<span className="pt-nav-state">Access disabled</span></nav>
@@ -102,5 +102,5 @@ export function PatientPortalPreview({ view }: { view: PortalView }) {
         <div className="pt-content-grid"><div className="pt-main-column"><ViewContent view={view}/></div><aside className="pt-side-column"><EmptyPortalCard title="Access requirements"><b className="pt-pending">Patient access is disabled</b><p>Identity proofing, account linking, patient consent and a patient authentication policy need approval before protected data can load.</p><Link className="r-button r-button-outline" href="/login">Sign-in information</Link></EmptyPortalCard><EmptyPortalCard title="Need help?"><p>For general service questions, contact Rudra. Do not include medical details in public enquiries.</p><Link className="r-button" href="/contact">Contact Rudra</Link></EmptyPortalCard><div className="pt-safety">Family links never grant medical access automatically. Each patient’s identity, scope, consent and revocation must be checked independently.</div></aside></div>
       </div>
     </div>
-  </main>;
+  </div>;
 }

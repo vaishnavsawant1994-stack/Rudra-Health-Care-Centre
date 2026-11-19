@@ -28,6 +28,13 @@ describe("patient portal preview safety and screen coverage", () => {
     expect(html).toContain("Access disabled");
     expect(html).not.toMatch(/<form\b|<input\b|type="password"|patient-contact-secret/i);
     expect(html).not.toContain("Synthetic workflow example");
+    expect(html).not.toContain("<main");
+    expect((html.match(/<h1\b/g) ?? [])).toHaveLength(1);
+  });
+
+  it.each(PATIENT_PORTAL_SCREENS)("provides a direct navigation link for $id", ({ id, route }) => {
+    const html = renderToStaticMarkup(createElement(PatientPortalPreview, { view: viewForScreen[id] }));
+    expect(html).toContain(`href="${route}"`);
   });
 
   it("uses synthetic scenarios that avoid invented released results and completed lab events", () => {

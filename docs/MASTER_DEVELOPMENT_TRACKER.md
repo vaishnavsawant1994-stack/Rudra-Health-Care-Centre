@@ -3112,3 +3112,10 @@ Batch 1 exercised W007, W008, W010, S001, R015, R014, R007 and R010 in Playwrigh
 - Phase 01 remains 0/26 technically complete and 0/26 Owner/QA accepted; existing 13 interaction-verified and 26 responsive-route results are retained as separate evidence counts. No screen is promoted from these source and SSR checks.
 - Dropped the identified disposable schema in `rudra_health_test`; the external test-only `.env.local` remains because the authorized cleanup was rejected by execution policy. Its restricted ACL remains in place. Persistent development DB unchanged.
 - Picomatch security advisory remains unresolved; no provider, payment, clinical or report-release restriction changed.
+
+## 2026-11-19 checkpoint — Phase 02 safe preview progress
+
+- Began Phase 02 independently of Phase 01 manual/visual acceptance. Removed the nested `<main>` landmark from the patient portal preview shell and added assertions for P001–P016 headings, canonical navigation and the no-data gate.
+- P001–P016 safe preview shell: production Chromium verified 16 routes at desktop/tablet/mobile (48/48), keyboard toggle of the explicitly synthetic example, P001 to P003 navigation, one main landmark/one h1 per route, zero overflow, zero API calls and zero browser exceptions. This verifies the gated preview only, not patient portal account functionality.
+- Focused Phase 02 and inventory regression tests passed 73/73. ESLint, TypeScript and production build passed; build generated 406 route entries. The matrix records the scope-limited functionally verified preview while preserving the restricted classification and all protected acceptance fields.
+- Patient account/authentication/family-data/report/billing/document actions remain gated by the Phase 02 readiness decisions. No patient API calls, patient data or database records were used. Phase 01 remains open independently.
