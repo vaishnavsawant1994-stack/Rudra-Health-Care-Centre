@@ -304,6 +304,22 @@ for (const line of lines) {
 const header = ["ID", "Experience group", "Target screen", "Target route", "Access in spec", "Required controls/workflow", "Authoritative objects in spec", "Exact source route", "Potential grouped source routes", "Explicit grouped screen mapping", "Direct page imports", "Candidate API routes by module", "Schema symbols in candidate APIs", "Permission checks found in candidate APIs", "Related test files", "Implementation status (evidence-based)", "Acceptance status", "External or policy blockers", "Evidence limitations", "Visual reference status", "Frontend evidence status", "Backend/API evidence status", "Database contract evidence status", "RBAC/privacy evidence status", "Integration readiness status", "Automated QA evidence status", "Manual desktop/mobile status", "Accessibility/responsive status", "Final Owner/QA acceptance", "Deployment readiness"];
 const output = [header.map(csv).join(",")];
 const routeEvidenceRecords = [];
+const sourceReferenceCache = new Map();
+const sourceTextCache = new Map();
+function sourceTextFor(source) {
+  if (!sourceTextCache.has(source)) sourceTextCache.set(source, readFile(source, "utf8"));
+  return sourceTextCache.get(source);
+}
+function sourceReferenceFor(source) {
+  if (!sourceReferenceCache.has(source)) {
+    sourceReferenceCache.set(source, Promise.all([readFile(source), stat(source)]).then(([bytes, info]) => ({
+      path: rel(source),
+      sha256: createHash("sha256").update(bytes).digest("hex"),
+      sourceModifiedAt: info.mtime.toISOString(),
+    })));
+  }
+  return sourceReferenceCache.get(source);
+}
 const specIds = rows.map((row) => row.id);
 if (new Set(specIds).size !== specIds.length) throw new Error("screen_spec_duplicate_ids");
 if (specIds.length !== 178) throw new Error(`Expected 178 unique screen records; parsed ${specIds.length}. Matrix not written.`);
@@ -316,7 +332,7 @@ for (const screen of rows) {
     const groupedPage = pageByRoute.get(groupedMapping.route);
     const groupedSource = path.join(root, groupedMapping.source);
     if (!groupedPage || !allFiles.includes(groupedSource)) throw new Error(`${screen.id} grouped mapping source is missing.`);
-    const [pageText, sourceText] = await Promise.all([readFile(groupedPage, "utf8"), readFile(groupedSource, "utf8")]);
+    const [pageText, sourceText] = await Promise.all([sourceTextFor(groupedPage), sourceTextFor(groupedSource)]);
     const missingMarkers = groupedMapping.sourceMarkers.filter((marker) => !sourceText.includes(marker));
     if (!pageText.includes(groupedMapping.pageMarker) || missingMarkers.length > 0) {
       throw new Error(`${screen.id} grouped mapping markers no longer match the implementation.${!pageText.includes(groupedMapping.pageMarker) ? " Page marker missing." : ""}${missingMarkers.length ? ` Source markers missing: ${missingMarkers.join(", ")}` : ""}`);
@@ -361,11 +377,11 @@ for (const screen of rows) {
     ...screenApiPaths.filter((apiPath) => apiByPath.has(apiPath)),
   ])].sort();
   const apiSources = apiCandidates.map((apiPath) => apiByPath.get(apiPath)).filter(Boolean);
-  const imports = page ? [...new Set([...readImports(await readFile(page, "utf8"), "components"), ...readImports(await readFile(page, "utf8"), "server")])].sort() : [];
+  const imports = page ? [...new Set([...readImports(await sourceTextFor(page), "components"), ...readImports(await sourceTextFor(page), "server")])].sort() : [];
   const schemaSymbols = new Set();
   const permissions = new Set();
   for (const source of apiSources) {
-    const text = await readFile(source, "utf8");
+    const text = await sourceTextFor(source);
     for (const match of text.matchAll(/import\s*\{([^}]+)\}\s*from\s*["']@\/db\/schema["']/g)) {
       for (const symbol of match[1].split(",").map((part) => part.trim().split(/\s+as\s+/)[0])) if (/^[A-Za-z_$][\w$]*$/.test(symbol)) schemaSymbols.add(symbol);
     }
@@ -458,11 +474,7 @@ for (const screen of rows) {
     ...apiSources,
     ...relatedTests.map((file) => path.join(root, file)),
   ].filter(Boolean))].sort((a, b) => rel(a).localeCompare(rel(b)));
-  const sourceReferences = [];
-  for (const source of sourceFiles) {
-    const [bytes, info] = await Promise.all([readFile(source), stat(source)]);
-    sourceReferences.push({ path: rel(source), sha256: createHash("sha256").update(bytes).digest("hex"), sourceModifiedAt: info.mtime.toISOString() });
-  }
+  const sourceReferences = await Promise.all(sourceFiles.map(sourceReferenceFor));
   routeEvidenceRecords.push({ id: screen.id, canonicalRoute: screen.route, sourceReferences });
 }
 

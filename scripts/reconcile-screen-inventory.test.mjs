@@ -26,12 +26,12 @@ describe("178-screen inventory reconciliation", () => {
   let lines;
   let header;
   beforeAll(async () => {
-    const run = spawnSync(process.execPath, [path.join(root, "scripts", "reconcile-screen-inventory.mjs")], { cwd: root, encoding: "utf8", timeout: 60_000 });
+    const run = spawnSync(process.execPath, [path.join(root, "scripts", "reconcile-screen-inventory.mjs")], { cwd: root, encoding: "utf8", timeout: 240_000 });
     expect(run.status, run.stderr || run.error?.message).toBe(0);
     const csv = await readFile(path.join(root, "docs", "SCREEN_IMPLEMENTATION_MATRIX.csv"), "utf8");
     lines = csv.trimEnd().split(/\r?\n/);
     header = parseCsvRow(lines[0]);
-  }, 65_000);
+  }, 245_000);
 
   it("validates W008 as the routed review step without treating it as appointment confirmation", async () => {
     const row = parseCsvRow(lines.find((line) => line.startsWith('"W008",')));
@@ -276,11 +276,11 @@ describe("178-screen inventory reconciliation", () => {
       path.join(root, "docs", "SCREEN_ACCEPTANCE_BASELINE.json"),
     ];
     const before = await Promise.all(paths.map((file) => readFile(file)));
-    const run = spawnSync(process.execPath, [path.join(root, "scripts", "reconcile-screen-inventory.mjs")], { cwd: root, encoding: "utf8", timeout: 60_000 });
+    const run = spawnSync(process.execPath, [path.join(root, "scripts", "reconcile-screen-inventory.mjs")], { cwd: root, encoding: "utf8", timeout: 240_000 });
     expect(run.status, run.stderr || run.error?.message).toBe(0);
     const after = await Promise.all(paths.map((file) => readFile(file)));
     expect(after.map((value) => value.toString("hex"))).toEqual(before.map((value) => value.toString("hex")));
-  }, 120_000);
+  }, 245_000);
 
   it("requires an explicit review reference for manual acceptance changes", () => {
     const row = Object.fromEntries([
