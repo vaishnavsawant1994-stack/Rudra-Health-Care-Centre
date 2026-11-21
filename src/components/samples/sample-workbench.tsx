@@ -37,23 +37,25 @@ function FormResult({ value }: { value: string }) { return <p className="form-me
 export function CollectionOperations({ grants = [], showDailySchedule = false, showScheduleDateFilter = false, initialCentreId }: { grants?: readonly PermissionGrant[]; showDailySchedule?: boolean; showScheduleDateFilter?: boolean; initialCentreId?: string }) {
   const [jobs, setJobs] = useState<Job[]>([]); const [eligible, setEligible] = useState<Eligible[]>([]); const [centres, setCentres] = useState<Centre[]>([]); const [procedures, setProcedures] = useState<Procedure[]>([]); const [state, setState] = useState("Loading collection operations…"); const [busy, setBusy] = useState(""); const [result, setResult] = useState(""); const [page, setPage] = useState(1); const [hasMore, setHasMore] = useState(false); const [centreId, setCentreId] = useState(initialCentreId ?? ""); const [visitStageFilter, setVisitStageFilter] = useState<"" | "TRAVELLING" | "ARRIVED" | "STAGE_PENDING">(""); const [summary, setSummary] = useState<{ total: number; byStatus: Record<string, number>; byVisitStage?: { travelling: number; arrived: number; inProgressUnstaged: number } }>({ total: 0, byStatus: {} });
   const initialCentreResolved = useRef(false);
+  const collectionRequests = useRef(new RequestSequence());
   const showDateFilter = showDailySchedule || showScheduleDateFilter;
   const [scheduleDate, setScheduleDate] = useState(() => showDailySchedule ? localCalendarDate(new Date()) : "");
   const createJobAttempts = useRef(new Map<string, IdempotencyAttempt>());
   const refresh = useCallback(async () => {
+    const requestId = collectionRequests.current.next();
     setJobs([]); setEligible([]); setSummary({ total: 0, byStatus: {} }); setHasMore(false);
     if (showDailySchedule && !scheduleDate) { setState("Choose a schedule date to view assigned collections."); return; }
     setState("Loading collection operations…");
-    if (showDailySchedule && !scheduleDate) return;
     try {
       const params = collectionOperationsQuery({ page, pageSize: 50, centreId, scheduleDate, includeScheduleDate: showDateFilter, visitStage: visitStageFilter });
       const [j, e, c, p] = await Promise.all([request(`/api/collections?${params}`), request("/api/collections/eligible"), request("/api/collections/centres"), request("/api/samples/procedures")]);
+      if (!collectionRequests.current.isCurrent(requestId)) return;
       const authorizedCentres = c.response.ok ? (c.body.centres ?? []) as Centre[] : []; setCentres(authorizedCentres); if (initialCentreId && !initialCentreResolved.current) { setCentreId(resolveAuthorizedCentreFilter(authorizedCentres, initialCentreId)); initialCentreResolved.current = true; }
       if (!j.response.ok) { setState(message(j.body, "Collection service unavailable.")); return; }
       setJobs((j.body.jobs ?? []) as Job[]); setHasMore(j.body.hasMore === true); setSummary((j.body.summary ?? { total: 0, byStatus: {} }) as { total: number; byStatus: Record<string, number>; byVisitStage?: { travelling: number; arrived: number; inProgressUnstaged: number } }); setEligible(e.response.ok ? (e.body.eligible ?? []) as Eligible[] : []); setProcedures(p.response.ok ? (p.body.procedures ?? []) as Procedure[] : []); setState("");
-    } catch { setState("Collection service unavailable. Check the local database connection."); }
+    } catch { if (collectionRequests.current.isCurrent(requestId)) setState("Collection service unavailable. Check the local database connection."); }
   }, [centreId, initialCentreId, page, scheduleDate, showDailySchedule, showDateFilter, visitStageFilter]);
-  useEffect(() => { void Promise.resolve().then(refresh); }, [refresh]);
+  useEffect(() => { const sequence = collectionRequests.current; void Promise.resolve().then(refresh); return () => sequence.invalidate(); }, [refresh]);
   async function createJob(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); const formElement = event.currentTarget; const form = new FormData(formElement); const selected = eligible.find((row) => row.orderId === String(form.get("orderId"))); if (!selected || !mayCreateCollectionJobAtCentre(grants, selected.centreId)) return;
     setBusy("create"); setResult("");
@@ -168,10 +170,11 @@ export function AppointmentCollectionHistory({ appointmentId }: { appointmentId:
 
 export function SamplesDirectory({ mode = "all", grants = [], initialCentreId, initialExceptionId }: { mode?: "all" | "receiving" | "handover" | "exceptions"; grants?: readonly PermissionGrant[]; initialCentreId?: string; initialExceptionId?: string }) {
   const [rows, setRows] = useState<Specimen[]>([]); const [procedures, setProcedures] = useState<Procedure[]>([]); const [state, setState] = useState("Loading sample records…"); const [result, setResult] = useState(""); const [busy, setBusy] = useState(""); const [page, setPage] = useState(1); const [hasMore, setHasMore] = useState(false);
+  const sampleRequests = useRef(new RequestSequence());
   const handoverAttempts = useRef(new Map<string, IdempotencyAttempt>());
   const receiveAttempts = useRef(new Map<string, IdempotencyAttempt>());
-  const refresh = useCallback(async () => { try { const params = new URLSearchParams({ view: mode === "all" ? "all" : mode, page: String(page), pageSize: "50" }); if (initialCentreId) params.set("centreId", initialCentreId); if (mode === "exceptions" && initialExceptionId) params.set("exceptionId", initialExceptionId); const [s,p] = await Promise.all([request(`/api/samples?${params}`), request("/api/samples/procedures")]); if (!s.response.ok) { setState(message(s.body, "Sample service unavailable.")); return; } setRows((s.body.specimens ?? []) as Specimen[]); setHasMore(s.body.hasMore === true); setProcedures(p.response.ok ? (p.body.procedures ?? []) as Procedure[] : []); setState(""); } catch { setRows([]); setHasMore(false); setState("Sample service unavailable."); } }, [initialCentreId, initialExceptionId, mode, page]);
-  useEffect(() => { void Promise.resolve().then(refresh); }, [refresh]);
+  const refresh = useCallback(async () => { const requestId = sampleRequests.current.next(); setRows([]); setHasMore(false); setState("Loading sample records…"); try { const params = new URLSearchParams({ view: mode === "all" ? "all" : mode, page: String(page), pageSize: "50" }); if (initialCentreId) params.set("centreId", initialCentreId); if (mode === "exceptions" && initialExceptionId) params.set("exceptionId", initialExceptionId); const [s,p] = await Promise.all([request(`/api/samples?${params}`), request("/api/samples/procedures")]); if (!sampleRequests.current.isCurrent(requestId)) return false; if (!s.response.ok) { setState(message(s.body, "Sample service unavailable.")); return false; } setRows((s.body.specimens ?? []) as Specimen[]); setHasMore(s.body.hasMore === true); setProcedures(p.response.ok ? (p.body.procedures ?? []) as Procedure[] : []); setState(""); return true; } catch { if (sampleRequests.current.isCurrent(requestId)) { setRows([]); setHasMore(false); setState("Sample service unavailable."); } return false; } }, [initialCentreId, initialExceptionId, mode, page]);
+  useEffect(() => { const sequence = sampleRequests.current; void Promise.resolve().then(refresh); return () => sequence.invalidate(); }, [refresh]);
   async function submitHandover(sample: Specimen) {
     const payload = { action: "submit_for_receiving", specimenId: sample.id, expectedVersion: sample.versionNumber, reason: "Submitted to Rudra receiving queue" };
     const requestBody = JSON.stringify(payload);

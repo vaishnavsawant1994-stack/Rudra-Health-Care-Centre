@@ -66,3 +66,9 @@ Proceed to Phase 05 only after completing manual acceptance and resolving the cl
 ## Wave 3 upstream integration boundary — 15 November 2026
 
 The new cross-module integration scenario exercises the collection-job API from a linked appointment/order and verifies that an order backed only by a synthetic, unverified catalogue version remains `PENDING_VERIFICATION`; the API refuses job creation and leaves the collection queue unchanged. Collector assignment, travel/arrival, clinical checklist, collection, specimen handover, physical receiving, branch dispatch and external-lab evidence continue to rely on their existing isolated API/PostgreSQL coverage; they were not chained into this scenario. No clinical step, collection job or lab event was fabricated.
+
+## Collection queue stale-response protection — 22 November 2026
+
+`CollectionOperations`, used by F001 and F002, and `SamplesDirectory`, used by F011 field handover and L003 branch receiving, now use the shared request-sequence guard. Responses for superseded date, stage, page, centre, or route-scope queries cannot replace the currently requested list, and unmounted views invalidate in-flight results. Rows are cleared while a new query loads. This is a UI privacy/reliability safeguard; no job lifecycle, physical receipt, or clinical permission was relaxed.
+
+Verification after this change: request-sequence, collection query, dispatch UI, dispatch queue, collection and sample PostgreSQL integration, and dispatch route tests passed **16/16 across seven files**; ESLint, TypeScript, and the production build passed (406 generated routes). These are automated component-contract/API results, not a new browser acceptance run. F001/F002, F011, and L003 remain partial; browser verification, full accessibility, and visual review remain pending. No persistent database migration or external provider action was performed.
