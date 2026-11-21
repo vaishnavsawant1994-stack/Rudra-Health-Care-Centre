@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { PageTitle } from "@/components/ui/page-title";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -18,6 +19,7 @@ export default function StaffPage() {
 }
 
 async function StaffAccessState({ ready, missing, invalid }: { ready: boolean; missing: string[]; invalid: string[] }) {
+  await connection();
   const database = await checkDatabase();
   const access = ready ? await getAccess() : null;
   if (access?.kind === "allowed") redirect("/staff/workspace");

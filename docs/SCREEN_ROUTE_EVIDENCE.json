@@ -5,7 +5,7 @@
     "path": "docs/SCREEN_SPEC_178.md",
     "sha256": "27c93e0b94a375a252b5ca784c6445eb63299f66285b863249883b097bfa11ed"
   },
-  "repositoryHead": "5e7ccbc0abf9738b55e4d65fbbac055027ee98c0",
+  "repositoryHead": "b128949739e23372526863e959c8935bd89cfa75",
   "evidenceScope": "source-reference and route-mapping only; not functional, QA, visual or acceptance proof",
   "screens": [
     {
@@ -4931,8 +4931,8 @@
         },
         {
           "path": "src/app/staff/page.tsx",
-          "sha256": "0d9865a8cca678821d45c8aea9ffe0e88a75fdde89c038e2d0b0040ede0c603f",
-          "sourceModifiedAt": "2026-11-13T16:11:41.152Z"
+          "sha256": "5cc7afe2efd2b9cb8589109e577df8a53750cde1916a08b0fe9e336a2dee3503",
+          "sourceModifiedAt": "2026-11-19T17:16:56.184Z"
         }
       ]
     },

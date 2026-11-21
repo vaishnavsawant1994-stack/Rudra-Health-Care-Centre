@@ -83,3 +83,20 @@ Phase 04 is **not ready for live integration**. Safe next development is to desi
 ## Wave 3 connected-workflow test — 15 November 2026
 
 The public-enquiry PostgreSQL integration suite now includes one scenario that submits an enquiry, reviews it through the protected centre-scoped queue, converts it to a lead, qualifies that lead, creates a patient record through the explicit staff conversion API, and creates an idempotent appointment request linked to both lead and patient. The same scenario verifies that the appointment status stays `REQUESTED`, its selected home fee remains separate, a wrong-centre appointment create is denied, and the appointment is not described as a reservation or confirmation. This is API/database evidence with mocked access grants and synthetic records, not a browser login or live staff-session acceptance.
+
+## Browser evidence update — 21 November 2026
+
+The isolated synthetic Chromium run completed the following connected reception actions under a real test-issued Better Auth session with TOTP. The disposable database was `rudra_health_test`; no persistent development or production database was used.
+
+- **R002 Patient Search:** search, authorized centre switch, injected 503 and retry, delayed/out-of-order response suppression, unauthorized-centre denial (403), keyboard focus order, and desktop/768px/390px no-overflow checks passed. The prior 14-step Chromium journey evidence is retained in the restricted external test folder.
+- **R013 Leads Inbox/Capture:** created a synthetic lead through the protected staff UI and opened its R014 detail.
+- **R014 Lead Detail:** changed stage to `QUALIFIED`; the protected API refresh returned the persisted stage. Created an internal administrative follow-up; no call or message was sent.
+- **R008 Appointment Request:** created an appointment request for an authorized synthetic patient. Persisted state was `REQUESTED`; this did not reserve capacity or confirm an appointment.
+- **R009 Order Draft:** verified that order creation stays disabled when the centre has no approved catalogue entries. No order was fabricated.
+- **Smoke-only screens:** R001, R007 and R009 route checks returned HTTP 200 in the prior browser run; this is not full-screen acceptance.
+
+The follow-up browser run passed all six recorded workflow steps with no page errors. Production build passed on this source with 406 generated routes; focused lead/appointment tests passed 10/10; inventory regression passed 23/23; ESLint and TypeScript passed. The complete Vitest suite passed 1008/1008 across 252 files on this source. No screen is promoted to technical completion: accessibility is partial, approved-image comparison and Owner/QA acceptance remain pending. Catalogue approval, confirmed appointment capacity and external communications remain gated.
+
+Evidence artifacts remain outside the repository in the restricted `R002_Phase03_Browser_2026-11-19_R1` folder; do not publish synthetic session credentials or environment files.
+
+**Final verification update (21 November 2026):** after the request-time rendering changes, the full Vitest suite passed **1008/1008 across 252 files**. ESLint, TypeScript, production build (406 generated routes), inventory regression (23/23), focused lead/appointment tests (10/10), and the six-step Chromium reception flow also passed.

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
 import { getAccess, type AccessResult } from "@/server/access";
 import type { StaffContext } from "@/server/access";
@@ -37,6 +38,10 @@ export async function resolveAdminAccess(permission: string, lookup: (permission
 }
 
 async function AdminShellContent({ permission, title, children }: AdminShellProps) {
+  // Session validation reads expiring, request-specific Better Auth state. Keep it
+  // out of prerendering so Next's cache-components runtime never evaluates the
+  // session clock as a build-time value.
+  await connection();
   const access = await resolveAdminAccess(permission, getAccess);
   if (access.kind !== "allowed") return <AccessState access={access} title={title} />;
   const has = (permission: string) => access.staff.grants.some((grant) => grant.key === permission);
