@@ -11,7 +11,7 @@ import { resolveAuthorizedCentreFilter } from "@/lib/authorized-centre-selection
 import { localCalendarDate } from "@/server/collection-schedule-policy";
 import { collectionAttemptProgress } from "@/server/sample-policy";
 import type { PermissionGrant } from "@/server/permissions";
-import { mayAuthorizeRecollectionAtCentre, mayCreateCollectionJobAtCentre, mayDispatchSamplesAtCentre, mayManageProceduresAtCentre, mayManageSampleExceptionsAtCentre, mayReceiveSamplesAtCentre, mayRecordVisitAtCentre, mayCollectSampleAtCentre, mayVerifyExternalReceiptAtCentre } from "@/lib/sample-operations-permissions";
+import { mayAuthorizeRecollectionAtCentre, mayCreateCollectionJobAtCentre, mayDispatchSamplesAtCentre, mayListEligibleCollectionJobs, mayManageProceduresAtCentre, mayManageSampleExceptionsAtCentre, mayReceiveSamplesAtCentre, mayRecordVisitAtCentre, mayCollectSampleAtCentre, mayVerifyExternalReceiptAtCentre } from "@/lib/sample-operations-permissions";
 
 type ApiResult = { response: Response; body: Record<string, unknown> };
 type Job = { id: string; jobNumber: string; centreId: string; centreTimeZone?: string; appointmentId: string; orderId: string; patientId: string; patientName?: string; patientLastName?: string; visitType?: string; homeCollectionAddress?: Record<string,string> | null; homeCollectionWindow?: string | null; status: string; visitStage?: "TRAVELLING" | "ARRIVED" | null; assignedStaffId: string | null; scheduledStart: string; scheduledEnd: string; versionNumber: number };
@@ -48,13 +48,13 @@ export function CollectionOperations({ grants = [], showDailySchedule = false, s
     setState("Loading collection operations…");
     try {
       const params = collectionOperationsQuery({ page, pageSize: 50, centreId, scheduleDate, includeScheduleDate: showDateFilter, visitStage: visitStageFilter });
-      const [j, e, c, p] = await Promise.all([request(`/api/collections?${params}`), request("/api/collections/eligible"), request("/api/collections/centres"), request("/api/samples/procedures")]);
+      const [j, e, c, p] = await Promise.all([request(`/api/collections?${params}`), mayListEligibleCollectionJobs(grants) ? request("/api/collections/eligible") : Promise.resolve({ response: new Response(null, { status: 204 }), body: {} as Record<string, unknown> }), request("/api/collections/centres"), request("/api/samples/procedures")]);
       if (!collectionRequests.current.isCurrent(requestId)) return;
       const authorizedCentres = c.response.ok ? (c.body.centres ?? []) as Centre[] : []; setCentres(authorizedCentres); if (initialCentreId && !initialCentreResolved.current) { setCentreId(resolveAuthorizedCentreFilter(authorizedCentres, initialCentreId)); initialCentreResolved.current = true; }
       if (!j.response.ok) { setState(message(j.body, "Collection service unavailable.")); return; }
       setJobs((j.body.jobs ?? []) as Job[]); setHasMore(j.body.hasMore === true); setSummary((j.body.summary ?? { total: 0, byStatus: {} }) as { total: number; byStatus: Record<string, number>; byVisitStage?: { travelling: number; arrived: number; inProgressUnstaged: number } }); setEligible(e.response.ok ? (e.body.eligible ?? []) as Eligible[] : []); setProcedures(p.response.ok ? (p.body.procedures ?? []) as Procedure[] : []); setState("");
     } catch { if (collectionRequests.current.isCurrent(requestId)) setState("Collection service unavailable. Check the local database connection."); }
-  }, [centreId, initialCentreId, page, scheduleDate, showDailySchedule, showDateFilter, visitStageFilter]);
+  }, [centreId, grants, initialCentreId, page, scheduleDate, showDailySchedule, showDateFilter, visitStageFilter]);
   useEffect(() => { const sequence = collectionRequests.current; void Promise.resolve().then(refresh); return () => sequence.invalidate(); }, [refresh]);
   async function createJob(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); const formElement = event.currentTarget; const form = new FormData(formElement); const selected = eligible.find((row) => row.orderId === String(form.get("orderId"))); if (!selected || !mayCreateCollectionJobAtCentre(grants, selected.centreId)) return;

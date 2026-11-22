@@ -5,7 +5,7 @@
     "path": "docs/SCREEN_SPEC_178.md",
     "sha256": "27c93e0b94a375a252b5ca784c6445eb63299f66285b863249883b097bfa11ed"
   },
-  "repositoryHead": "525d70f4a6cd010436261466aa29dd59eda0f2b3",
+  "repositoryHead": "08d8c56e5508bac7f2af3cf07478fd180f44a3ea",
   "evidenceScope": "source-reference and route-mapping only; not functional, QA, visual or acceptance proof",
   "screens": [
     {
@@ -15750,8 +15750,8 @@
         },
         {
           "path": "src/components/samples/sample-workbench.tsx",
-          "sha256": "09d018afd27ca74f455b0d81ff942f722ec3d0cedc5bef7b63231da84c49ebb3",
-          "sourceModifiedAt": "2026-11-21T20:27:43.940Z"
+          "sha256": "285308498e13cb402557b6b3192863e2d0fc9180da3ebc4bb1700938bd6928a0",
+          "sourceModifiedAt": "2026-11-22T06:30:43.164Z"
         }
       ]
     },
