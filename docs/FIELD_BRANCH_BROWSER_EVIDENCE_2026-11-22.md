@@ -30,7 +30,7 @@ Field-only roles were causing an unnecessary request to the assignment-only elig
 
 ## Temporary test infrastructure cleanup
 
-The isolated Next.js server was stopped. The generated `rudra_health_test` schema and external runtime `.env.local` still require cleanup. The exact schema/database/role identity was checked before cleanup; the platform execution policy rejected the schema-drop and file-removal commands. No alternate execution path was used. The persistent development database was not targeted. Remove the disposable schema and runtime credentials through an authorized cleanup channel before reusing this environment.
+The isolated Next.js server was stopped. The generated `rudra_health_test` schema and external runtime artifacts still require cleanup: `app/.env.local`, root `synthetic-accounts.json`, and `app/.playwright-cli` browser state. The exact schema/database/role identity was checked before cleanup; the platform execution policy rejected the schema-drop and file-removal commands. No alternate execution path was used. The persistent development database was not targeted. Remove the disposable schema and these synthetic credentials/session artifacts through an authorized cleanup channel before reusing this environment.
 
 ## Screen dispositions
 
