@@ -58,8 +58,10 @@ jobs:
       - name: Generate disposable CI cryptographic keys
         shell: bash
         run: |
-          node <<'NODE' >> "$GITHUB_ENV"
+          node <<'NODE'
           const { randomBytes } = require('node:crypto');
+          const { appendFileSync } = require('node:fs');
+          const { GITHUB_ENV } = process.env;
           const fieldId = 'ci-field';
           const reportId = 'ci-report';
           const lines = {
@@ -72,7 +74,8 @@ jobs:
           };
           for (const [key, value] of Object.entries(lines)) {
             if (/[\r\n]/.test(value)) throw new Error(`invalid_ci_env_value:${key}`);
-            process.stdout.write(`${key}=${value}\n`);
+            process.stdout.write(`::add-mask::${value}\n`);
+            appendFileSync(GITHUB_ENV, `${key}=${value}\n`);
           }
           NODE
 
@@ -88,7 +91,7 @@ jobs:
         run: npm run lint
 
       - name: Typecheck
-        run: npm run typecheck
+        run: npx next typegen && npm run typecheck
 
       - name: Full automated tests
         run: npm test
