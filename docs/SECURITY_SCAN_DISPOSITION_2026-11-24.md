@@ -1,0 +1,25 @@
+# Historical Gitleaks finding disposition — 24 November 2026
+
+## Scope
+
+Reviewed the nine `generic-api-key` matches reported by the full-history Gitleaks job for PR #11 at commit `6f6a31e565e0005eb2012bdbdc8282e5de7826c9`. The workflow SARIF artifact identifies all nine source locations at historical commit `4efa93ea5792f52dda6209d91124aa7543d2719f`.
+
+## Finding-by-finding review
+
+| # | Historical source location | Finding context | Disposition |
+|---|---|---|---|
+| 1 | `src/app/api/doctors/[id]/route.test.ts:19` | Loopback PATCH test; static UUID-format `idempotency-key` fixture and synthetic centre identifier | Test-only idempotency token; not an API credential |
+| 2 | `src/app/api/doctors/route.test.ts:24` | Loopback POST test; static UUID-format `idempotency-key` fixture and synthetic record fields | Test-only idempotency token; not an API credential |
+| 3 | `src/app/api/business-relationships/[id]/route.test.ts:19` | Loopback PATCH test; static UUID-format `idempotency-key` fixture and explicitly synthetic relationship data | Test-only idempotency token; not an API credential |
+| 4 | `src/app/api/business-relationships/route.test.ts:24` | Loopback POST test; static UUID-format `idempotency-key` fixture and synthetic relationship data | Test-only idempotency token; not an API credential |
+| 5 | `src/app/api/metropolis/status/route.test.ts:20` | Loopback status API test; static UUID-format `idempotency-key` fixture and explicitly synthetic external references | Test-only idempotency token; not a provider credential |
+| 6 | `src/app/api/communications/governance/route.test.ts:9` | Shared policy-test body; static UUID-format `idempotencyKey` fixture and synthetic policy data | Test-only idempotency token; not a messaging-provider credential |
+| 7 | `src/app/api/metropolis/references/route.test.ts:19` | Loopback validation test; static UUID-format `idempotency-key` fixture | Test-only idempotency token; not a provider credential |
+| 8 | `src/app/api/metropolis/references/route.test.ts:28` | Loopback authorization test; static UUID-format `idempotency-key` fixture and explicitly synthetic external references | Test-only idempotency token; not a provider credential |
+| 9 | `src/server/communication-governance-policy.test.ts:5` | Static UUID-format idempotency fixture used by policy unit tests | Test-only idempotency token; not a communications credential |
+
+## Decision and remaining control
+
+For each finding, the source is a test file and the matched value is used as an idempotency key, not as an authentication secret. The surrounding request and data are synthetic and local-test-only. No evidence in these nine locations indicates a live credential or reusable provider key. The values themselves are intentionally omitted from this report.
+
+This is a source-context disposition, not a scanner suppression. No broad rule bypass, path exclusion, or `.gitleaksignore` entry was added. The full-history Gitleaks job remains blocking until the repository's approved security process accepts this disposition or a reviewed history remediation is performed. Do not treat the latest-commit-only push scan as a substitute for the full-history PR scan.

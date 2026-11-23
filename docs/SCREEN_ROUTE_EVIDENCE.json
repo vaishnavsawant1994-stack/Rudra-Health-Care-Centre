@@ -5,7 +5,7 @@
     "path": "docs/SCREEN_SPEC_178.md",
     "sha256": "27c93e0b94a375a252b5ca784c6445eb63299f66285b863249883b097bfa11ed"
   },
-  "repositoryHead": "e483244399c4fdc61c4f9e6009645f270c2b35ea",
+  "repositoryHead": "6f6a31e565e0005eb2012bdbdc8282e5de7826c9",
   "evidenceScope": "source-reference and route-mapping only; not functional, QA, visual or acceptance proof",
   "screens": [
     {
@@ -19781,8 +19781,8 @@
         },
         {
           "path": "src/app/finance/billing/page.tsx",
-          "sha256": "24bb3ca0003f2c0eafc77d11cb54a4e878ac9db4b97765e1062f85992f7aa485",
-          "sourceModifiedAt": "2026-11-14T06:19:17.986Z"
+          "sha256": "49dd5464712cb32713f0068c8341e428ad555af68485c79e42532e6ae436bdca",
+          "sourceModifiedAt": "2026-11-23T18:24:20.688Z"
         },
         {
           "path": "src/components/admin/admin-shell.test.ts",
