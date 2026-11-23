@@ -93,6 +93,19 @@ jobs:
       - name: Typecheck
         run: npx next typegen && npm run typecheck
 
+      - name: Provision no-login application role for migration grants
+        run: |
+          node --input-type=module <<'NODE'
+          import { Client } from 'pg';
+          const client = new Client({ connectionString: process.env.DATABASE_URL });
+          await client.connect();
+          try {
+            await client.query('CREATE ROLE rudra_dev_app NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE');
+          } finally {
+            await client.end();
+          }
+          NODE
+
       - name: Full automated tests
         run: npm test
 
