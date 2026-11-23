@@ -106,6 +106,19 @@ jobs:
           }
           NODE
 
+      - name: Install PostgreSQL 17 client tools for isolated recovery tests
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes ca-certificates curl gnupg
+          sudo install -d /usr/share/postgresql-common/pgdg
+          curl --fail --silent --show-error https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor --yes -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg] https://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo "$VERSION_CODENAME")-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client-17
+          pg_dump --version
+          psql --version
+
       - name: Full automated tests
         run: npm test
 

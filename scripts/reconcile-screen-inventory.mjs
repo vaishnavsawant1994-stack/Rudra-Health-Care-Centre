@@ -266,8 +266,8 @@ function normalizeDynamicRoute(route) {
 }
 
 const allFiles = await walk(path.join(root, "src"));
-const appPages = allFiles.filter((file) => /(?:^|\\)page\.tsx?$/.test(file) && file.includes(`${path.sep}app${path.sep}`));
-const apiRoutes = allFiles.filter((file) => /(?:^|\\)route\.ts$/.test(file) && file.includes(`${path.sep}app${path.sep}api${path.sep}`));
+const appPages = allFiles.filter((file) => /(?:^|[\\/])page\.tsx?$/.test(file) && file.includes(`${path.sep}app${path.sep}`));
+const apiRoutes = allFiles.filter((file) => /(?:^|[\\/])route\.ts$/.test(file) && file.includes(`${path.sep}app${path.sep}api${path.sep}`));
 const testFiles = allFiles.filter((file) => /\.(?:test|spec)\.(?:ts|tsx|js|mjs)$/.test(file));
 
 function rel(file) { return path.relative(root, file).replaceAll(path.sep, "/"); }
