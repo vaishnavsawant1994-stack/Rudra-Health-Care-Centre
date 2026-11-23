@@ -40,7 +40,6 @@ jobs:
       BETTER_AUTH_URL: http://localhost:3000
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
       PUBLIC_SITE_URL: http://localhost:3000
-      REPORT_PRIVATE_STORAGE_DIR: ${{ runner.temp }}/rudra-health-os-private-reports
 
     steps:
       - name: Checkout PR head
@@ -76,6 +75,10 @@ jobs:
             process.stdout.write(`${key}=${value}\n`);
           }
           NODE
+
+      - name: Configure private CI document storage
+        shell: bash
+        run: echo "REPORT_PRIVATE_STORAGE_DIR=$RUNNER_TEMP/rudra-health-os-private-reports" >> "$GITHUB_ENV"
 
       - name: Install locked dependencies
         id: install
