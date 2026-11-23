@@ -21,7 +21,8 @@ Field-only roles were causing an unnecessary request to the assignment-only elig
 
 - Focused permission/query tests: 8 passed.
 - Inventory reconciliation tests: 23 passed.
-- Full Vitest run: 992 passed, 18 skipped, 3 PostgreSQL integration suites failed during setup/teardown timeouts/deadlock under parallel load. The three affected suites passed when rerun serially: 23/23. The full suite is therefore not reported as green.
+- Initial full Vitest run, while the isolated app server was still active: 992 passed, 18 skipped, and 3 PostgreSQL integration suites failed during setup/teardown timeouts/deadlock. The three affected suites passed when rerun serially: 23/23.
+- Controlled full Vitest rerun with the isolated app server stopped: **1010/1010 passed across 252 files**. The repo already configures one Vitest worker and the database suites use unique disposable schemas. This evidence points to test-database contention from running the browser server concurrently; no assertion or timeout was weakened.
 - ESLint: passed.
 - TypeScript: passed.
 - Production build: passed; 406 generated routes.
@@ -30,7 +31,7 @@ Field-only roles were causing an unnecessary request to the assignment-only elig
 
 ## Temporary test infrastructure cleanup
 
-The isolated Next.js server was stopped. The generated `rudra_health_test` schema and external runtime artifacts still require cleanup: `app/.env.local`, root `synthetic-accounts.json`, and `app/.playwright-cli` browser state. The exact schema/database/role identity was checked before cleanup; the platform execution policy rejected the schema-drop and file-removal commands. No alternate execution path was used. The persistent development database was not targeted. Remove the disposable schema and these synthetic credentials/session artifacts through an authorized cleanup channel before reusing this environment.
+The isolated Next.js server was stopped. The generated `rudra_health_test` schema and external runtime artifacts still require cleanup: `app/.env.local`, root `synthetic-accounts.json`, and `app/.playwright-cli` browser state. The exact schema/database/role identity was checked before cleanup; the platform execution policy rejected the schema-drop and file-removal commands. No alternate execution path was used, and the contaminated runtime was not reused for the controlled full-suite run. The persistent development database was not targeted. Remove the disposable schema and these synthetic credentials/session artifacts through an authorized cleanup channel before reusing this environment.
 
 ## Screen dispositions
 
