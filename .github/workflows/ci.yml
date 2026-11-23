@@ -1,0 +1,161 @@
+name: Rudra Health OS CI
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master, codex/rudra-review-8055f48]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rudra-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, typecheck, tests, build, inventory
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_USER: rudra_ci
+          POSTGRES_PASSWORD: rudra_ci_test_only
+          POSTGRES_DB: rudra_health_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rudra_ci -d rudra_health_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://rudra_ci:rudra_ci_test_only@127.0.0.1:5432/rudra_health_test
+      DATABASE_TEST_URL: postgresql://rudra_ci:rudra_ci_test_only@127.0.0.1:5432/rudra_health_test
+      DATABASE_MIGRATION_URL: postgresql://rudra_ci:rudra_ci_test_only@127.0.0.1:5432/rudra_health_test
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      PUBLIC_SITE_URL: http://localhost:3000
+      REPORT_PRIVATE_STORAGE_DIR: ${{ runner.temp }}/rudra-health-os-private-reports
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          package-manager-cache: false
+
+      - name: Generate disposable CI cryptographic keys
+        shell: bash
+        run: |
+          node <<'NODE' >> "$GITHUB_ENV"
+          const { randomBytes } = require('node:crypto');
+          const fieldId = 'ci-field';
+          const reportId = 'ci-report';
+          const lines = {
+            BETTER_AUTH_SECRET: randomBytes(48).toString('base64url'),
+            RUDRA_FIELD_ACTIVE_KEY_ID: fieldId,
+            RUDRA_FIELD_ENCRYPTION_KEYS: JSON.stringify({ [fieldId]: randomBytes(32).toString('base64') }),
+            RUDRA_BLIND_INDEX_KEY: randomBytes(32).toString('base64'),
+            REPORT_DOCUMENT_ACTIVE_KEY_ID: reportId,
+            REPORT_DOCUMENT_ENCRYPTION_KEYS: JSON.stringify({ [reportId]: randomBytes(32).toString('base64') }),
+          };
+          for (const [key, value] of Object.entries(lines)) {
+            if (/[\r\n]/.test(value)) throw new Error(`invalid_ci_env_value:${key}`);
+            process.stdout.write(`${key}=${value}\n`);
+          }
+          NODE
+
+      - name: Install locked dependencies
+        id: install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Full automated tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+
+      - name: Reconcile canonical screen inventory
+        run: node scripts/reconcile-screen-inventory.mjs
+
+  dependency-audit:
+    name: Dependency vulnerability audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          package-manager-cache: false
+
+      - name: Install locked dependencies
+        id: install
+        run: npm ci
+
+      - name: Audit all dependencies
+        id: audit_all
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+      - name: Audit production dependencies
+        id: audit_production
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Fail if either dependency audit reports high severity
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        env:
+          AUDIT_ALL_OUTCOME: ${{ steps.audit_all.outcome }}
+          AUDIT_PRODUCTION_OUTCOME: ${{ steps.audit_production.outcome }}
+        run: |
+          if [[ "$AUDIT_ALL_OUTCOME" != "success" || "$AUDIT_PRODUCTION_OUTCOME" != "success" ]]; then
+            echo "Dependency audit findings are blocking; review the audit output and remediate or document through an explicit security decision."
+            exit 1
+          fi
+
+  secret-scan:
+    name: Full-history secret scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout complete PR history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Scan history for secrets
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
