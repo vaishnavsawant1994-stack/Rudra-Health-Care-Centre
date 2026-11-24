@@ -92,6 +92,14 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   expect((await authorizedCentreLoad).status()).toBe(200);
 
   await expect(orderPicker.locator("option")).toHaveCount(7);
+  for (const width of [1280, 768, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.getByRole("heading", { name: "Billing work queue" })).toBeVisible();
+    await expect(orderPicker).toBeVisible();
+    await expect(page.getByRole("button", { name: "Create charge snapshots" })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `billing queue horizontal overflow at ${width}px`).toBe(true);
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
   const expectedCharges = new Map<string, { choice: string; amount: string | null }>([
     [orderIds[0], { choice: "75", amount: "7500" }],
     [orderIds[1], { choice: "99", amount: "9900" }],
@@ -128,6 +136,8 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
               c.snapshot->'items'->0->>'catalogueVersionId' AS catalogue_version_id,
               c.snapshot->'items'->0->>'catalogueItemId' AS catalogue_item_id,
               c.snapshot->'items'->0->>'verificationStatus' AS verification_status,
+              c.snapshot->'items'->0->>'priceSourceReference' AS price_source_reference,
+              c.snapshot->'items'->0->>'effectiveFrom' AS effective_from,
               c.snapshot->>'invoiceIssuer' AS invoice_issuer,c.snapshot->>'legalInvoice' AS legal_invoice
        FROM finance_charges c WHERE c.order_id = ANY($1::uuid[]) AND c.state='ACTIVE' ORDER BY c.order_id,c.charge_type`,
       [orderIds],
@@ -139,7 +149,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
       expect(charges.filter((charge) => charge.charge_type === "DIAGNOSTIC")).toHaveLength(1);
       const diagnostic = charges.find((charge) => charge.charge_type === "DIAGNOSTIC");
       expect(diagnostic?.amount).toBe("45000");
-      expect(diagnostic).toMatchObject({ catalogue_version_id: catalogueVersionIds[orderIds.indexOf(orderId)], catalogue_item_id: catalogueItemIds[orderIds.indexOf(orderId)], verification_status: "SYNTHETIC", invoice_issuer: "PENDING", legal_invoice: "false" });
+      expect(diagnostic).toMatchObject({ catalogue_version_id: catalogueVersionIds[orderIds.indexOf(orderId)], catalogue_item_id: catalogueItemIds[orderIds.indexOf(orderId)], verification_status: "SYNTHETIC", price_source_reference: expect.stringContaining("TEST ONLY synthetic catalogue fixture"), effective_from: "2026-01-01", invoice_issuer: "PENDING", legal_invoice: "false" });
       const home = charges.find((charge) => charge.charge_type === "HOME_COLLECTION");
       if (expected.amount === null) expect(home).toBeUndefined();
       else expect(home).toMatchObject({ amount: expected.amount, choice: expected.choice });

@@ -94,8 +94,8 @@ async function createOrder(client, centreId, suffix, homeCharge) {
      VALUES($1,$2,$3,'TEST',$4,1,$5)`, [itemId, ids.organizationId, centreId, itemCode, ids.staffId],
   );
   await client.query(
-    `INSERT INTO diagnostic_catalogue_versions(id,organization_id,centre_id,catalogue_item_id,version_number,display_name,verification_status,price_amount,currency,source_type,created_by_staff_id)
-     VALUES($1,$2,$3,$4,1,$5,'SYNTHETIC',450.00,'INR','SYNTHETIC_TEST',$6)`, [versionId, ids.organizationId, centreId, itemId, `Synthetic test ${suffix}`, ids.staffId],
+    `INSERT INTO diagnostic_catalogue_versions(id,organization_id,centre_id,catalogue_item_id,version_number,display_name,verification_status,price_amount,currency,price_source_reference,effective_from,source_type,created_by_staff_id)
+     VALUES($1,$2,$3,$4,1,$5,'SYNTHETIC',450.00,'INR',$6,'2026-01-01','SYNTHETIC_TEST',$7)`, [versionId, ids.organizationId, centreId, itemId, `Synthetic test ${suffix}`, `TEST ONLY synthetic catalogue fixture ${versionId.slice(0, 8)}`, ids.staffId],
   );
   await client.query(
     `INSERT INTO diagnostic_orders(id,organization_id,centre_id,order_number,patient_id,appointment_id,status,idempotency_key,request_hash,currency,total_amount,created_by_staff_id,confirmed_by_staff_id,confirmed_at)
@@ -103,9 +103,9 @@ async function createOrder(client, centreId, suffix, homeCharge) {
     [orderId, ids.organizationId, centreId, `SYN-ORD-${suffix}-${orderId.slice(0, 6)}`, patientId, appointmentId, randomUUID(), randomBytes(32).toString("hex"), ids.staffId],
   );
   await client.query(
-    `INSERT INTO diagnostic_order_items(id,organization_id,centre_id,order_id,catalogue_item_id,catalogue_version_id,service_type,service_code,display_name,verification_status,price_amount,currency,service_snapshot)
-     VALUES($1,$2,$3,$4,$5,$6,'TEST',$7,$8,'SYNTHETIC',450.00,'INR',$9::jsonb)`,
-    [randomUUID(), ids.organizationId, centreId, orderId, itemId, versionId, itemCode, `Synthetic test ${suffix}`, JSON.stringify({ source: "browser_fixture", synthetic: true })],
+    `INSERT INTO diagnostic_order_items(id,organization_id,centre_id,order_id,catalogue_item_id,catalogue_version_id,service_type,service_code,display_name,verification_status,price_amount,currency,price_source_reference,effective_from,service_snapshot)
+     VALUES($1,$2,$3,$4,$5,$6,'TEST',$7,$8,'SYNTHETIC',450.00,'INR',$9,'2026-01-01',$10::jsonb)`,
+    [randomUUID(), ids.organizationId, centreId, orderId, itemId, versionId, itemCode, `Synthetic test ${suffix}`, `TEST ONLY synthetic catalogue fixture ${versionId.slice(0, 8)}`, JSON.stringify({ source: "browser_fixture", synthetic: true })],
   );
   return { orderId, appointmentId, catalogueItemId: itemId, catalogueVersionId: versionId };
 }
