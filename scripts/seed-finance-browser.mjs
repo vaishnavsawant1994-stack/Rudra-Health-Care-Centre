@@ -29,6 +29,16 @@ function patientIndex(field, value) {
   const normalized = field === "email" ? value.trim().toLowerCase() : value.trim().replace(/[ ()-]/g, "");
   return createHmac("sha256", blindIndexKey).update(`rudra:patient-contact-index:v1:${field}:`).update(normalized).digest("hex");
 }
+function encryptOperational(value, recordType, recordId, centreId) {
+  const keyId = process.env.RUDRA_FIELD_ACTIVE_KEY_ID;
+  const key = Buffer.from(JSON.parse(process.env.RUDRA_FIELD_ENCRYPTION_KEYS ?? "{}")[keyId] ?? "", "base64");
+  if (!keyId || key.length !== 32) throw new Error("operational_encryption_key_unavailable");
+  const nonce = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", key, nonce);
+  cipher.setAAD(Buffer.from(`rudra:operational-data:v1:${ids.organizationId}:${centreId}:${recordType}:${recordId}:${keyId}`));
+  const ciphertext = Buffer.concat([cipher.update(JSON.stringify(value), "utf8"), cipher.final()]);
+  return `v1.${keyId}.${nonce.toString("base64url")}.${cipher.getAuthTag().toString("base64url")}.${ciphertext.toString("base64url")}`;
+}
 function nameIndex(kind, value) {
   const normalized = value.normalize("NFC").trim().replace(/\s+/g, " ").toLocaleLowerCase("en-US");
   return createHmac("sha256", blindIndexKey).update(`rudra:patient-name-index:v1:${kind}:`).update(normalized).digest("hex");
@@ -62,13 +72,18 @@ async function createOrder(client, centreId, suffix, homeCharge) {
   const orderId = randomUUID();
   const now = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
   const isHome = Boolean(homeCharge);
+  const privateDataCiphertext = encryptOperational({
+    homeCollectionAddress: isHome ? { line1: "Synthetic test location", city: "Test City", state: "Test State", postalCode: "000000" } : null,
+    collectionInstructions: null,
+    communicationEvidenceReference: null,
+    homeChargeReason: isHome ? homeCharge.reason ?? null : null,
+  }, "appointment", appointmentId, centreId);
   await client.query(
-    `INSERT INTO appointments(id,organization_id,centre_id,appointment_number,patient_id,booking_source,visit_type,scheduled_at,time_zone,status,home_collection_address,home_collection_window,home_charge_choice,home_charge_rupees,home_charge_reason,created_by_staff_id,idempotency_key,request_hash)
-     VALUES($1,$2,$3,$4,$5,'STAFF',$6,$7,'Asia/Kolkata','REQUESTED',$8::jsonb,$9,$10,$11,$12,$13,$14,$15)`,
+    `INSERT INTO appointments(id,organization_id,centre_id,appointment_number,patient_id,booking_source,visit_type,scheduled_at,time_zone,status,home_collection_window,home_charge_choice,home_charge_rupees,private_data_ciphertext,created_by_staff_id,idempotency_key,request_hash)
+     VALUES($1,$2,$3,$4,$5,'STAFF',$6,$7,'Asia/Kolkata','REQUESTED',$8,$9,$10,$11,$12,$13,$14)`,
     [appointmentId, ids.organizationId, centreId, `SYN-AP-${suffix}-${appointmentId.slice(0, 6)}`, patientId, isHome ? "HOME_COLLECTION" : "CENTRE", now,
-      isHome ? JSON.stringify({ line1: "Synthetic test location", city: "Test City", state: "Test State", postalCode: "000000" }) : null,
       isHome ? "Synthetic test window" : null,
-      isHome ? homeCharge.choice : null, isHome ? homeCharge.rupees : null, isHome ? homeCharge.reason ?? null : null,
+      isHome ? homeCharge.choice : null, isHome ? homeCharge.rupees : null, privateDataCiphertext,
       ids.staffId, randomUUID(), randomBytes(32).toString("hex")],
   );
   const itemId = randomUUID();
