@@ -7,7 +7,7 @@ const { Pool } = pg;
 const databaseUrl = process.env.DATABASE_TEST_URL;
 if (process.env.CI !== "true" || !databaseUrl) throw new Error("finance_browser_fixtures_require_github_ci_database");
 const parsedDatabaseUrl = new URL(databaseUrl);
-if (!["127.0.0.1", "localhost"].includes(parsedDatabaseUrl.hostname) || decodeURIComponent(parsedDatabaseUrl.pathname) !== "/rudra_health_browser_test") {
+if (!["127.0.0.1", "localhost"].includes(parsedDatabaseUrl.hostname) || decodeURIComponent(parsedDatabaseUrl.pathname) !== "/rudra_health_test") {
   throw new Error("finance_browser_fixtures_refuse_non_disposable_database");
 }
 

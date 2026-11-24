@@ -137,21 +137,21 @@ jobs:
         image: postgres:17-bookworm
         env:
           POSTGRES_USER: rudra_browser
-          POSTGRES_DB: rudra_health_browser_test
+          POSTGRES_DB: rudra_health_test
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U rudra_browser -d rudra_health_browser_test"
+          --health-cmd "pg_isready -U rudra_browser -d rudra_health_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
     permissions:
       contents: read
     env:
-      DATABASE_URL: postgresql://rudra_browser@127.0.0.1:5432/rudra_health_browser_test
-      DATABASE_TEST_URL: postgresql://rudra_browser@127.0.0.1:5432/rudra_health_browser_test
-      DATABASE_MIGRATION_URL: postgresql://rudra_browser@127.0.0.1:5432/rudra_health_browser_test
+      DATABASE_URL: postgresql://rudra_browser@127.0.0.1:5432/rudra_health_test
+      DATABASE_TEST_URL: postgresql://rudra_browser@127.0.0.1:5432/rudra_health_test
+      DATABASE_MIGRATION_URL: postgresql://rudra_browser@127.0.0.1:5432/rudra_health_test
       BETTER_AUTH_URL: http://127.0.0.1:3000
       NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
       PUBLIC_SITE_URL: http://127.0.0.1:3000
