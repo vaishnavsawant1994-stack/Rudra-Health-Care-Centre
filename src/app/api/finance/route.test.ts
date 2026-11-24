@@ -29,6 +29,15 @@ describe("finance API boundary",()=>{
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({error:"invalid_centre"});
   });
+  it("rejects malformed order filters before issuing financial SQL",async()=>{
+    getApiAccess.mockResolvedValueOnce({staff:{organizationId:"org-synthetic",staffUserId:"staff-synthetic",grants:[{key:"finance.read",centreId:null}]},response:null});
+    const execute=vi.fn();
+    getDb.mockReturnValue({execute});
+    const response=await GET(new Request("http://localhost/api/finance?orderId=not-a-uuid"));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({error:"invalid_order"});
+    expect(execute).not.toHaveBeenCalled();
+  });
   it("marks the authorized financial overview private and non-cacheable",async()=>{
     getApiAccess.mockResolvedValueOnce({staff:{organizationId:"org-synthetic",staffUserId:"staff-synthetic",grants:[{key:"finance.read",centreId:null}]},response:null});
     const execute=vi.fn().mockResolvedValue({rows:[]});

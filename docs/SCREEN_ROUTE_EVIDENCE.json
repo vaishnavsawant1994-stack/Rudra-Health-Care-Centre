@@ -5,7 +5,7 @@
     "path": "docs/SCREEN_SPEC_178.md",
     "sha256": "27c93e0b94a375a252b5ca784c6445eb63299f66285b863249883b097bfa11ed"
   },
-  "repositoryHead": "6f6a31e565e0005eb2012bdbdc8282e5de7826c9",
+  "repositoryHead": "4e3829fd20cd4b311b8e6fe9937d9b6dfd0a7fd6",
   "evidenceScope": "source-reference and route-mapping only; not functional, QA, visual or acceptance proof",
   "screens": [
     {
@@ -19766,13 +19766,13 @@
         },
         {
           "path": "src/app/api/finance/route.test.ts",
-          "sha256": "5acb55c3525e3cd41faa640b7bb830c21faa0042503cdfd3a6dd03a9b682e5b1",
-          "sourceModifiedAt": "2026-11-03T18:58:25.583Z"
+          "sha256": "d78f97afb8d8e46a05bfab30183643a2843d9b5148c8ef93ac6181f575a8e4bd",
+          "sourceModifiedAt": "2026-11-24T02:59:25.129Z"
         },
         {
           "path": "src/app/api/finance/route.ts",
-          "sha256": "a2fd2a3f763bc2e553123cff1c0a4fe84c4bc5b936894e6848bc1f5f79235680",
-          "sourceModifiedAt": "2026-11-03T18:58:25.577Z"
+          "sha256": "104f04ddadb3990348b00f3460270adb210386e518823f2748ec3c903105ec55",
+          "sourceModifiedAt": "2026-11-24T02:41:57.537Z"
         },
         {
           "path": "src/app/api/public/enquiries/route.db.integration.test.ts",
@@ -19817,13 +19817,13 @@
         },
         {
           "path": "src/app/api/finance/route.test.ts",
-          "sha256": "5acb55c3525e3cd41faa640b7bb830c21faa0042503cdfd3a6dd03a9b682e5b1",
-          "sourceModifiedAt": "2026-11-03T18:58:25.583Z"
+          "sha256": "d78f97afb8d8e46a05bfab30183643a2843d9b5148c8ef93ac6181f575a8e4bd",
+          "sourceModifiedAt": "2026-11-24T02:59:25.129Z"
         },
         {
           "path": "src/app/api/finance/route.ts",
-          "sha256": "a2fd2a3f763bc2e553123cff1c0a4fe84c4bc5b936894e6848bc1f5f79235680",
-          "sourceModifiedAt": "2026-11-03T18:58:25.577Z"
+          "sha256": "104f04ddadb3990348b00f3460270adb210386e518823f2748ec3c903105ec55",
+          "sourceModifiedAt": "2026-11-24T02:41:57.537Z"
         },
         {
           "path": "src/app/api/public/enquiries/route.db.integration.test.ts",
@@ -19832,8 +19832,8 @@
         },
         {
           "path": "src/app/finance/orders/[id]/bill/page.tsx",
-          "sha256": "08d8f1424f7d50fed874fb68a021ec06215733271ee4f816efca647ace2ad0c4",
-          "sourceModifiedAt": "2026-11-14T06:59:13.281Z"
+          "sha256": "bfc21a906ccd106f8829e359d87c9f261023794c32407e591b90747ddac8758e",
+          "sourceModifiedAt": "2026-11-24T02:56:40.993Z"
         },
         {
           "path": "src/components/admin/admin-shell.test.ts",
@@ -19868,13 +19868,13 @@
         },
         {
           "path": "src/app/api/finance/route.test.ts",
-          "sha256": "5acb55c3525e3cd41faa640b7bb830c21faa0042503cdfd3a6dd03a9b682e5b1",
-          "sourceModifiedAt": "2026-11-03T18:58:25.583Z"
+          "sha256": "d78f97afb8d8e46a05bfab30183643a2843d9b5148c8ef93ac6181f575a8e4bd",
+          "sourceModifiedAt": "2026-11-24T02:59:25.129Z"
         },
         {
           "path": "src/app/api/finance/route.ts",
-          "sha256": "a2fd2a3f763bc2e553123cff1c0a4fe84c4bc5b936894e6848bc1f5f79235680",
-          "sourceModifiedAt": "2026-11-03T18:58:25.577Z"
+          "sha256": "104f04ddadb3990348b00f3460270adb210386e518823f2748ec3c903105ec55",
+          "sourceModifiedAt": "2026-11-24T02:41:57.537Z"
         },
         {
           "path": "src/app/finance/quotes/[id]/page.tsx",
@@ -19914,13 +19914,13 @@
         },
         {
           "path": "src/app/api/finance/route.test.ts",
-          "sha256": "5acb55c3525e3cd41faa640b7bb830c21faa0042503cdfd3a6dd03a9b682e5b1",
-          "sourceModifiedAt": "2026-11-03T18:58:25.583Z"
+          "sha256": "d78f97afb8d8e46a05bfab30183643a2843d9b5148c8ef93ac6181f575a8e4bd",
+          "sourceModifiedAt": "2026-11-24T02:59:25.129Z"
         },
         {
           "path": "src/app/api/finance/route.ts",
-          "sha256": "a2fd2a3f763bc2e553123cff1c0a4fe84c4bc5b936894e6848bc1f5f79235680",
-          "sourceModifiedAt": "2026-11-03T18:58:25.577Z"
+          "sha256": "104f04ddadb3990348b00f3460270adb210386e518823f2748ec3c903105ec55",
+          "sourceModifiedAt": "2026-11-24T02:41:57.537Z"
         },
         {
           "path": "src/app/finance/invoices/[id]/page.tsx",
@@ -19960,13 +19960,13 @@
         },
         {
           "path": "src/app/api/finance/route.test.ts",
-          "sha256": "5acb55c3525e3cd41faa640b7bb830c21faa0042503cdfd3a6dd03a9b682e5b1",
-          "sourceModifiedAt": "2026-11-03T18:58:25.583Z"
+          "sha256": "d78f97afb8d8e46a05bfab30183643a2843d9b5148c8ef93ac6181f575a8e4bd",
+          "sourceModifiedAt": "2026-11-24T02:59:25.129Z"
         },
         {
           "path": "src/app/api/finance/route.ts",
-          "sha256": "a2fd2a3f763bc2e553123cff1c0a4fe84c4bc5b936894e6848bc1f5f79235680",
-          "sourceModifiedAt": "2026-11-03T18:58:25.577Z"
+          "sha256": "104f04ddadb3990348b00f3460270adb210386e518823f2748ec3c903105ec55",
+          "sourceModifiedAt": "2026-11-24T02:41:57.537Z"
         },
         {
           "path": "src/app/api/public/enquiries/route.db.integration.test.ts",
@@ -20011,13 +20011,13 @@
         },
         {
           "path": "src/app/api/finance/route.test.ts",
-          "sha256": "5acb55c3525e3cd41faa640b7bb830c21faa0042503cdfd3a6dd03a9b682e5b1",
-          "sourceModifiedAt": "2026-11-03T18:58:25.583Z"
+          "sha256": "d78f97afb8d8e46a05bfab30183643a2843d9b5148c8ef93ac6181f575a8e4bd",
+          "sourceModifiedAt": "2026-11-24T02:59:25.129Z"
         },
         {
           "path": "src/app/api/finance/route.ts",
-          "sha256": "a2fd2a3f763bc2e553123cff1c0a4fe84c4bc5b936894e6848bc1f5f79235680",
-          "sourceModifiedAt": "2026-11-03T18:58:25.577Z"
+          "sha256": "104f04ddadb3990348b00f3460270adb210386e518823f2748ec3c903105ec55",
+          "sourceModifiedAt": "2026-11-24T02:41:57.537Z"
         },
         {
           "path": "src/app/api/public/enquiries/route.db.integration.test.ts",
@@ -20062,13 +20062,13 @@
         },
         {
           "path": "src/app/api/finance/route.test.ts",
-          "sha256": "5acb55c3525e3cd41faa640b7bb830c21faa0042503cdfd3a6dd03a9b682e5b1",
-          "sourceModifiedAt": "2026-11-03T18:58:25.583Z"
+          "sha256": "d78f97afb8d8e46a05bfab30183643a2843d9b5148c8ef93ac6181f575a8e4bd",
+          "sourceModifiedAt": "2026-11-24T02:59:25.129Z"
         },
         {
           "path": "src/app/api/finance/route.ts",
-          "sha256": "a2fd2a3f763bc2e553123cff1c0a4fe84c4bc5b936894e6848bc1f5f79235680",
-          "sourceModifiedAt": "2026-11-03T18:58:25.577Z"
+          "sha256": "104f04ddadb3990348b00f3460270adb210386e518823f2748ec3c903105ec55",
+          "sourceModifiedAt": "2026-11-24T02:41:57.537Z"
         },
         {
           "path": "src/app/finance/refunds/page.tsx",
@@ -20108,13 +20108,13 @@
         },
         {
           "path": "src/app/api/finance/route.test.ts",
-          "sha256": "5acb55c3525e3cd41faa640b7bb830c21faa0042503cdfd3a6dd03a9b682e5b1",
-          "sourceModifiedAt": "2026-11-03T18:58:25.583Z"
+          "sha256": "d78f97afb8d8e46a05bfab30183643a2843d9b5148c8ef93ac6181f575a8e4bd",
+          "sourceModifiedAt": "2026-11-24T02:59:25.129Z"
         },
         {
           "path": "src/app/api/finance/route.ts",
-          "sha256": "a2fd2a3f763bc2e553123cff1c0a4fe84c4bc5b936894e6848bc1f5f79235680",
-          "sourceModifiedAt": "2026-11-03T18:58:25.577Z"
+          "sha256": "104f04ddadb3990348b00f3460270adb210386e518823f2748ec3c903105ec55",
+          "sourceModifiedAt": "2026-11-24T02:41:57.537Z"
         },
         {
           "path": "src/app/api/public/enquiries/route.db.integration.test.ts",
@@ -20159,13 +20159,13 @@
         },
         {
           "path": "src/app/api/finance/route.test.ts",
-          "sha256": "5acb55c3525e3cd41faa640b7bb830c21faa0042503cdfd3a6dd03a9b682e5b1",
-          "sourceModifiedAt": "2026-11-03T18:58:25.583Z"
+          "sha256": "d78f97afb8d8e46a05bfab30183643a2843d9b5148c8ef93ac6181f575a8e4bd",
+          "sourceModifiedAt": "2026-11-24T02:59:25.129Z"
         },
         {
           "path": "src/app/api/finance/route.ts",
-          "sha256": "a2fd2a3f763bc2e553123cff1c0a4fe84c4bc5b936894e6848bc1f5f79235680",
-          "sourceModifiedAt": "2026-11-03T18:58:25.577Z"
+          "sha256": "104f04ddadb3990348b00f3460270adb210386e518823f2748ec3c903105ec55",
+          "sourceModifiedAt": "2026-11-24T02:41:57.537Z"
         },
         {
           "path": "src/app/api/public/enquiries/route.db.integration.test.ts",
@@ -20210,13 +20210,13 @@
         },
         {
           "path": "src/app/api/finance/route.test.ts",
-          "sha256": "5acb55c3525e3cd41faa640b7bb830c21faa0042503cdfd3a6dd03a9b682e5b1",
-          "sourceModifiedAt": "2026-11-03T18:58:25.583Z"
+          "sha256": "d78f97afb8d8e46a05bfab30183643a2843d9b5148c8ef93ac6181f575a8e4bd",
+          "sourceModifiedAt": "2026-11-24T02:59:25.129Z"
         },
         {
           "path": "src/app/api/finance/route.ts",
-          "sha256": "a2fd2a3f763bc2e553123cff1c0a4fe84c4bc5b936894e6848bc1f5f79235680",
-          "sourceModifiedAt": "2026-11-03T18:58:25.577Z"
+          "sha256": "104f04ddadb3990348b00f3460270adb210386e518823f2748ec3c903105ec55",
+          "sourceModifiedAt": "2026-11-24T02:41:57.537Z"
         },
         {
           "path": "src/app/finance/metropolis/page.tsx",
@@ -20256,13 +20256,13 @@
         },
         {
           "path": "src/app/api/finance/route.test.ts",
-          "sha256": "5acb55c3525e3cd41faa640b7bb830c21faa0042503cdfd3a6dd03a9b682e5b1",
-          "sourceModifiedAt": "2026-11-03T18:58:25.583Z"
+          "sha256": "d78f97afb8d8e46a05bfab30183643a2843d9b5148c8ef93ac6181f575a8e4bd",
+          "sourceModifiedAt": "2026-11-24T02:59:25.129Z"
         },
         {
           "path": "src/app/api/finance/route.ts",
-          "sha256": "a2fd2a3f763bc2e553123cff1c0a4fe84c4bc5b936894e6848bc1f5f79235680",
-          "sourceModifiedAt": "2026-11-03T18:58:25.577Z"
+          "sha256": "104f04ddadb3990348b00f3460270adb210386e518823f2748ec3c903105ec55",
+          "sourceModifiedAt": "2026-11-24T02:41:57.537Z"
         },
         {
           "path": "src/app/api/public/enquiries/route.db.integration.test.ts",
@@ -20307,13 +20307,13 @@
         },
         {
           "path": "src/app/api/finance/route.test.ts",
-          "sha256": "5acb55c3525e3cd41faa640b7bb830c21faa0042503cdfd3a6dd03a9b682e5b1",
-          "sourceModifiedAt": "2026-11-03T18:58:25.583Z"
+          "sha256": "d78f97afb8d8e46a05bfab30183643a2843d9b5148c8ef93ac6181f575a8e4bd",
+          "sourceModifiedAt": "2026-11-24T02:59:25.129Z"
         },
         {
           "path": "src/app/api/finance/route.ts",
-          "sha256": "a2fd2a3f763bc2e553123cff1c0a4fe84c4bc5b936894e6848bc1f5f79235680",
-          "sourceModifiedAt": "2026-11-03T18:58:25.577Z"
+          "sha256": "104f04ddadb3990348b00f3460270adb210386e518823f2748ec3c903105ec55",
+          "sourceModifiedAt": "2026-11-24T02:41:57.537Z"
         },
         {
           "path": "src/app/finance/partner-billing/page.tsx",
@@ -20353,13 +20353,13 @@
         },
         {
           "path": "src/app/api/finance/route.test.ts",
-          "sha256": "5acb55c3525e3cd41faa640b7bb830c21faa0042503cdfd3a6dd03a9b682e5b1",
-          "sourceModifiedAt": "2026-11-03T18:58:25.583Z"
+          "sha256": "d78f97afb8d8e46a05bfab30183643a2843d9b5148c8ef93ac6181f575a8e4bd",
+          "sourceModifiedAt": "2026-11-24T02:59:25.129Z"
         },
         {
           "path": "src/app/api/finance/route.ts",
-          "sha256": "a2fd2a3f763bc2e553123cff1c0a4fe84c4bc5b936894e6848bc1f5f79235680",
-          "sourceModifiedAt": "2026-11-03T18:58:25.577Z"
+          "sha256": "104f04ddadb3990348b00f3460270adb210386e518823f2748ec3c903105ec55",
+          "sourceModifiedAt": "2026-11-24T02:41:57.537Z"
         },
         {
           "path": "src/app/finance/expenses/page.tsx",
@@ -20399,13 +20399,13 @@
         },
         {
           "path": "src/app/api/finance/route.test.ts",
-          "sha256": "5acb55c3525e3cd41faa640b7bb830c21faa0042503cdfd3a6dd03a9b682e5b1",
-          "sourceModifiedAt": "2026-11-03T18:58:25.583Z"
+          "sha256": "d78f97afb8d8e46a05bfab30183643a2843d9b5148c8ef93ac6181f575a8e4bd",
+          "sourceModifiedAt": "2026-11-24T02:59:25.129Z"
         },
         {
           "path": "src/app/api/finance/route.ts",
-          "sha256": "a2fd2a3f763bc2e553123cff1c0a4fe84c4bc5b936894e6848bc1f5f79235680",
-          "sourceModifiedAt": "2026-11-03T18:58:25.577Z"
+          "sha256": "104f04ddadb3990348b00f3460270adb210386e518823f2748ec3c903105ec55",
+          "sourceModifiedAt": "2026-11-24T02:41:57.537Z"
         },
         {
           "path": "src/app/finance/analytics/page.tsx",
@@ -20445,13 +20445,13 @@
         },
         {
           "path": "src/app/api/finance/route.test.ts",
-          "sha256": "5acb55c3525e3cd41faa640b7bb830c21faa0042503cdfd3a6dd03a9b682e5b1",
-          "sourceModifiedAt": "2026-11-03T18:58:25.583Z"
+          "sha256": "d78f97afb8d8e46a05bfab30183643a2843d9b5148c8ef93ac6181f575a8e4bd",
+          "sourceModifiedAt": "2026-11-24T02:59:25.129Z"
         },
         {
           "path": "src/app/api/finance/route.ts",
-          "sha256": "a2fd2a3f763bc2e553123cff1c0a4fe84c4bc5b936894e6848bc1f5f79235680",
-          "sourceModifiedAt": "2026-11-03T18:58:25.577Z"
+          "sha256": "104f04ddadb3990348b00f3460270adb210386e518823f2748ec3c903105ec55",
+          "sourceModifiedAt": "2026-11-24T02:41:57.537Z"
         },
         {
           "path": "src/app/api/public/enquiries/route.db.integration.test.ts",
