@@ -128,6 +128,100 @@ jobs:
       - name: Reconcile canonical screen inventory
         run: node scripts/reconcile-screen-inventory.mjs
 
+  finance-browser-acceptance:
+    name: Finance browser acceptance (synthetic)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_USER: rudra_browser
+          POSTGRES_DB: rudra_health_browser_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rudra_browser -d rudra_health_browser_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    permissions:
+      contents: read
+    env:
+      DATABASE_URL: postgresql://rudra_browser@127.0.0.1:5432/rudra_health_browser_test
+      DATABASE_TEST_URL: postgresql://rudra_browser@127.0.0.1:5432/rudra_health_browser_test
+      DATABASE_MIGRATION_URL: postgresql://rudra_browser@127.0.0.1:5432/rudra_health_browser_test
+      BETTER_AUTH_URL: http://127.0.0.1:3000
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+      PUBLIC_SITE_URL: http://127.0.0.1:3000
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          package-manager-cache: false
+
+      - name: Generate disposable browser-test encryption keys
+        shell: bash
+        run: |
+          node <<'NODE'
+          const { randomBytes } = require('node:crypto');
+          const { appendFileSync } = require('node:fs');
+          const fieldId = 'ci-finance-field';
+          const reportId = 'ci-finance-report';
+          const values = {
+            BETTER_AUTH_SECRET: randomBytes(48).toString('base64url'),
+            RUDRA_FIELD_ACTIVE_KEY_ID: fieldId,
+            RUDRA_FIELD_ENCRYPTION_KEYS: JSON.stringify({ [fieldId]: randomBytes(32).toString('base64') }),
+            RUDRA_BLIND_INDEX_KEY: randomBytes(32).toString('base64'),
+            REPORT_DOCUMENT_ACTIVE_KEY_ID: reportId,
+            REPORT_DOCUMENT_ENCRYPTION_KEYS: JSON.stringify({ [reportId]: randomBytes(32).toString('base64') }),
+            REPORT_PRIVATE_STORAGE_DIR: `${process.env.RUNNER_TEMP}/rudra-finance-browser-private`,
+          };
+          for (const [key, value] of Object.entries(values)) {
+            if (/[\r\n]/.test(value)) throw new Error(`invalid_ci_env_value:${key}`);
+            process.stdout.write(`::add-mask::${value}\n`);
+            appendFileSync(process.env.GITHUB_ENV, `${key}=${value}\n`);
+          }
+          NODE
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Install Chromium and operating-system dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Provision no-login application role
+        run: |
+          node --input-type=module <<'NODE'
+          import { Client } from 'pg';
+          const client = new Client({ connectionString: process.env.DATABASE_URL });
+          await client.connect();
+          try { await client.query('CREATE ROLE rudra_dev_app NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE'); }
+          finally { await client.end(); }
+          NODE
+
+      - name: Apply migrations to disposable browser database
+        run: npm run db:migrate
+
+      - name: Create synthetic finance operator and order fixtures
+        run: npm run seed:browser:finance
+
+      - name: Build production application
+        run: npm run build
+
+      - name: Run authenticated finance browser journey
+        run: npm run test:browser:finance
+
   dependency-audit:
     name: Dependency vulnerability audit
     runs-on: ubuntu-24.04

@@ -700,7 +700,7 @@ describe("public enquiry PostgreSQL integration", () => {
     expect(await duplicateCharges.json()).toMatchObject({ result: { chargeIds: [] } });
     const chargeRows = await pool.query("SELECT id,charge_type,amount_minor::text AS amount_minor,snapshot FROM finance_charges WHERE (order_id=$1 OR appointment_id=$2) AND state='ACTIVE' ORDER BY charge_type", [order.id, appointment.id]);
     expect(chargeRows.rows.map((row) => ({ type: row.charge_type, amount: row.amount_minor }))).toEqual([{ type: "DIAGNOSTIC", amount: "45000" }, { type: "HOME_COLLECTION", amount: "9900" }]);
-    expect(chargeRows.rows[0].snapshot).toMatchObject({ source: "confirmed_order_snapshot", currency: "INR", invoiceIssuer: "PENDING", legalInvoice: false, items: [{ priceAmount: "450.00", priceSourceReference: expect.stringContaining("TEST ONLY") }] });
+    expect(chargeRows.rows[0].snapshot).toMatchObject({ source: "confirmed_order_snapshot", currency: "INR", invoiceIssuer: "PENDING", legalInvoice: false, items: [{ catalogueItemId, catalogueVersionId, verificationStatus: "VERIFIED", priceAmount: "450.00", priceSourceReference: expect.stringContaining("TEST ONLY") }] });
     expect(chargeRows.rows[1].snapshot).toMatchObject({ source: "appointment_charge_snapshot", choice: "99", currency: "INR", invoiceIssuer: "PENDING", legalInvoice: false });
     const diagnosticChargeId = chargeRows.rows.find((row) => row.charge_type === "DIAGNOSTIC")!.id as string;
     const openedReconciliation = await financePost({ action: "open_reconciliation", centreId, openingCashMinor: 0 });
