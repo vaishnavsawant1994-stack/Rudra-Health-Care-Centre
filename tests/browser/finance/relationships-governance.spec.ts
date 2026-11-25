@@ -128,8 +128,9 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     await revisitPlanForm.getByRole("button", { name: "Plan visit" }).click();
     expect((await secondPlanResponsePromise).status()).toBe(201);
     await expect(page.getByRole("row").filter({ hasText: "RELATIONSHIP" })).toHaveCount(2);
-    const cancellationRow = page.getByRole("row").filter({ hasText: "RELATIONSHIP" }).last();
-    await expect(cancellationRow.getByRole("button", { name: "Cancel planned visit" })).toBeVisible();
+    const cancellationButton = page.getByRole("button", { name: "Cancel planned visit" });
+    await expect(cancellationButton).toBeVisible();
+    const cancellationRow = cancellationButton.locator("xpath=ancestor::tr");
     await cancellationRow.locator('input[name="reason"]').fill("Synthetic schedule change for browser verification.");
     const cancellationResponsePromise = page.waitForResponse(response => response.request().method() === "POST" && response.url().endsWith("/visits"));
     await cancellationRow.getByRole("button", { name: "Cancel planned visit" }).click();
