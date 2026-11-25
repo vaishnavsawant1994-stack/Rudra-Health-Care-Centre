@@ -142,7 +142,9 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
               c.snapshot->'items'->0->>'priceSourceReference' AS price_source_reference,
               c.snapshot->'items'->0->>'effectiveFrom' AS effective_from,
               c.snapshot->>'invoiceIssuer' AS invoice_issuer,c.snapshot->>'legalInvoice' AS legal_invoice
-       FROM finance_charges c WHERE c.order_id = ANY($1::uuid[]) AND c.state='ACTIVE' ORDER BY c.order_id,c.charge_type`,
+       FROM finance_charges c JOIN diagnostic_orders o
+         ON (c.order_id=o.id OR c.appointment_id=o.appointment_id)
+       WHERE o.id = ANY($1::uuid[]) AND c.state='ACTIVE' ORDER BY o.id,c.charge_type`,
       [orderIds],
     );
     const byOrder = new Map<string, Array<{ charge_type: string; amount: string; choice: string | null }>>();
