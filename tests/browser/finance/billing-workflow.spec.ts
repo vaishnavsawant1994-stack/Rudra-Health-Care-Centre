@@ -251,7 +251,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.getByRole("textbox", { name: "First name" }).fill("Synthetic");
   await page.getByRole("textbox", { name: "Last name" }).fill("Corporate Contact");
-  await page.getByRole("textbox", { name: "Phone" }).fill("+15555550123");
+  await page.getByRole("textbox", { name: "Phone", exact: true }).fill("+15555550123");
   const attributedLeadResponsePromise = page.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith("/api/leads"));
   await page.getByRole("button", { name: "Create attributed lead" }).click();
   const attributedLeadResponse = await attributedLeadResponsePromise;
