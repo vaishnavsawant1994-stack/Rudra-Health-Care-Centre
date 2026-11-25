@@ -116,7 +116,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
     const actionResponse = page.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith("/api/finance"));
     await submit.press("Enter");
     const savedResponse = await actionResponse;
-    const savedBody = await savedResponse.clone().json().catch(() => ({}));
+    const savedBody = await savedResponse.json().catch(() => ({}));
     expect(savedResponse.status(), JSON.stringify(savedBody)).toBe(201);
     if (orderId === orderIds[0]) {
       await expect(page.getByRole("status").first()).toContainText("Saved successfully, but financial data could not be refreshed");
