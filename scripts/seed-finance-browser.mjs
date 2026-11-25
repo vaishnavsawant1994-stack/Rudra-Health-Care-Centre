@@ -12,7 +12,7 @@ if (!["127.0.0.1", "localhost"].includes(parsedDatabaseUrl.hostname) || decodeUR
 }
 
 const pool = new Pool({ connectionString: databaseUrl, max: 1, application_name: "rudra-finance-browser-fixtures" });
-const ids = { organizationId: randomUUID(), authorizedCentreId: randomUUID(), readOnlyCentreId: randomUUID(), deniedCentreId: randomUUID(), staffId: randomUUID(), authUserId: randomUUID(), readRoleId: randomUUID(), createRoleId: randomUUID(), paymentRoleId: randomUUID(), reconcileRoleId: randomUUID(), closerStaffId: randomUUID(), closerAuthUserId: randomUUID(), closerReadRoleId: randomUUID(), closerReconcileRoleId: randomUUID(), quoteLeadId: randomUUID(), crossCentreLeadId: randomUUID(), quoteCatalogueItemId: randomUUID(), quoteCatalogueVersionId: randomUUID() };
+const ids = { organizationId: randomUUID(), authorizedCentreId: randomUUID(), readOnlyCentreId: randomUUID(), deniedCentreId: randomUUID(), staffId: randomUUID(), authUserId: randomUUID(), relationshipStaffId: randomUUID(), relationshipAuthUserId: randomUUID(), readRoleId: randomUUID(), createRoleId: randomUUID(), relationshipReadRoleId: randomUUID(), paymentRoleId: randomUUID(), reconcileRoleId: randomUUID(), closerStaffId: randomUUID(), closerAuthUserId: randomUUID(), closerReadRoleId: randomUUID(), closerReconcileRoleId: randomUUID(), quoteLeadId: randomUUID(), crossCentreLeadId: randomUUID(), quoteCatalogueItemId: randomUUID(), quoteCatalogueVersionId: randomUUID() };
 const patientKeyId = process.env.RUDRA_FIELD_ACTIVE_KEY_ID;
 const patientKey = Buffer.from(JSON.parse(process.env.RUDRA_FIELD_ENCRYPTION_KEYS ?? "{}")[patientKeyId] ?? "", "base64");
 const blindIndexKey = Buffer.from(process.env.RUDRA_BLIND_INDEX_KEY ?? "", "base64");
@@ -135,8 +135,11 @@ try {
   const email = `finance-browser-${randomUUID().slice(0, 8)}@invalid.test`;
   const closerPassword = `Synthetic-CI-${randomBytes(24).toString("base64url")}!`;
   const closerEmail = `finance-closer-${randomUUID().slice(0, 8)}@invalid.test`;
+  const relationshipPassword = `Synthetic-CI-${randomBytes(24).toString("base64url")}!`;
+  const relationshipEmail = `relationship-browser-${randomUUID().slice(0, 8)}@invalid.test`;
   const passwordHash = await hashPassword(password);
   const closerPasswordHash = await hashPassword(closerPassword);
+  const relationshipPasswordHash = await hashPassword(relationshipPassword);
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -148,18 +151,24 @@ try {
     await client.query('INSERT INTO "user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)', [ids.authUserId, "Synthetic Finance Operator", email]);
     await client.query('INSERT INTO "account"(id,"accountId","providerId","userId",password) VALUES($1,$2,\'credential\',$3,$4)', [randomUUID(), ids.authUserId, ids.authUserId, passwordHash]);
     await client.query("INSERT INTO staff_users(id,auth_user_id,organization_id,staff_code,display_name,status) VALUES($1,$2,$3,$4,$5,'ACTIVE')", [ids.staffId, ids.authUserId, ids.organizationId, `CI-${ids.staffId.slice(0, 8)}`, "Synthetic Finance Operator"]);
+    await client.query('INSERT INTO "user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)', [ids.relationshipAuthUserId, "Synthetic Relationship Operator", relationshipEmail]);
+    await client.query('INSERT INTO "account"(id,"accountId","providerId","userId",password) VALUES($1,$2,\'credential\',$3,$4)', [randomUUID(), ids.relationshipAuthUserId, ids.relationshipAuthUserId, relationshipPasswordHash]);
+    await client.query("INSERT INTO staff_users(id,auth_user_id,organization_id,staff_code,display_name,status) VALUES($1,$2,$3,$4,$5,'ACTIVE')", [ids.relationshipStaffId, ids.relationshipAuthUserId, ids.organizationId, `REL-${ids.relationshipStaffId.slice(0, 8)}`, "Synthetic Relationship Operator"]);
     await client.query('INSERT INTO "user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)', [ids.closerAuthUserId, "Synthetic Finance Closer", closerEmail]);
     await client.query('INSERT INTO "account"(id,"accountId","providerId","userId",password) VALUES($1,$2,\'credential\',$3,$4)', [randomUUID(), ids.closerAuthUserId, ids.closerAuthUserId, closerPasswordHash]);
     await client.query("INSERT INTO staff_users(id,auth_user_id,organization_id,staff_code,display_name,status) VALUES($1,$2,$3,$4,$5,'ACTIVE')", [ids.closerStaffId, ids.closerAuthUserId, ids.organizationId, `CI-${ids.closerStaffId.slice(0, 8)}`, "Synthetic Finance Closer"]);
     await client.query("INSERT INTO roles(id,organization_id,key,name,scope) VALUES($1,$2,$3,'Synthetic finance read','CENTRE'),($4,$2,$5,'Synthetic finance charge creator','CENTRE'),($6,$2,$7,'Synthetic payment recorder','CENTRE'),($8,$2,$9,'Synthetic reconciliation operator','CENTRE'),($10,$2,$11,'Synthetic closer read','CENTRE'),($12,$2,$13,'Synthetic closer reconciliation','CENTRE')", [ids.readRoleId, ids.organizationId, `finance_read_${ids.staffId.slice(0, 8)}`, ids.createRoleId, `finance_create_${ids.staffId.slice(0, 8)}`, ids.paymentRoleId, `finance_payment_${ids.staffId.slice(0, 8)}`, ids.reconcileRoleId, `finance_reconcile_${ids.staffId.slice(0, 8)}`, ids.closerReadRoleId, `finance_read_${ids.closerStaffId.slice(0, 8)}`, ids.closerReconcileRoleId, `finance_reconcile_${ids.closerStaffId.slice(0, 8)}`]);
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='finance.read' ON CONFLICT DO NOTHING", [ids.readRoleId]);
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key IN ('finance.charge.create','appointments.home_charge.manage') ON CONFLICT DO NOTHING", [ids.createRoleId]);
-    await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key IN ('leads.read','leads.create','catalogue.read','orders.create','corporate.read','corporate.manage','partners.read','partners.manage','doctors.read','doctors.manage','tasks.create','workspace.read') ON CONFLICT DO NOTHING", [ids.createRoleId]);
+    await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key IN ('leads.read','leads.create','leads.followups.manage','catalogue.read','orders.create','corporate.read','corporate.manage','partners.read','partners.manage','doctors.read','doctors.manage','tasks.create','tasks.read','workspace.read') ON CONFLICT DO NOTHING", [ids.createRoleId]);
+    await client.query("INSERT INTO roles(id,organization_id,key,name,scope) VALUES($1,$2,$3,'Synthetic relationship read','CENTRE')", [ids.relationshipReadRoleId, ids.organizationId, `relationship_read_${ids.staffId.slice(0, 8)}`]);
+    await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key IN ('doctors.read','corporate.read','partners.read') ON CONFLICT DO NOTHING", [ids.relationshipReadRoleId]);
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='finance.payment.record' ON CONFLICT DO NOTHING", [ids.paymentRoleId]);
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='finance.reconcile' ON CONFLICT DO NOTHING", [ids.reconcileRoleId]);
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='finance.read' ON CONFLICT DO NOTHING", [ids.closerReadRoleId]);
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='finance.reconcile' ON CONFLICT DO NOTHING", [ids.closerReconcileRoleId]);
-    await client.query("INSERT INTO staff_role_assignments(organization_id,staff_user_id,role_id,centre_id) VALUES($1,$2,$3,$4),($1,$2,$3,$5),($1,$2,$6,$4),($1,$2,$7,$4),($1,$2,$8,$4),($1,$9,$10,$4),($1,$9,$11,$4)", [ids.organizationId, ids.staffId, ids.readRoleId, ids.authorizedCentreId, ids.readOnlyCentreId, ids.createRoleId, ids.paymentRoleId, ids.reconcileRoleId, ids.closerStaffId, ids.closerReadRoleId, ids.closerReconcileRoleId]);
+    await client.query("INSERT INTO staff_role_assignments(organization_id,staff_user_id,role_id,centre_id) VALUES($1,$2,$3,$4),($1,$2,$3,$5),($1,$2,$6,$4),($1,$2,$7,$4),($1,$2,$8,$4),($1,$2,$9,$5),($1,$10,$11,$4),($1,$10,$12,$4)", [ids.organizationId, ids.staffId, ids.readRoleId, ids.authorizedCentreId, ids.readOnlyCentreId, ids.createRoleId, ids.paymentRoleId, ids.reconcileRoleId, ids.relationshipReadRoleId, ids.closerStaffId, ids.closerReadRoleId, ids.closerReconcileRoleId]);
+    await client.query("INSERT INTO staff_role_assignments(organization_id,staff_user_id,role_id,centre_id) VALUES($1,$2,$3,$4),($1,$2,$5,$6)", [ids.organizationId, ids.relationshipStaffId, ids.createRoleId, ids.authorizedCentreId, ids.relationshipReadRoleId, ids.readOnlyCentreId]);
     const homeFeeFixtures = [
       ["75", 75, null], ["99", 99, null], ["150", 150, null], ["CUSTOM", 125, "Authorized synthetic custom fee"], ["WAIVED", 0, "Synthetic fee waiver test"], ["ZERO", 0, null],
     ];
@@ -193,6 +202,8 @@ try {
     const lines = {
       FINANCE_BROWSER_EMAIL: email,
       FINANCE_BROWSER_PASSWORD: password,
+      RELATIONSHIP_BROWSER_EMAIL: relationshipEmail,
+      RELATIONSHIP_BROWSER_PASSWORD: relationshipPassword,
       FINANCE_BROWSER_CLOSER_EMAIL: closerEmail,
       FINANCE_BROWSER_CLOSER_PASSWORD: closerPassword,
       FINANCE_BROWSER_CENTRE_ID: ids.authorizedCentreId,
