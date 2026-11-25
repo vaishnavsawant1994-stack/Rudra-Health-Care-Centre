@@ -49,17 +49,18 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
 
     // C004: create and close a staff-recorded visit, then use the protected task handoff.
     await page.goto("/relationships/doctor-visits");
-    await expect(page.getByRole("heading", { name: "Plan a doctor relationship visit" })).toBeVisible();
-    const visitCentre = page.getByLabel("Centre", { exact: true });
+    const visitSection = page.locator("section").filter({ has: page.getByRole("heading", { name: "Plan a doctor relationship visit" }) });
+    await expect(visitSection).toBeVisible();
+    const visitCentre = visitSection.getByRole("combobox").nth(0);
     await visitCentre.focus();
     await page.keyboard.press("Tab");
-    const doctorPicker = page.getByLabel("Doctor", { exact: true });
+    const doctorPicker = visitSection.getByRole("combobox").nth(1);
     await expect(doctorPicker).toBeFocused();
     await visitCentre.selectOption(centreId!);
     const doctorId = await doctorPicker.locator("option").filter({ hasText: "Synthetic Browser Doctor" }).getAttribute("value");
     expect(doctorId).toBeTruthy();
     await doctorPicker.selectOption(doctorId!);
-    const planForm = page.locator("form").filter({ has: page.getByRole("button", { name: "Plan visit" }) });
+    const planForm = visitSection.locator("form").filter({ has: page.getByRole("button", { name: "Plan visit" }) });
     const plannedLocal = new Date(Date.now() + 24 * 60 * 60_000 - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
     await planForm.getByLabel("Planned date and time").fill(plannedLocal);
     await planForm.getByLabel("Operational agenda").fill("Synthetic relationship check-in; no patient or clinical information.");
