@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type Centre = { id: string; name: string; code: string };
 type Campaign = { id: string; centreId: string; campaignCode: string; name: string; description: string | null; channel: string; status: string; startsOn: string | null; endsOn: string | null; versionNumber: number; attributedLeadCount: number; convertedLeadCount: number; conversionRatePercent: number | null; appointmentCount: number; activeAppointmentCount: number; confirmedAppointmentCount: number };
@@ -20,18 +20,27 @@ export function CampaignWorkbench({ managedCentreIds = [], attributionOnly = fal
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<{ campaignId: string; events: CampaignEvent[] } | null>(null);
   const [editing, setEditing] = useState<Campaign | null>(null);
+  const latestCampaignRequest = useRef(0);
   const canManage = managedCentreIds.includes("*") || managedCentreIds.includes(centreId);
-  const load = useCallback(async (id: string, selectedFrom = appliedFrom, selectedTo = appliedTo) => {
+  const load = useCallback(async (id: string, selectedFrom = "", selectedTo = "") => {
     if (!id) return;
+    const requestNumber = ++latestCampaignRequest.current;
     const params = new URLSearchParams({ centreId: id });
     if (selectedFrom && selectedTo) { params.set("from", selectedFrom); params.set("to", selectedTo); }
-    const response = await fetch(`/api/marketing/campaigns?${params}`, { cache: "no-store" });
-    const body = await response.json() as { campaigns?: Campaign[]; attributionWindow?: CampaignWindow; error?: string };
-    if (!response.ok) throw new Error(body.error ?? "unavailable");
-    setCampaigns(body.campaigns ?? []);
-    setWindowSummary(body.attributionWindow ?? null);
-    setMessage(body.campaigns?.length ? "" : "No internal campaigns recorded for this centre.");
-  }, [appliedFrom, appliedTo]);
+    setMessage("Loading campaign records…");
+    try {
+      const response = await fetch(`/api/marketing/campaigns?${params}`, { cache: "no-store" });
+      const body = await response.json() as { campaigns?: Campaign[]; attributionWindow?: CampaignWindow; error?: string };
+      if (requestNumber !== latestCampaignRequest.current) return;
+      if (!response.ok) throw new Error(body.error ?? "unavailable");
+      setCampaigns(body.campaigns ?? []);
+      setWindowSummary(body.attributionWindow ?? null);
+      setMessage(body.campaigns?.length ? "" : "No internal campaigns recorded for this centre.");
+    } catch (error) {
+      if (requestNumber !== latestCampaignRequest.current) return;
+      throw error;
+    }
+  }, []);
 
   useEffect(() => {
     let live = true;
@@ -41,12 +50,12 @@ export function CampaignWorkbench({ managedCentreIds = [], attributionOnly = fal
       setCentres(rows);
       setCentreId(rows[0]?.id ?? "");
       if (!rows.length) setMessage("No authorized centre is available for campaign management.");
-      else try { await load(rows[0].id); } catch { if (live) setMessage("Campaign records could not be loaded."); }
+      else try { await load(rows[0].id, "", ""); } catch { if (live) setMessage("Campaign records could not be loaded."); }
     }).catch(() => { if (live) setMessage("Campaign workspace is unavailable."); });
     return () => { live = false; };
   }, [load]);
 
-  async function refresh() { try { await load(centreId); } catch { setMessage("Campaign records could not be refreshed."); } }
+  async function refresh() { try { await load(centreId, appliedFrom, appliedTo); } catch { setMessage("Campaign records could not be refreshed."); } }
   async function applyWindow(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (Boolean(from) !== Boolean(to)) { setMessage("Enter both dates, or clear both to show all recorded leads."); return; }
@@ -55,6 +64,7 @@ export function CampaignWorkbench({ managedCentreIds = [], attributionOnly = fal
     setMessage("Loading campaign attribution for the selected period…");
     setAppliedFrom(from);
     setAppliedTo(to);
+    void load(centreId, from, to).catch(() => setMessage("Campaign records could not be loaded."));
   }
   async function create(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); const form = event.currentTarget; setBusy(true); setMessage("");
@@ -92,7 +102,7 @@ export function CampaignWorkbench({ managedCentreIds = [], attributionOnly = fal
   }
 
   return <section className="admin-card">
-    <div className="task-toolbar"><div><h2>{attributionOnly ? "Recorded lead attribution and booking funnel" : "Internal campaign directory and attribution"}</h2><p>{attributionOnly ? "Counts are sourced from recorded campaign-linked leads, conversions and appointments in this centre. They do not establish payment, completed diagnostics or patient acquisition." : "Track centre campaigns and connect them to CRM enquiries. An active campaign means internal attribution tracking only. This workspace does not publish content, send communications or spend advertising funds."}</p></div>{centres.length > 0 && <label>Centre<select value={centreId} onChange={(event) => { setCentreId(event.target.value); void load(event.target.value).catch(() => setMessage("Campaign records could not be loaded.")); }}>{centres.map((centre) => <option key={centre.id} value={centre.id}>{centre.name} ({centre.code})</option>)}</select></label>}</div>
+    <div className="task-toolbar"><div><h2>{attributionOnly ? "Recorded lead attribution and booking funnel" : "Internal campaign directory and attribution"}</h2><p>{attributionOnly ? "Counts are sourced from recorded campaign-linked leads, conversions and appointments in this centre. They do not establish payment, completed diagnostics or patient acquisition." : "Track centre campaigns and connect them to CRM enquiries. An active campaign means internal attribution tracking only. This workspace does not publish content, send communications or spend advertising funds."}</p></div>{centres.length > 0 && <label>Centre<select value={centreId} onChange={(event) => { const nextCentreId = event.target.value; setCampaigns([]); setWindowSummary(null); setMessage("Loading campaign records…"); setCentreId(nextCentreId); void load(nextCentreId, appliedFrom, appliedTo).catch(() => setMessage("Campaign records could not be loaded.")); }}>{centres.map((centre) => <option key={centre.id} value={centre.id}>{centre.name} ({centre.code})</option>)}</select></label>}</div>
     {!canManage && <p className="muted">Read-only campaign attribution access.</p>}
     {message && <p role="status">{message}</p>}
     {centreId && <form className="admin-form" onSubmit={(event) => void applyWindow(event)} aria-label="Campaign attribution date filter"><h3>Attribution period</h3><label>Lead created from<input type="date" value={from} onChange={(event) => setFrom(event.target.value)} /></label><label>Lead created through<input type="date" value={to} onChange={(event) => setTo(event.target.value)} /></label><button className="button button-secondary" disabled={busy}>Apply period</button><p className="muted">{windowSummary?.basis === "LEAD_CREATED_COHORT" ? `Counts leads created ${windowSummary.from} through ${windowSummary.to}; conversions recorded later for those leads are included.` : "Showing all recorded attributed leads and their recorded conversions."}</p></form>}

@@ -356,6 +356,69 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     const otherCentreGovernance = await page.request.get(`/api/communications/governance?centreId=${encodeURIComponent(deniedCentreId!)}&recordKind=KNOWLEDGE`);
     expect(otherCentreGovernance.status()).toBe(200);
     expect((await otherCentreGovernance.json() as { records: unknown[] }).records).toHaveLength(0);
+
+    // Phase 09: keep internal campaign data scoped to the selected centre even
+    // when the preceding centre's slower response arrives after a centre switch.
+    let delayedCentreRequestSeen = false;
+    let markDelayedCentreRequest!: () => void;
+    const delayedCentreRequest = new Promise<void>(resolve => { markDelayedCentreRequest = resolve; });
+    await page.route(url => url.pathname === "/api/marketing/campaigns" && url.searchParams.get("centreId") === centreId, async route => {
+      if (!delayedCentreRequestSeen) {
+        delayedCentreRequestSeen = true;
+        markDelayedCentreRequest();
+        await new Promise(resolve => setTimeout(resolve, 1_200));
+      }
+      await route.continue();
+    });
+    await page.goto("/marketing/campaigns");
+    await expect(page.getByRole("heading", { name: "Internal campaign directory and attribution" })).toBeVisible();
+    const campaignCentre = page.locator(".task-toolbar").getByLabel("Centre");
+    if (await campaignCentre.inputValue() !== centreId) await campaignCentre.selectOption(centreId!);
+    await delayedCentreRequest;
+    const otherCentreCampaignResponse = page.waitForResponse(response => {
+      const url = new URL(response.url());
+      return url.pathname === "/api/marketing/campaigns" && url.searchParams.get("centreId") === readOnlyCentreId && response.status() === 200;
+    });
+    await campaignCentre.selectOption(readOnlyCentreId!);
+    await otherCentreCampaignResponse;
+    await expect(page.getByText("No internal campaigns recorded for this centre.")).toBeVisible();
+    await page.waitForTimeout(1_300);
+    await expect(campaignCentre).toHaveValue(readOnlyCentreId!);
+    await expect(page.getByText("No internal campaigns recorded for this centre.")).toBeVisible();
+    await expect(page.getByRole("row")).toHaveCount(1);
+    await page.unroute(url => url.pathname === "/api/marketing/campaigns" && url.searchParams.get("centreId") === centreId);
+
+    const authorizedCampaignResponse = page.waitForResponse(response => {
+      const url = new URL(response.url());
+      return url.pathname === "/api/marketing/campaigns" && url.searchParams.get("centreId") === centreId && response.status() === 200;
+    });
+    await campaignCentre.selectOption(centreId!);
+    await authorizedCampaignResponse;
+    const campaignForm = page.locator("form").filter({ has: page.getByRole("heading", { name: "Create campaign record" }) });
+    const campaignCode = `SYN${randomUUID().slice(0, 8)}`;
+    const campaignName = `Synthetic internal attribution ${randomUUID().slice(0, 8)}`;
+    await campaignForm.getByLabel("Campaign code").fill(campaignCode);
+    await campaignForm.getByLabel("Name", { exact: true }).fill(campaignName);
+    await campaignForm.getByLabel("Internal description").fill("Synthetic internal lead attribution only.");
+    await campaignForm.getByLabel("Channel").selectOption("REFERRAL");
+    const campaignCreate = page.waitForResponse(response => response.request().method() === "POST" && response.url().endsWith("/api/marketing/campaigns"));
+    await campaignForm.getByRole("button", { name: "Save draft" }).click();
+    const campaignCreateResponse = await campaignCreate;
+    expect(campaignCreateResponse.status()).toBe(201);
+    await expect(page.getByText("Campaign saved as an internal draft. No publication, messaging or advertising spend occurred.")).toBeVisible();
+    const campaignRow = page.getByRole("row").filter({ hasText: campaignCode });
+    await expect(campaignRow).toContainText(campaignName);
+    const storedCampaign = await workflowPool.query("SELECT centre_id,status,private_data_ciphertext FROM marketing_campaigns WHERE campaign_code=$1", [campaignCode]);
+    expect(storedCampaign.rowCount).toBe(1);
+    expect(storedCampaign.rows[0]).toMatchObject({ centre_id: centreId, status: "DRAFT" });
+    expect(storedCampaign.rows[0].private_data_ciphertext).not.toContain(campaignName);
+
+    page.once("dialog", dialog => dialog.accept("Synthetic internal tracking validation."));
+    const activateCampaign = page.waitForResponse(response => response.request().method() === "PATCH" && response.url().includes("/api/marketing/campaigns/"));
+    await campaignRow.getByRole("button", { name: "Activate tracking" }).click();
+    expect((await activateCampaign).status()).toBe(200);
+    await expect(page.getByRole("row").filter({ hasText: campaignCode })).toContainText("ACTIVE");
+    await expect(page.getByText("This workspace does not publish content, send communications or spend advertising funds.")).toBeVisible();
   } finally {
     await workflowPool.end();
   }

@@ -5,7 +5,7 @@
     "path": "docs/SCREEN_SPEC_178.md",
     "sha256": "27c93e0b94a375a252b5ca784c6445eb63299f66285b863249883b097bfa11ed"
   },
-  "repositoryHead": "e0aaa9d1091a655ff004da6bc1939cf96526df31",
+  "repositoryHead": "0a081439ffe2210eb24c07381c9028cf1090f232",
   "evidenceScope": "source-reference and route-mapping only; not functional, QA, visual or acceptance proof",
   "screens": [
     {
@@ -23427,8 +23427,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.tsx",
-          "sha256": "fa6e2212a3ad34b335143764374ace2f7e8e6006a6f780df63709ee950891049",
-          "sourceModifiedAt": "2026-11-14T16:00:55.299Z"
+          "sha256": "e270e5ce1754190f89b4b371327c30938339b573b793b843dd31b10243c68077",
+          "sourceModifiedAt": "2026-11-25T21:48:08.813Z"
         }
       ]
     },
