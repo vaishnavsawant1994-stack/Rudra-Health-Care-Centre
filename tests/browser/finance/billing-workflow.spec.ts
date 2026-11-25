@@ -343,6 +343,41 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   expect(partnerStorage.rowCount).toBe(1);
   expect(partnerStorage.rows[0].private_data_ciphertext).not.toContain("Synthetic Browser Referral Partner");
 
+  // C001-C003: internal doctor directory, unverified relationship intake and scoped profile.
+  await page.goto("/relationships/doctors");
+  await expect(page.getByRole("heading", { name: "Doctor CRM Directory" })).toBeVisible();
+  await page.getByRole("link", { name: "Start doctor onboarding" }).click();
+  await expect(page).toHaveURL(/\/relationships\/doctors\/new$/);
+  await expect(page.getByRole("heading", { name: "Doctor onboarding and credential review" })).toBeVisible();
+  await expect(page.getByText("Professional credentials are not verified by profile creation", { exact: false })).toBeVisible();
+  await page.getByRole("textbox", { name: "Doctor name" }).fill("Synthetic Browser Doctor");
+  await page.getByRole("textbox", { name: "Specialty" }).fill("Synthetic Diagnostics");
+  await page.getByRole("textbox", { name: "Registration reference" }).fill("SYNTHETIC-REFERENCE-ONLY");
+  const doctorResponsePromise = page.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith("/api/doctors"));
+  await page.getByRole("button", { name: "Save doctor profile" }).click();
+  const doctorResponse = await doctorResponsePromise;
+  expect(doctorResponse.status()).toBe(201);
+  const doctorBody = await doctorResponse.json() as { doctor: { id: string; centreId: string; doctorNumber: string; specialty: string; status: string; name: string; registrationReference: string } };
+  expect(doctorBody.doctor).toMatchObject({ centreId, specialty: "Synthetic Diagnostics", status: "ACTIVE", name: "Synthetic Browser Doctor", registrationReference: "SYNTHETIC-REFERENCE-ONLY" });
+  const deniedDoctorList = await page.request.get(`/api/doctors?centreId=${encodeURIComponent(deniedCentreId!)}`);
+  expect(deniedDoctorList.status()).toBe(403);
+  await page.goto(`/relationships/doctors/${doctorBody.doctor.id}`);
+  await expect(page.getByRole("heading", { name: "Synthetic Browser Doctor" })).toBeVisible();
+  for (const width of [1280, 768, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.getByRole("heading", { name: "Synthetic Browser Doctor" })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `doctor profile horizontal overflow at ${width}px`).toBe(true);
+  }
+  const doctorStorage = await workflowPool.query(
+    `SELECT d.private_data_ciphertext,e.action FROM doctor_profiles d
+       JOIN audit_events e ON e.entity_id=d.id::text AND e.action='doctor_profile.created'
+      WHERE d.id=$1 AND d.centre_id=$2`,
+    [doctorBody.doctor.id, centreId],
+  );
+  expect(doctorStorage.rowCount).toBe(1);
+  expect(doctorStorage.rows[0]).toMatchObject({ action: "doctor_profile.created" });
+  expect(doctorStorage.rows[0].private_data_ciphertext).not.toContain("Synthetic Browser Doctor");
+
   // B005/B006: staff-entered evidence is persisted as RECORDED, not settled.
   const chargeLookup = await workflowPool.query(
     "SELECT id,charge_code FROM finance_charges WHERE order_id=$1 AND charge_type='DIAGNOSTIC' AND state='ACTIVE'",
