@@ -351,7 +351,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   await expect(page.getByRole("heading", { name: "Doctor onboarding and credential review" })).toBeVisible();
   await expect(page.getByText("Professional credentials are not verified by profile creation", { exact: false })).toBeVisible();
   await page.getByRole("textbox", { name: "Doctor name" }).fill("Synthetic Browser Doctor");
-  await page.getByRole("textbox", { name: "Specialty" }).fill("Synthetic Diagnostics");
+  await page.getByRole("textbox", { name: "Specialty", exact: true }).fill("Synthetic Diagnostics");
   await page.getByRole("textbox", { name: "Registration reference" }).fill("SYNTHETIC-REFERENCE-ONLY");
   const doctorResponsePromise = page.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith("/api/doctors"));
   await page.getByRole("button", { name: "Save doctor profile" }).click();
