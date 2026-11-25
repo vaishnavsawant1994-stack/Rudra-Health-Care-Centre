@@ -260,8 +260,9 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     // A006/A007: internal support request lifecycle uses encrypted tasks and audit events.
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/field/support");
-    const supportTaskForm = page.locator("form").filter({ has: page.getByRole("heading", { name: "Create task" }) });
-    await expect(supportTaskForm).toBeVisible();
+    const supportTaskSection = page.locator("section").filter({ has: page.getByRole("heading", { name: "Create task" }) });
+    await expect(supportTaskSection).toBeVisible();
+    const supportTaskForm = supportTaskSection.locator("form");
     await supportTaskForm.getByLabel("Centre").selectOption(centreId!);
     const supportTitle = `Synthetic internal support request ${randomUUID().slice(0, 8)}`;
     await supportTaskForm.getByLabel("Title").fill(supportTitle);
