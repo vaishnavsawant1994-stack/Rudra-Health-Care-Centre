@@ -79,9 +79,10 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   await expect(page.getByRole("status").first()).toContainText("synthetic_test_unavailable");
   await page.getByRole("button", { name: "Retry loading financial data" }).click();
   await expect(page.getByLabel("Confirmed order ID")).toBeVisible();
-  await expect(page.getByLabel("Centre")).toBeVisible();
 
-  const centrePicker = page.getByLabel("Centre");
+  const billingQueue = page.locator("section").filter({ has: page.getByRole("heading", { name: "Billing work queue" }) });
+  const centrePicker = billingQueue.getByLabel("Centre");
+  await expect(centrePicker).toBeVisible();
   const orderPicker = page.getByLabel("Confirmed order ID");
   const readOnlyCentreLoad = page.waitForResponse((response) => response.request().method() === "GET" && response.url().includes(`/api/finance?`) && response.url().includes(readOnlyCentreId!));
   await centrePicker.selectOption(readOnlyCentreId!);

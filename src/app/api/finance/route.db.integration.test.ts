@@ -81,6 +81,25 @@ describe("finance pagination PostgreSQL integration", () => {
     expect(secondBody.pagination.hasMore.charges).toBe(false);
   });
 
+  it("queries all authorized centres when finance access spans multiple centres", async () => {
+    const secondCentreId = randomUUID();
+    await pool.query("INSERT INTO centres(id,organization_id,code,name,time_zone) VALUES($1,$2,$3,$4,'Asia/Kolkata')", [secondCentreId, organizationId, `FC-${secondCentreId.slice(0, 8)}`, "Synthetic Finance Centre Two"]);
+    await pool.query(
+      "INSERT INTO finance_charges(id,organization_id,centre_id,charge_type,charge_code,amount_minor,snapshot,recorded_by_staff_id,idempotency_key) VALUES($1,$2,$3,'ADJUSTMENT','SYNTH-SECOND-CENTRE',250,'{}'::jsonb,$4,$5)",
+      [randomUUID(), organizationId, secondCentreId, staffUserId, randomUUID()],
+    );
+    mocks.getApiAccess.mockResolvedValueOnce({
+      staff: { organizationId, staffUserId, grants: [{ key: "finance.read", centreId }, { key: "finance.read", centreId: secondCentreId }] },
+      response: null,
+    });
+
+    const response = await handler(new Request("http://localhost/api/finance"));
+    const body = await response.json() as { centres: Array<{ id: string }>; charges: Array<{ chargeCode: string }> };
+    expect(response.status).toBe(200);
+    expect(body.centres.map((centre) => centre.id).sort()).toEqual([centreId, secondCentreId].sort());
+    expect(body.charges.some((charge) => charge.chargeCode === "SYNTH-SECOND-CENTRE")).toBe(true);
+  });
+
   it("rejects invalid and oversized page values", async () => {
     expect((await handler(new Request("http://localhost/api/finance?page=0"))).status).toBe(400);
     expect((await handler(new Request("http://localhost/api/finance?page=1000000"))).status).toBe(400);
