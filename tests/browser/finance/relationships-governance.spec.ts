@@ -115,11 +115,21 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     expect(taskRecord.rowCount).toBe(1);
     expect(taskRecord.rows[0].private_data_ciphertext).not.toContain("Synthetic doctor follow-up");
 
-    // A separate planned visit can be cancelled with a retained reason.
-    await planForm.getByLabel("Planned date and time").fill(new Date(Date.now() + 72 * 60 * 60_000 - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16));
-    await planForm.getByRole("button", { name: "Plan visit" }).click();
+    // Return from the linked task workflow, then cancel a separate planned visit.
+    const revisitListResponsePromise = page.waitForResponse(response => response.request().method() === "GET" && response.url().includes(`/api/doctors?centreId=${centreId}`));
+    await page.goto("/relationships/doctor-visits");
+    expect((await revisitListResponsePromise).status()).toBe(200);
+    const revisitSection = page.locator("section").filter({ has: page.getByRole("heading", { name: "Plan a doctor relationship visit" }) });
+    const revisitDoctorPicker = revisitSection.getByRole("combobox").nth(1);
+    await revisitDoctorPicker.selectOption(doctorId!);
+    await expect(page.getByRole("row").filter({ hasText: "Synthetic relationship meeting recorded by staff." })).toBeVisible();
+    const revisitPlanForm = revisitSection.locator("form");
+    await revisitPlanForm.locator('input[name="scheduledAt"]').fill(new Date(Date.now() + 72 * 60 * 60_000 - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16));
+    const secondPlanResponsePromise = page.waitForResponse(response => response.request().method() === "POST" && /\/api\/doctors\/[^/]+\/visits$/.test(response.url()));
+    await revisitPlanForm.getByRole("button", { name: "Plan visit" }).click();
+    expect((await secondPlanResponsePromise).status()).toBe(201);
     await expect(page.getByRole("row").filter({ hasText: "RELATIONSHIP" })).toHaveCount(2);
-    const cancellationRow = page.getByRole("row").filter({ hasText: "RELATIONSHIP" }).last();
+    const cancellationRow = page.getByRole("row").filter({ hasText: "Planned" }).last();
     await cancellationRow.getByLabel("Cancellation reason").fill("Synthetic schedule change for browser verification.");
     const cancellationResponsePromise = page.waitForResponse(response => response.request().method() === "POST" && response.url().endsWith("/visits"));
     await cancellationRow.getByRole("button", { name: "Cancel planned visit" }).click();
