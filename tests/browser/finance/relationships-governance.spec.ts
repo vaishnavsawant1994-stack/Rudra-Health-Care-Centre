@@ -60,10 +60,13 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     const doctorId = await doctorPicker.locator("option").filter({ hasText: "Synthetic Browser Doctor" }).getAttribute("value");
     expect(doctorId).toBeTruthy();
     await doctorPicker.selectOption(doctorId!);
+    // Wait for the doctor visit-history request to finish before acting on the form;
+    // the workbench replaces its history panel when that response arrives.
+    await expect(visitSection.getByText("No visits recorded for this doctor.")).toBeVisible();
     const planForm = visitSection.locator("form").filter({ has: page.getByRole("button", { name: "Plan visit" }) });
     const plannedLocal = new Date(Date.now() + 24 * 60 * 60_000 - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
-    await planForm.getByLabel("Planned date and time").fill(plannedLocal);
-    await planForm.getByLabel("Operational agenda").fill("Synthetic relationship check-in; no patient or clinical information.");
+    await planForm.locator('input[name="scheduledAt"]').fill(plannedLocal);
+    await planForm.locator('textarea[name="agenda"]').fill("Synthetic relationship check-in; no patient or clinical information.");
     const planResponsePromise = page.waitForResponse(response => response.request().method() === "POST" && /\/api\/doctors\/[^/]+\/visits$/.test(response.url()));
     await planForm.getByRole("button", { name: "Plan visit" }).click();
     const planResponse = await planResponsePromise;
