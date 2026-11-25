@@ -233,7 +233,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   await expect(page.getByRole("heading", { name: "Payment history" })).toBeVisible();
   await page.getByLabel("Exact payment number").fill(paymentLookup.rows[0].payment_number);
   await expect(page.getByRole("row").filter({ hasText: paymentLookup.rows[0].payment_number })).toContainText("RECORDED");
-  await expect(page.getByRole("row").filter({ hasText: paymentLookup.rows[0].payment_number })).toContainText("UPI");
+  await expect(page.getByRole("row").filter({ hasText: paymentLookup.rows[0].payment_number })).toContainText("upi");
 
   // B008: the outstanding screen reflects the partial allocation.
   await page.goto("/finance/outstanding");
