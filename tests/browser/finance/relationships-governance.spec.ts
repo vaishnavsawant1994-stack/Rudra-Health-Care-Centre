@@ -140,7 +140,7 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     expect(await cancellationResponse.json()).toMatchObject({ visitEvent: { type: "VISIT_CANCELLED" } });
     const refreshedHistory = await (await refreshedHistoryPromise).json() as { visits: Array<{ cancelled: string | null }> };
     expect(refreshedHistory.visits).toEqual(expect.arrayContaining([expect.objectContaining({ cancelled: "Synthetic schedule change for browser verification." })]));
-    await expect(page.getByText("Cancelled: Synthetic schedule change for browser verification.", { exact: true })).toBeVisible();
+    await expect(page.getByRole("cell").filter({ hasText: "Cancelled: Synthetic schedule change for browser verification." })).toBeVisible();
     const cancellationAudit = await workflowPool.query(
       "SELECT count(*)::int AS count FROM doctor_relationship_events WHERE doctor_id=$1 AND centre_id=$2 AND event_type='VISIT_CANCELLED'",
       [doctorId, centreId],
