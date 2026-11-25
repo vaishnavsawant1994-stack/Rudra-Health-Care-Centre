@@ -31,3 +31,9 @@ The 178-row matrix preserves canonical names/routes and records route mapping se
 ## Final verification — 14 November 2026
 
 Governance policy/API tests and isolated PostgreSQL tests passed **8/8**; the isolated communications governance integration used a disposable schema and verified encrypted persistence, idempotent create replay, versioned edits and centre-scope denial. Inventory reconciliation passed **14/14**; the combined focused run passed **22/22 across four files**. Full Vitest passed **942/942 across 235 files**. ESLint and TypeScript passed. Production build passed and generated **377 pages**. These automated checks do not constitute manual browser, accessibility, visual or policy acceptance. Phase 08 remains 0/13 accepted.
+
+## Internal template governance browser evidence - 25 November 2026
+
+The authenticated synthetic Chromium journey in GitHub Actions push run [45668553070](https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45668553070) exercised A013 on disposable PostgreSQL: create an encrypted draft email template, edit its version, activate it for internal use, and verify append-only event records. The UI and API kept sending/provider delivery disabled and exposed no send/deliver action. No recipient, patient message, external provider event, or delivery claim was created.
+
+A013 has this limited functionally verified path only. Notification preferences, consent-aware recipient resolution, provider queues, delivery/retry evidence, full keyboard/screen-reader acceptance, approved-reference visual comparison, and Owner/QA approval remain unverified. No Phase 08 screen was promoted to technically complete or Owner/QA accepted.
