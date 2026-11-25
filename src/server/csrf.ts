@@ -2,21 +2,17 @@ export function isSameOriginRequest(request: Request) {
   const origin = request.headers.get("origin");
   const fetchSite = request.headers.get("sec-fetch-site");
   if (fetchSite && fetchSite !== "same-origin" && fetchSite !== "none") return false;
-  const requestOrigin = new URL(request.url).origin;
+  const requestUrl = new URL(request.url);
+  // Next may normalize Request.url to an internal hostname while preserving
+  // the browser-facing Host header. Compare Origin against the incoming host.
+  const host = request.headers.get("host");
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const protocol = forwardedProto === "https" || forwardedProto === "http"
+    ? forwardedProto
+    : requestUrl.protocol.slice(0, -1);
+  const requestOrigin = host ? `${protocol}://${host}` : requestUrl.origin;
   if (origin) {
-    try {
-      const originMatches = new URL(origin).origin === requestOrigin;
-      if (!originMatches && process.env.CI === "true") {
-        console.warn("csrf_origin_rejected", {
-          requestOrigin,
-          origin: new URL(origin).origin,
-          host: request.headers.get("host"),
-          forwardedHost: request.headers.get("x-forwarded-host"),
-          forwardedProto: request.headers.get("x-forwarded-proto"),
-        });
-      }
-      return originMatches;
-    } catch { return false; }
+    try { return new URL(origin).origin === requestOrigin; } catch { return false; }
   }
   // Chromium may omit Origin on a same-origin fetch. A browser cannot forge
   // Referer, so accept it only when its origin exactly matches the request.
