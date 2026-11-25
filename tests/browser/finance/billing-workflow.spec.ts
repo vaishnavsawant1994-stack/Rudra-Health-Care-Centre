@@ -192,8 +192,10 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
     expect(noOverflow, `horizontal overflow at ${width}px`).toBe(true);
   }
 
+  const workflowPool = new Pool({ connectionString: databaseUrl, max: 1, application_name: "rudra-finance-workflow-assertions" });
+  try {
   // B005/B006: staff-entered evidence is persisted as RECORDED, not settled.
-  const chargeLookup = await pool.query(
+  const chargeLookup = await workflowPool.query(
     "SELECT id FROM finance_charges WHERE order_id=$1 AND charge_type='DIAGNOSTIC' AND state='ACTIVE'",
     [orderIds[0]],
   );
@@ -210,7 +212,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   const paymentResponse = await paymentResponsePromise;
   expect(paymentResponse.status()).toBe(201);
   await expect(page.getByRole("status").first()).toContainText("Saved successfully.");
-  const paymentLookup = await pool.query(
+  const paymentLookup = await workflowPool.query(
     `SELECT p.id,p.payment_number,p.status,p.amount_minor::text AS amount,p.method,
             a.amount_minor::text AS allocated
        FROM finance_payments p JOIN finance_allocations a ON a.payment_id=p.id
@@ -221,7 +223,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   );
   expect(paymentLookup.rowCount).toBe(1);
   expect(paymentLookup.rows[0]).toMatchObject({ status: "RECORDED", amount: "10000", method: "UPI", allocated: "10000" });
-  const paymentAudit = await pool.query(
+  const paymentAudit = await workflowPool.query(
     "SELECT count(*)::int AS count FROM audit_events WHERE action='finance.payment_recorded' AND entity_id=$1",
     [paymentLookup.rows[0].id],
   );
@@ -254,7 +256,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   await page.getByRole("button", { name: "Open reconciliation" }).click();
   expect((await openResponsePromise).status()).toBe(201);
   await expect(page.getByRole("status").first()).toContainText("Saved successfully.");
-  const openRecon = await pool.query(
+  const openRecon = await workflowPool.query(
     "SELECT id,opened_by_staff_id,status,opening_cash_minor::text AS opening FROM finance_reconciliations WHERE centre_id=$1 AND status='OPEN' ORDER BY opened_at DESC LIMIT 1",
     [centreId],
   );
@@ -296,12 +298,15 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
     const closeResponse = await closeResponsePromise;
     expect(closeResponse.status()).toBe(200);
     await expect(closerPage.getByRole("status").first()).toContainText("Saved successfully.");
-    const closedRecon = await pool.query(
+    const closedRecon = await workflowPool.query(
       "SELECT status,closed_by_staff_id,expected_cash_minor::text AS expected,counted_cash_minor::text AS counted,variance_minor::text AS variance FROM finance_reconciliations WHERE id=$1",
       [openRecon.rows[0].id],
     );
     expect(closedRecon.rows[0]).toMatchObject({ status: "CLOSED", closed_by_staff_id: process.env.FINANCE_BROWSER_CLOSER_STAFF_ID, expected: "2000", counted: "2000", variance: "0" });
   } finally {
     await closerContext.close();
+  }
+  } finally {
+    await workflowPool.end();
   }
 });
