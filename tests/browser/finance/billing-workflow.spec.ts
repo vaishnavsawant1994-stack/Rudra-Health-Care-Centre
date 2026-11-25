@@ -191,4 +191,117 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
     const noOverflow = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
     expect(noOverflow, `horizontal overflow at ${width}px`).toBe(true);
   }
+
+  // B005/B006: staff-entered evidence is persisted as RECORDED, not settled.
+  const chargeLookup = await pool.query(
+    "SELECT id FROM finance_charges WHERE order_id=$1 AND charge_type='DIAGNOSTIC' AND state='ACTIVE'",
+    [orderIds[0]],
+  );
+  expect(chargeLookup.rowCount).toBe(1);
+  await page.goto("/finance/payments/new");
+  await expect(page.getByRole("heading", { name: "Record payment against an existing charge" })).toBeVisible();
+  await expect(page.getByText("This creates an internal staff record only. It does not verify an external bank, UPI or card transaction.")).toBeVisible();
+  await page.locator('select[name="chargeId"]').selectOption(chargeLookup.rows[0].id);
+  await page.locator('input[name="amount"]').fill("100.00");
+  await page.locator('select[name="method"]').selectOption("UPI");
+  await page.locator('input[name="reference"]').fill("TEST ONLY synthetic payment evidence");
+  const paymentResponsePromise = page.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith("/api/finance"));
+  await page.getByRole("button", { name: "Record payment" }).click();
+  const paymentResponse = await paymentResponsePromise;
+  expect(paymentResponse.status()).toBe(201);
+  await expect(page.getByRole("status").first()).toContainText("Saved successfully.");
+  const paymentLookup = await pool.query(
+    `SELECT p.id,p.payment_number,p.status,p.amount_minor::text AS amount,p.method,
+            a.amount_minor::text AS allocated
+       FROM finance_payments p JOIN finance_allocations a ON a.payment_id=p.id
+      WHERE p.centre_id=$1 AND p.amount_minor=10000 AND p.method='UPI'
+        AND p.private_data_ciphertext IS NOT NULL
+      ORDER BY p.recorded_at DESC LIMIT 1`,
+    [centreId],
+  );
+  expect(paymentLookup.rowCount).toBe(1);
+  expect(paymentLookup.rows[0]).toMatchObject({ status: "RECORDED", amount: "10000", method: "UPI", allocated: "10000" });
+  const paymentAudit = await pool.query(
+    "SELECT count(*)::int AS count FROM audit_events WHERE action='finance.payment_recorded' AND entity_id=$1",
+    [paymentLookup.rows[0].id],
+  );
+  expect(paymentAudit.rows[0].count).toBe(1);
+
+  await page.goto("/finance/payments");
+  await expect(page.getByRole("heading", { name: "Payment history" })).toBeVisible();
+  await page.getByLabel("Exact payment number").fill(paymentLookup.rows[0].payment_number);
+  await expect(page.getByRole("row").filter({ hasText: paymentLookup.rows[0].payment_number })).toContainText("RECORDED");
+  await expect(page.getByRole("row").filter({ hasText: paymentLookup.rows[0].payment_number })).toContainText("UPI");
+
+  // B008: the outstanding screen reflects the partial allocation.
+  await page.goto("/finance/outstanding");
+  await expect(page.getByRole("heading", { name: "Charges and balances" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "INR 350.00" })).toBeVisible();
+
+  // B011/B014: home fees are separated from diagnostic charges; export stays gated.
+  await page.goto("/finance/home-fees");
+  await expect(page.getByRole("heading", { name: "Recorded Rudra home-collection charges" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "HOME_COLLECTION" }).first()).toBeVisible();
+  await page.goto("/finance/analytics");
+  await expect(page.getByRole("heading", { name: "Export availability" })).toBeVisible();
+  await expect(page.getByText("Export is unavailable until a scoped finance export permission, privacy review and immutable export audit contract are approved.")).toBeVisible();
+
+  // B009: an isolated synthetic close is performed by a second authenticated staff user.
+  await page.goto("/finance/reconciliation");
+  await page.locator('form select[name="centreId"]').selectOption(centreId!);
+  await page.getByLabel("Opening cash (INR)").fill("20.00");
+  const openResponsePromise = page.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith("/api/finance"));
+  await page.getByRole("button", { name: "Open reconciliation" }).click();
+  expect((await openResponsePromise).status()).toBe(201);
+  await expect(page.getByRole("status").first()).toContainText("Saved successfully.");
+  const openRecon = await pool.query(
+    "SELECT id,opened_by_staff_id,status,opening_cash_minor::text AS opening FROM finance_reconciliations WHERE centre_id=$1 AND status='OPEN' ORDER BY opened_at DESC LIMIT 1",
+    [centreId],
+  );
+  expect(openRecon.rowCount).toBe(1);
+  expect(openRecon.rows[0]).toMatchObject({ opened_by_staff_id: process.env.FINANCE_BROWSER_STAFF_ID, status: "OPEN", opening: "2000" });
+
+  const closerEmail = process.env.FINANCE_BROWSER_CLOSER_EMAIL;
+  const closerPassword = process.env.FINANCE_BROWSER_CLOSER_PASSWORD;
+  const browser = page.context().browser();
+  expect(closerEmail && closerPassword && browser).toBeTruthy();
+  const closerContext = await browser!.newContext({ baseURL: "http://127.0.0.1:3000" });
+  const closerPage = await closerContext.newPage();
+  try {
+    await closerPage.goto("/staff");
+    await closerPage.getByLabel("Work email").fill(closerEmail!);
+    await closerPage.getByLabel("Password", { exact: true }).fill(closerPassword!);
+    await closerPage.getByRole("button", { name: "Sign in securely" }).click();
+    await expect(closerPage).toHaveURL(/\/staff\/security-setup$/);
+    await closerPage.getByLabel("Account password").fill(closerPassword!);
+    const closerEnrollmentResponse = closerPage.waitForResponse((response) => response.request().method() === "POST" && response.url().includes("/api/auth/two-factor/enable"));
+    await closerPage.getByRole("button", { name: "Begin authenticator setup" }).click();
+    const closerEnrollment = await (await closerEnrollmentResponse).json() as { totpURI: string; method: string };
+    expect(closerEnrollment.method).toBe("totp");
+    const closerSecret = new URL(closerEnrollment.totpURI).searchParams.get("secret");
+    expect(closerSecret).toBeTruthy();
+    if (Date.now() % 30_000 > 27_000) await closerPage.waitForTimeout(3_000);
+    await closerPage.getByLabel("Current six-digit authenticator code").fill(totp(closerSecret!));
+    await closerPage.getByRole("button", { name: "Verify and finish setup" }).click();
+    await expect(closerPage).toHaveURL(/\/staff\/workspace$/);
+    await closerPage.goto("/finance/reconciliation");
+    const openRow = closerPage.getByRole("row").filter({ hasText: "Synthetic Finance Centre A" }).filter({ hasText: "OPEN" });
+    await expect(openRow).toBeVisible();
+    closerPage.on("dialog", async (dialog) => {
+      if (dialog.type() === "prompt") await dialog.accept("20.00");
+      else await dialog.accept();
+    });
+    const closeResponsePromise = closerPage.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith("/api/finance"));
+    await openRow.getByRole("button", { name: "Close cash session" }).click();
+    const closeResponse = await closeResponsePromise;
+    expect(closeResponse.status()).toBe(200);
+    await expect(closerPage.getByRole("status").first()).toContainText("Saved successfully.");
+    const closedRecon = await pool.query(
+      "SELECT status,closed_by_staff_id,expected_cash_minor::text AS expected,counted_cash_minor::text AS counted,variance_minor::text AS variance FROM finance_reconciliations WHERE id=$1",
+      [openRecon.rows[0].id],
+    );
+    expect(closedRecon.rows[0]).toMatchObject({ status: "CLOSED", closed_by_staff_id: process.env.FINANCE_BROWSER_CLOSER_STAFF_ID, expected: "2000", counted: "2000", variance: "0" });
+  } finally {
+    await closerContext.close();
+  }
 });
