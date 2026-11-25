@@ -56,7 +56,9 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     await page.keyboard.press("Tab");
     const doctorPicker = visitSection.getByRole("combobox").nth(1);
     await expect(doctorPicker).toBeFocused();
+    const doctorsResponsePromise = page.waitForResponse(response => response.request().method() === "GET" && response.url().includes(`/api/doctors?centreId=${centreId}`));
     await visitCentre.selectOption(centreId!);
+    expect((await doctorsResponsePromise).status()).toBe(200);
     const doctorId = await doctorPicker.locator("option").filter({ hasText: "Synthetic Browser Doctor" }).getAttribute("value");
     expect(doctorId).toBeTruthy();
     await doctorPicker.selectOption(doctorId!);
