@@ -57,7 +57,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   let failFirstRead = true;
   let failRefreshAfterNextWrite = false;
   let simulateRefreshFailureOnce = true;
-  await page.route("**/api/finance?*", async (route) => {
+  await page.route(/\/api\/finance(?:\?.*)?$/, async (route) => {
     if (failFirstRead && route.request().method() === "GET") {
       failFirstRead = false;
       await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "synthetic_test_unavailable" }) });
@@ -117,15 +117,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
     await submit.press("Enter");
     const savedResponse = await actionResponse;
     const savedBody = await savedResponse.json().catch(() => ({}));
-    const requestHeaders = await savedResponse.request().allHeaders();
-    const csrfContext = {
-      pageOrigin: new URL(page.url()).origin,
-      requestOrigin: new URL(savedResponse.url()).origin,
-      originHeader: requestHeaders.origin ? new URL(requestHeaders.origin).origin : null,
-      refererOrigin: requestHeaders.referer ? new URL(requestHeaders.referer).origin : null,
-      fetchSite: requestHeaders["sec-fetch-site"] ?? null,
-    };
-    expect(savedResponse.status(), JSON.stringify({ body: savedBody, csrfContext })).toBe(201);
+    expect(savedResponse.status(), JSON.stringify(savedBody)).toBe(201);
     if (orderId === orderIds[0]) {
       await expect(page.getByRole("status").first()).toContainText("Saved successfully, but financial data could not be refreshed");
       await page.getByRole("button", { name: "Retry loading financial data" }).click();
