@@ -230,6 +230,126 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     expect(templateStorage.rowCount).toBe(1);
     expect(templateStorage.rows[0]).toMatchObject({ status: "ACTIVE", version_number: 3, event_count: 3 });
     expect(templateStorage.rows[0].private_data_ciphertext).not.toContain(templateName);
+
+    // A004: retry the centre-scoped internal draft inbox after a transient failure.
+    await page.goto("/communications/inbox");
+    await expect(page.getByRole("heading", { name: "Unified communications inbox" })).toBeVisible();
+    const inboxDraftsTab = page.getByRole("tab", { name: "Unsent drafts" });
+    let inboxFailureInjected = false;
+    await page.route("**/api/communications/drafts?*", async route => {
+      if (!inboxFailureInjected) {
+        inboxFailureInjected = true;
+        await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "temporary_unavailable" }) });
+      } else await route.continue();
+    });
+    await inboxDraftsTab.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByText("Draft queue could not be loaded in your authorized scope.")).toBeVisible();
+    const inboxRetry = page.waitForResponse(response => response.url().includes("/api/communications/drafts?") && response.status() === 200);
+    await page.getByRole("button", { name: "Refresh" }).click();
+    await inboxRetry;
+    await expect(page.getByText("No internal drafts match these filters.")).toBeVisible();
+    await page.unroute("**/api/communications/drafts?*");
+    const deniedDrafts = await page.request.get(`/api/communications/drafts?centreId=${encodeURIComponent(deniedCentreId!)}&page=1`);
+    expect(deniedDrafts.status()).toBe(403);
+    for (const width of [1280, 768, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `communications inbox overflow at ${width}px`).toBe(true);
+    }
+
+    // A006/A007: internal support request lifecycle uses encrypted tasks and audit events.
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/field/support");
+    const supportTaskForm = page.locator("form").filter({ has: page.getByRole("heading", { name: "Create task" }) });
+    await expect(supportTaskForm).toBeVisible();
+    await supportTaskForm.getByLabel("Centre").selectOption(centreId!);
+    const supportTitle = `Synthetic internal support request ${randomUUID().slice(0, 8)}`;
+    await supportTaskForm.getByLabel("Title").fill(supportTitle);
+    await supportTaskForm.getByLabel("Description").fill("Synthetic operations-only request; no patient or clinical details.");
+    const supportCreate = page.waitForResponse(response => response.request().method() === "POST" && response.url().endsWith("/api/tasks"));
+    await supportTaskForm.getByRole("button", { name: "Create task" }).click();
+    const supportCreateResponse = await supportCreate;
+    expect(supportCreateResponse.status()).toBe(201);
+    const supportBody = await supportCreateResponse.json() as { task: { id: string; taskNumber: string } };
+    const supportStored = await workflowPool.query(
+      "SELECT task_type,status,private_data_ciphertext FROM staff_tasks WHERE id=$1 AND centre_id=$2",
+      [supportBody.task.id, centreId],
+    );
+    expect(supportStored.rowCount).toBe(1);
+    expect(supportStored.rows[0]).toMatchObject({ task_type: "SUPPORT_REQUEST", status: "OPEN" });
+    expect(supportStored.rows[0].private_data_ciphertext).not.toContain(supportTitle);
+
+    let supportQueueFailureInjected = false;
+    await page.route(url => url.pathname === "/api/tasks" && url.searchParams.get("type") === "SUPPORT_REQUEST", async route => {
+      if (!supportQueueFailureInjected) {
+        supportQueueFailureInjected = true;
+        await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "temporary_unavailable" }) });
+      } else await route.continue();
+    });
+    await page.goto(`/support/tickets?centreId=${encodeURIComponent(centreId!)}`);
+    await expect(page.getByText("Support requests could not be loaded in your authorized scope.")).toBeVisible();
+    const supportQueueRetry = page.waitForResponse(response => { const url = new URL(response.url()); return url.pathname === "/api/tasks" && url.searchParams.get("type") === "SUPPORT_REQUEST" && response.status() === 200; });
+    await page.getByRole("button", { name: "Refresh" }).click();
+    await supportQueueRetry;
+    const supportRow = page.getByRole("row").filter({ hasText: supportTitle });
+    await expect(supportRow).toBeVisible();
+    await supportRow.getByRole("link", { name: "Open request" }).click();
+    await expect(page.getByRole("heading", { name: supportTitle })).toBeVisible();
+    const startSupport = page.waitForResponse(response => response.request().method() === "PATCH" && response.url().endsWith(`/api/tasks/${supportBody.task.id}`));
+    await page.getByRole("button", { name: "Start", exact: true }).click();
+    expect((await startSupport).status()).toBe(200);
+    await page.getByLabel("Comment").fill("Synthetic internal follow-up note.");
+    const supportComment = page.waitForResponse(response => response.request().method() === "PATCH" && response.url().endsWith(`/api/tasks/${supportBody.task.id}`));
+    await page.getByRole("button", { name: "Add comment" }).click();
+    expect((await supportComment).status()).toBe(200);
+    await page.getByLabel("Recorded service outcome").selectOption("INTERNAL_OPERATIONAL_RESOLVED");
+    const completeSupport = page.waitForResponse(response => response.request().method() === "PATCH" && response.url().endsWith(`/api/tasks/${supportBody.task.id}`));
+    await page.getByRole("button", { name: "Complete", exact: true }).click();
+    expect((await completeSupport).status()).toBe(200);
+    const supportEvents = await workflowPool.query("SELECT event_type FROM staff_task_events WHERE task_id=$1 ORDER BY recorded_at", [supportBody.task.id]);
+    expect(supportEvents.rows.map(row => row.event_type)).toEqual(expect.arrayContaining(["CREATED", "STARTED", "COMMENTED", "COMPLETED"]));
+    await expect(page.getByText("Recorded service outcome: internal operational resolved")).toBeVisible();
+    await page.unroute(url => url.pathname === "/api/tasks" && url.searchParams.get("type") === "SUPPORT_REQUEST");
+
+    // A002/A003/A008: encrypted governance drafts are centre-scoped and stay inactive.
+    const governanceDrafts: Array<{ route: string; kind: "PROVIDER_POLICY" | "KNOWLEDGE"; channel?: "WHATSAPP" | "VOICE"; title: string; fill: (form: ReturnType<typeof page.locator>, title: string) => Promise<void> }> = [
+      { route: "/communications/whatsapp", kind: "PROVIDER_POLICY", channel: "WHATSAPP", title: `Synthetic WhatsApp policy ${randomUUID().slice(0, 8)}`, fill: async (form, title) => { await form.getByLabel("Internal policy name").fill(title); await form.getByLabel("Supported language codes").fill("en, hi"); await form.getByLabel("Routing and human escalation instructions").fill("Route all uncertain requests to an authorized human reviewer."); } },
+      { route: "/communications/voice", kind: "PROVIDER_POLICY", channel: "VOICE", title: `Synthetic voice policy ${randomUUID().slice(0, 8)}`, fill: async (form, title) => { await form.getByLabel("Internal policy name").fill(title); await form.getByLabel("Supported language codes").fill("en, mr"); await form.getByLabel("Routing and human escalation instructions").fill("Route all clinical questions to authorized staff; do not provide advice."); } },
+      { route: "/ai/knowledge", kind: "KNOWLEDGE", title: `Synthetic service knowledge ${randomUUID().slice(0, 8)}`, fill: async (form, title) => { await form.getByLabel("Article title").fill(title); await form.getByLabel("Source reference").fill("Synthetic source reference for workflow testing"); await form.getByLabel("Draft content").fill("This synthetic draft explains that service availability must be confirmed by an authorized centre."); } },
+    ];
+    for (const item of governanceDrafts) {
+      await page.goto(item.route);
+      const form = page.locator("form").filter({ has: page.getByRole("heading", { name: "Create governance draft" }) });
+      await expect(form).toBeVisible();
+      await form.getByLabel("Centre").selectOption(centreId!);
+      await item.fill(form, item.title);
+      const saveDraft = page.waitForResponse(response => response.request().method() === "POST" && response.url().endsWith("/api/communications/governance"));
+      await form.getByRole("button", { name: "Save encrypted draft" }).click();
+      const draftResponse = await saveDraft;
+      expect(draftResponse.status()).toBe(201);
+      const draftBody = await draftResponse.json() as { record: { id: string; status: string; versionNumber: number }; delivery: string; publication: string };
+      expect(draftBody).toMatchObject({ record: { status: "DRAFT", versionNumber: 1 }, delivery: "DISABLED", publication: "DISABLED" });
+      const createdRow = page.getByRole("row").filter({ hasText: item.title });
+      await expect(createdRow).toBeVisible();
+      await createdRow.getByRole("button", { name: "Edit draft" }).click();
+      const editForm = page.locator("form").filter({ has: page.getByRole("heading", { name: /Edit draft/ }) });
+      if (item.kind === "KNOWLEDGE") await editForm.getByLabel("Draft content").fill("Updated synthetic service guidance. The centre must confirm availability before a request proceeds.");
+      else await editForm.getByLabel("Routing and human escalation instructions").fill("Updated policy: route uncertain requests to an authorized human reviewer.");
+      const updateDraft = page.waitForResponse(response => response.request().method() === "PATCH" && response.url().endsWith(`/api/communications/governance/${draftBody.record.id}`));
+      await editForm.getByRole("button", { name: "Save new draft version" }).click();
+      expect((await updateDraft).status()).toBe(200);
+      const governanceStorage = await workflowPool.query(
+        `SELECT r.status,r.version_number,r.private_data_ciphertext,count(e.id)::int AS event_count
+           FROM communication_governance_records r JOIN communication_governance_events e ON e.record_id=r.id
+          WHERE r.id=$1 GROUP BY r.id`,
+        [draftBody.record.id],
+      );
+      expect(governanceStorage.rowCount).toBe(1);
+      expect(governanceStorage.rows[0]).toMatchObject({ status: "DRAFT", version_number: 2, event_count: 2 });
+      expect(governanceStorage.rows[0].private_data_ciphertext).not.toContain(item.title);
+    }
+    const deniedGovernance = await page.request.get(`/api/communications/governance?centreId=${encodeURIComponent(deniedCentreId!)}&recordKind=KNOWLEDGE`);
+    expect(deniedGovernance.status()).toBe(403);
   } finally {
     await workflowPool.end();
   }
