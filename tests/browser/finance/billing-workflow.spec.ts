@@ -225,6 +225,84 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   await page.goto(`/finance/quotes/${crypto.randomUUID()}?leadId=${encodeURIComponent(quoteLeadId!)}`);
   await expect(page.getByText("This quote is unavailable in the authorized lead scope. No quote data was disclosed.")).toBeVisible();
 
+  // Phase 07: corporate directory → attributed CRM enquiry → linked follow-up task.
+  await page.goto("/relationships/corporate");
+  await expect(page.getByRole("heading", { name: "Corporate relationships" })).toBeVisible();
+  await page.getByRole("textbox", { name: "Corporate client name" }).fill("Synthetic Browser Corporate");
+  const corporateFormSection = page.locator("section").filter({ has: page.getByRole("heading", { name: "Register corporate client" }) });
+  await corporateFormSection.getByRole("textbox", { name: "Category" }).fill("EMPLOYER");
+  const relationshipResponsePromise = page.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith("/api/business-relationships"));
+  await corporateFormSection.getByRole("button", { name: "Save corporate client" }).click();
+  const relationshipResponse = await relationshipResponsePromise;
+  expect(relationshipResponse.status()).toBe(201);
+  const relationshipBody = await relationshipResponse.json() as { relationship: { id: string; relationshipNumber: string; centreId: string; type: string; agreementStatus: string } };
+  const relationship = relationshipBody.relationship;
+  expect(relationship).toMatchObject({ centreId, type: "CORPORATE", agreementStatus: "NOT_RECORDED" });
+  const deniedCorporateResponse = await page.request.get(`/api/business-relationships?centreId=${encodeURIComponent(deniedCentreId!)}&type=CORPORATE`);
+  expect(deniedCorporateResponse.status()).toBe(403);
+  await page.goto(`/relationships/corporate/${relationship.id}`);
+  await expect(page.getByRole("heading", { name: "Synthetic Browser Corporate" })).toBeVisible();
+  await expect(page.getByText("Contact permission remains pending until documented; marketing consent is not requested.", { exact: false })).toBeVisible();
+  for (const width of [1280, 768, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.getByRole("heading", { name: "Synthetic Browser Corporate" })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `corporate profile horizontal overflow at ${width}px`).toBe(true);
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.getByRole("textbox", { name: "First name" }).fill("Synthetic");
+  await page.getByRole("textbox", { name: "Last name" }).fill("Corporate Contact");
+  await page.getByRole("textbox", { name: "Phone" }).fill("+15555550123");
+  const attributedLeadResponsePromise = page.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith("/api/leads"));
+  await page.getByRole("button", { name: "Create attributed lead" }).click();
+  const attributedLeadResponse = await attributedLeadResponsePromise;
+  expect(attributedLeadResponse.status()).toBe(201);
+  const attributedLeadBody = await attributedLeadResponse.json() as { lead: { id: string; leadNumber: string } };
+  await expect(page.getByRole("status").last()).toContainText(attributedLeadBody.lead.leadNumber);
+  await expect(page.getByRole("link", { name: attributedLeadBody.lead.leadNumber })).toBeVisible();
+
+  const attributedReportResponse = await page.request.get(`/api/relationships/referrals?centreId=${encodeURIComponent(centreId!)}&type=CORPORATE`);
+  expect(attributedReportResponse.status()).toBe(200);
+  const attributedReport = await attributedReportResponse.json() as { referrals: Array<{ sourceId: string; leads: number; converted: number }> };
+  expect(attributedReport.referrals).toContainEqual(expect.objectContaining({ sourceId: relationship.id, leads: 1, converted: 0 }));
+  expect(JSON.stringify(attributedReport)).not.toContain("Corporate Contact");
+  const corporateStorage = await workflowPool.query(
+    `SELECT r.private_data_ciphertext,l.source_relationship_id,l.source_relationship_type,l.source,
+            p.payload_ciphertext,e.action
+       FROM business_relationships r
+       JOIN leads l ON l.source_relationship_id=r.id AND l.source_relationship_type='CORPORATE'
+       JOIN lead_private_data p ON p.lead_id=l.id
+       JOIN audit_events e ON e.entity_id=r.id AND e.action='business_relationship.created'
+      WHERE r.id=$1 AND l.id=$2 AND r.centre_id=$3 AND l.centre_id=$3`,
+    [relationship.id, attributedLeadBody.lead.id, centreId],
+  );
+  expect(corporateStorage.rowCount).toBe(1);
+  expect(corporateStorage.rows[0]).toMatchObject({ source_relationship_id: relationship.id, source_relationship_type: "CORPORATE", source: "CORPORATE", action: "business_relationship.created" });
+  expect(corporateStorage.rows[0].private_data_ciphertext).not.toContain("Synthetic Browser Corporate");
+  expect(corporateStorage.rows[0].payload_ciphertext).not.toContain("Corporate Contact");
+
+  await page.getByRole("link", { name: "Create linked follow-up task" }).click();
+  await expect(page).toHaveURL(new RegExp(`/tasks\\?.*referenceType=CORPORATE_RELATIONSHIP.*referenceId=${relationship.id}`));
+  await expect(page.getByRole("heading", { name: "Create task" })).toBeVisible();
+  await expect(page.getByLabel("Centre")).toHaveValue(centreId!);
+  await expect(page.getByLabel("Link to operational record")).toHaveValue("CORPORATE_RELATIONSHIP");
+  await expect(page.getByLabel("Record")).toHaveValue(relationship.id);
+  await page.getByRole("textbox", { name: "Title" }).fill("Synthetic corporate follow-up");
+  const taskCreateResponsePromise = page.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith("/api/tasks"));
+  await page.getByRole("button", { name: "Create task" }).click();
+  const taskCreateResponse = await taskCreateResponsePromise;
+  expect(taskCreateResponse.status()).toBe(201);
+  const taskResult = await taskCreateResponse.json() as { task?: { id: string; taskNumber: string; replayed: boolean } };
+  expect(taskResult.task?.id).toBeTruthy();
+  const savedTask = await workflowPool.query(
+    `SELECT t.centre_id,t.task_type,t.status,t.private_data_ciphertext,e.action
+       FROM staff_tasks t JOIN audit_events e ON e.entity_id=t.id AND e.action='staff_task.created'
+      WHERE t.id=$1 AND t.centre_id=$2`,
+    [taskResult.task!.id, centreId],
+  );
+  expect(savedTask.rowCount).toBe(1);
+  expect(savedTask.rows[0]).toMatchObject({ centre_id: centreId, task_type: "FOLLOW_UP", status: "OPEN", action: "staff_task.created" });
+  expect(savedTask.rows[0].private_data_ciphertext).not.toContain("Synthetic Browser Corporate");
+
   // B005/B006: staff-entered evidence is persisted as RECORDED, not settled.
   const chargeLookup = await workflowPool.query(
     "SELECT id,charge_code FROM finance_charges WHERE order_id=$1 AND charge_type='DIAGNOSTIC' AND state='ACTIVE'",
