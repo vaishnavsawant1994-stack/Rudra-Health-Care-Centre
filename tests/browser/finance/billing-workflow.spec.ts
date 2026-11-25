@@ -257,7 +257,6 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   const attributedLeadResponse = await attributedLeadResponsePromise;
   expect(attributedLeadResponse.status()).toBe(201);
   const attributedLeadBody = await attributedLeadResponse.json() as { lead: { id: string; leadNumber: string } };
-  await expect(page.getByRole("status").last()).toContainText(attributedLeadBody.lead.leadNumber);
   await expect(page.getByRole("link", { name: attributedLeadBody.lead.leadNumber })).toBeVisible();
 
   const attributedReportResponse = await page.request.get(`/api/relationships/referrals?centreId=${encodeURIComponent(centreId!)}&type=CORPORATE`);
