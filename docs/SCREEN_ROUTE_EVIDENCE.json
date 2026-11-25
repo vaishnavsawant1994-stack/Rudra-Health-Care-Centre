@@ -5,7 +5,7 @@
     "path": "docs/SCREEN_SPEC_178.md",
     "sha256": "27c93e0b94a375a252b5ca784c6445eb63299f66285b863249883b097bfa11ed"
   },
-  "repositoryHead": "0a081439ffe2210eb24c07381c9028cf1090f232",
+  "repositoryHead": "642ae6fbfeb1b50db577eaf1b3335c0361b2c8b5",
   "evidenceScope": "source-reference and route-mapping only; not functional, QA, visual or acceptance proof",
   "screens": [
     {

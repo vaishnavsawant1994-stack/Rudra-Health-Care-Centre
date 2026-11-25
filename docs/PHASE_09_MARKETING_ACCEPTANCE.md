@@ -40,4 +40,15 @@ Canonical identity is preserved in [`MARKETING_SCREEN_CROSSWALK_M001_M018.md`](M
 
 ## Database and project limits
 
-No new Phase 09 migration was added. Existing database state remains at migration 0093; source migrations 0094–0100 remain unapplied. No deployment, external publishing, provider activation, production data access, commit or push occurred. Prior phase blockers (identity proofing, legal invoice issuer, Metropolis approvals, encryption key recovery/backup restore, clinical content policy) remain open.
+No new Phase 09 migration was added. The earlier evidence checkpoint recorded the persistent development database at migration 0093, with source migrations 0094–0100 unapplied. No deployment, external publishing, provider activation or production data access occurred. Prior phase blockers (identity proofing, legal invoice issuer, Metropolis approvals, encryption key recovery/backup restore, clinical content policy) remain open.
+
+## Additional synthetic browser evidence — 26 November 2026
+
+GitHub Actions run [45708945623](https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45708945623), commit `642ae6fbfeb1b50db577eaf1b3335c0361b2c8b5`, ran the existing authenticated Chromium relationships/governance journey in an ephemeral PostgreSQL environment with synthetic staff and test-only encryption keys. The Playwright browser job passed 2/2 tests; this supplements, and does not replace, the earlier C004/C012/A013 evidence in run 45705275143.
+
+| Screen | Additional verified path | Evidence boundary |
+|---|---|---|
+| M012 — Campaign directory and planner | In Chromium, switched between two permitted centres while an earlier list response was deliberately delayed; the stale response did not replace the currently selected centre's rows. Created a synthetic campaign through the UI, verified its `DRAFT` database record and encrypted private fields, then activated internal attribution tracking through the UI and verified `ACTIVE`. | Internal tracking only. No publication, outbound communication, advertising spend, or external provider call. This is a scoped workflow, not full screen completion. Dedicated keyboard, viewport, accessibility and approved-image comparison were not asserted by this test. |
+| M003 — Content studio and drafts | In Chromium, created a private synthetic content draft through the UI (`DRAFT`, version 1), verified encrypted persistence and absence of plaintext title in the stored ciphertext, edited it to version 2, verified append-only `CREATED`/`UPDATED` events, and opened the visible history. | Draft remained private; no review approval, publishing, sending, or spend occurred. This test did not establish full workflow, centre/role denial coverage, responsive, keyboard/accessibility, visual parity or Owner/QA acceptance. |
+
+Run 45708945623 quality job also passed: 1,016 Vitest tests across 253 files, ESLint, TypeScript, production build (406 generated routes), and canonical inventory reconciliation. Dependency audit passed. The full-history Gitleaks job failed on the already documented historical synthetic-fixture findings; those remain unresolved and were not suppressed. The PR remains draft. These results do not qualify unapplied source migrations 0094–0100 or production readiness.
