@@ -159,7 +159,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
       if (expected.amount === null) expect(home).toBeUndefined();
       else expect(home).toMatchObject({ amount: expected.amount, choice: expected.choice });
     }
-    const audit = await pool.query("SELECT count(*)::int AS count FROM audit_events WHERE action='finance.order_charges_created' AND entity_id=ANY($1::uuid[])", [orderIds]);
+    const audit = await pool.query("SELECT count(*)::int AS count FROM audit_events WHERE action='finance.order_charges_created' AND entity_id=ANY($1::text[])", [orderIds]);
     expect(audit.rows[0].count).toBe(7);
   } finally {
     await pool.end();
