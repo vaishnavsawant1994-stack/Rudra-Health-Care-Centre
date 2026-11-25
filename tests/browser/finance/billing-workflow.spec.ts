@@ -290,6 +290,8 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   expect(corporateStorage.rows[0].private_data_ciphertext).not.toContain("Synthetic Browser Corporate");
   expect(corporateStorage.rows[0].payload_ciphertext).not.toContain("Corporate Contact");
 
+  await page.goto(`/corporates/${relationship.id}`);
+  await expect(page.getByRole("heading", { name: "Synthetic Browser Corporate" })).toBeVisible();
   await page.getByRole("link", { name: "Create linked follow-up task" }).click();
   await expect(page).toHaveURL(new RegExp(`/tasks\\?.*referenceType=CORPORATE_RELATIONSHIP.*referenceId=${relationship.id}`));
   await expect(page.getByRole("heading", { name: "Create task" })).toBeVisible();
