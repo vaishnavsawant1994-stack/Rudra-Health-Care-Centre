@@ -226,8 +226,10 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   await expect(page.getByText("This quote is unavailable in the authorized lead scope. No quote data was disclosed.")).toBeVisible();
 
   // Phase 07: corporate directory → attributed CRM enquiry → linked follow-up task.
-  await page.goto("/relationships/corporate");
-  await expect(page.getByRole("heading", { name: "Corporate relationships" })).toBeVisible();
+  await page.goto("/corporates");
+  await expect(page.getByRole("heading", { name: "Corporate accounts" })).toBeVisible();
+  await page.goto("/corporates/new");
+  await expect(page.getByRole("heading", { name: "Corporate enquiry and proposal intake" })).toBeVisible();
   await page.getByRole("textbox", { name: "Corporate client name" }).fill("Synthetic Browser Corporate");
   const corporateFormSection = page.locator("section").filter({ has: page.getByRole("heading", { name: "Register corporate client" }) });
   await corporateFormSection.getByRole("textbox", { name: "Category" }).fill("EMPLOYER");
@@ -240,7 +242,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   expect(relationship).toMatchObject({ centreId, type: "CORPORATE", agreementStatus: "NOT_RECORDED" });
   const deniedCorporateResponse = await page.request.get(`/api/business-relationships?centreId=${encodeURIComponent(deniedCentreId!)}&type=CORPORATE`);
   expect(deniedCorporateResponse.status()).toBe(403);
-  await page.goto(`/relationships/corporate/${relationship.id}`);
+  await page.goto(`/corporates/${relationship.id}`);
   await expect(page.getByRole("heading", { name: "Synthetic Browser Corporate" })).toBeVisible();
   await expect(page.getByText("Contact permission remains pending until documented; marketing consent is not requested.", { exact: false })).toBeVisible();
   await expect(page.getByRole("link", { name: "Create linked follow-up task" })).toBeVisible();
@@ -265,6 +267,12 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   const attributedReport = await attributedReportResponse.json() as { referrals: Array<{ sourceId: string; leads: number; converted: number }> };
   expect(attributedReport.referrals).toContainEqual(expect.objectContaining({ sourceId: relationship.id, leads: 1, converted: 0 }));
   expect(JSON.stringify(attributedReport)).not.toContain("Corporate Contact");
+  await page.goto("/relationships/referrals");
+  const referralReport = page.locator('section[aria-labelledby="referral-report-title"]');
+  await referralReport.getByLabel("Source type").selectOption("CORPORATE");
+  await expect(referralReport.getByLabel("Centre")).toHaveValue(centreId!);
+  await referralReport.getByRole("button", { name: "Apply filters" }).click();
+  await expect(referralReport.getByRole("row").filter({ hasText: relationship.relationshipNumber })).toBeVisible();
   const corporateStorage = await workflowPool.query(
     `SELECT r.private_data_ciphertext,l.source_relationship_id,l.source_relationship_type,l.source,
             p.payload_ciphertext,e.action
