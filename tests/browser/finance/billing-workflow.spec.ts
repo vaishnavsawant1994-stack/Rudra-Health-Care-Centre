@@ -283,7 +283,8 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   await page.getByRole("link", { name: "Create linked follow-up task" }).click();
   await expect(page).toHaveURL(new RegExp(`/tasks\\?.*referenceType=CORPORATE_RELATIONSHIP.*referenceId=${relationship.id}`));
   await expect(page.getByRole("heading", { name: "Create task" })).toBeVisible();
-  await expect(page.getByLabel("Centre")).toHaveValue(centreId!);
+  const followupTaskForm = page.locator("form.task-form");
+  await expect(followupTaskForm.getByLabel("Centre")).toHaveValue(centreId!);
   await expect(page.getByLabel("Link to operational record")).toHaveValue("CORPORATE_RELATIONSHIP");
   await expect(page.getByLabel("Record")).toHaveValue(relationship.id);
   await page.getByRole("textbox", { name: "Title" }).fill("Synthetic corporate follow-up");
