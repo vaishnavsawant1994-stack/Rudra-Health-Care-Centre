@@ -22,6 +22,22 @@
 
 Diagnostic catalogue retail and home-collection fees stay separate. Current finance policies keep legal invoice issuance disabled when issuer responsibility is pending. Internal payment records do not prove bank, UPI, card or gateway settlement. Every screen remains pending manual browser/mobile and visual acceptance. See [`PHASE_05_06_READINESS.md`](PHASE_05_06_READINESS.md) for migration, provider, legal and scope limitations.
 
+## Synthetic browser evidence checkpoint — 25 November 2026
+
+GitHub Actions run [45548280139](https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45548280139) at commit `1f885d987883ac8ca7c5f1d37a37e9ef1587e90d` passed the finance Chromium workflow, full-history secret scan, dependency audit and quality job (lint, typecheck, full Vitest suite, production build and inventory reconciliation). The PR-triggered run for the same commit also completed quality, browser and dependency jobs successfully; its full-history secret scan failed on the previously documented historical fixture findings. The push scan passed, but does not replace the PR scan result.
+
+The browser workflow added these limited, positive findings:
+
+- **B005/B006:** a synthetic finance operator recorded payment evidence against an authorized charge. The API returned `201`; a disposable PostgreSQL assertion confirmed a centre-linked payment/allocation, encrypted private evidence and one audit event. The ledger displayed the saved payment as `RECORDED`. This is staff-entered evidence, not provider or bank settlement.
+- **B008:** the outstanding view continued to show the charge as `INR 450.00` and `UNPAID` after the unverified evidence was recorded. The test confirms recorded evidence does not reduce the payable balance as if settled. Reminder and adjustment workflows were not exercised.
+- **B009:** one synthetic MFA user opened a reconciliation and a distinct synthetic MFA user closed it. The API returned `201` for both actions; disposable PostgreSQL assertions verified the persisted state, distinct opener/closer, matching expected/count values, and zero variance. This does not verify bank/UPI statement matching or settlement.
+- **B011:** the home-fees view rendered a separately categorized synthetic `HOME_COLLECTION` charge. This did not qualify fee calculation, waiver reporting, tax/accounting rules, or expense comparison.
+- **B014:** Chromium verified the explicit export restriction. No export workflow was performed; scoped export permission, privacy review and immutable export-audit requirements remain pending.
+
+The recorded workflow used a real synthetic Better Auth/TOTP session, a second independently authenticated closer, and disposable PostgreSQL fixtures. One wrong-centre finance mutation was denied with `403`. Responsive viewport assertions in this test cover the order-billing view (1280, 768 and 390 pixels), not each screen above. Keyboard/screen-reader accessibility and approved-image comparisons were not established by this run.
+
+Accordingly, B005, B006, B008, B009 and B011 have **specific functionally verified paths**; B014 has a **verified restriction**. These results do not make any of the six screens technically complete, and no protected acceptance field or Owner/QA status was changed. B003 and the other Phase 06 screens were not exercised in this browser journey. Current explicit restrictions for B003/B004/B007/B010/B012/B013/B015 remain as listed above.
+
 ## Verification checkpoint
 
 - Focused finance API/policy/quote and screen-inventory tests: **32/32 passed** across five files.
