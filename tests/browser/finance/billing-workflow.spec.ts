@@ -95,7 +95,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   await expect(orderPicker.locator("option")).toHaveCount(7);
   for (const width of [1280, 768, 390]) {
     await page.setViewportSize({ width, height: 900 });
-    await expect(page.getByRole("heading", { name: "Billing work queue" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "Billing work queue" })).toBeVisible();
     await expect(orderPicker).toBeVisible();
     await expect(page.getByRole("button", { name: "Create charge snapshots" })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `billing queue horizontal overflow at ${width}px`).toBe(true);
