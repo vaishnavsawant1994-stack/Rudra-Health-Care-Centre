@@ -298,7 +298,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
     const closeResponsePromise = closerPage.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith("/api/finance"));
     await openRow.getByRole("button", { name: "Close cash session" }).click();
     const closeResponse = await closeResponsePromise;
-    expect(closeResponse.status()).toBe(200);
+    expect(closeResponse.status()).toBe(201);
     await expect(closerPage.getByRole("status").first()).toContainText("Saved successfully.");
     const closedRecon = await workflowPool.query(
       "SELECT status,closed_by_staff_id,expected_cash_minor::text AS expected,counted_cash_minor::text AS counted,variance_minor::text AS variance FROM finance_reconciliations WHERE id=$1",
