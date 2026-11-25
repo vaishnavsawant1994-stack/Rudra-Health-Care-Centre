@@ -29,3 +29,14 @@ Doctor attribution uses existing lead, referral, appointment and task workflows.
 
 Focused route, authorization, public redirect, inventory and isolated PostgreSQL pipeline tests passed **28/28 across eight files**. The aggregate test uses a uniquely scoped throwaway schema and synthetic records. The full Vitest suite passed **933/933 across 232 files**; ESLint and TypeScript passed; production build passed and generated 365 static pages. Canonical routes and aggregate queries do not count as complete functionality. All 12 screens require manual browser/keyboard/responsive acceptance and screen-specific functional verification before acceptance. Phase 08 readiness is **not established** because communications consent/provider prerequisites, clinical review, patient privacy checks, identity controls and broader manual acceptance remain open.
 
+
+
+## Corporate referral browser evidence ? 25 November 2026
+
+The authenticated Chromium journey in GitHub Actions push run [45611660102](https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45611660102), commit `b7719963ed8eafe2aed8fb8b80b9654617aa0c5a`, passed as part of the isolated synthetic finance workflow. It opened the canonical corporate directory (C006), created an internal corporate relationship through the canonical intake page (C007), opened the direct profile (C008), created a synthetic CRM lead attributed to that relationship, applied the corporate filter in the canonical referrals UI (C005), and followed the profile link to create an internal follow-up task.
+
+The test used synthetic staff, a disposable PostgreSQL database and a test-issued Better Auth/TOTP session. It verified HTTP 201 for relationship, lead and task creation; HTTP 403 for a wrong-centre corporate list request; centre-scoped referral visibility; encrypted corporate/lead/task private fields; and persisted audit events. It confirmed the relationship agreement remained `NOT_RECORDED` and contact permission remained pending. No marketing consent, communication, contract, patient data, camp, booking, partner billing or external provider action was created. Corporate profile overflow was checked at 1280, 768 and 390 pixels.
+
+These are specific functional paths, not complete-screen acceptance. The test does not establish keyboard/screen-reader accessibility or comparison with approved visual references; no Owner/QA acceptance fields were changed. Doctor and partner workflows (C001-C004 and C010-C012) were not browser-tested by this journey. C009 camp planning and C011 partner portal remain policy/contract gated as described above.
+
+The PR-triggered run [45611672221](https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45611672221) passed browser, dependency and quality jobs, but the historical secret-scan job remains blocked on previously documented findings.

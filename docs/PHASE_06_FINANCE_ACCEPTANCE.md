@@ -51,3 +51,12 @@ Accordingly, B005, B006, B008, B009 and B011 have **specific functionally verifi
 ## Wave 3 upstream workflow boundary — 15 November 2026
 
 The cross-module test leaves the diagnostic order pending because the selected catalogue version is explicitly synthetic and unverified. It records no customer-facing diagnostic total, invoice, payment, refund or provider settlement. Existing supported finance API tests remain separate; this workflow does not qualify billing/legal issuer or payment acceptance.
+
+
+## B003 and connected Phase 07 browser evidence ? 25 November 2026
+
+GitHub Actions push run [45611660102](https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45611660102) passed all four jobs on commit `b7719963ed8eafe2aed8fb8b80b9654617aa0c5a`. The PR-triggered run [45611672221](https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45611672221) passed browser, dependency and quality jobs; its full-history secret scan remains failed on the known historical fixture findings.
+
+The authenticated Chromium journey exercised B003: it created an internal quote draft from an authorized synthetic lead (HTTP 201), verified its catalogue-version snapshot and total in the UI, opened quote details, and checked lead-scope denial for a cross-centre lead and an unknown quote. Disposable PostgreSQL assertions confirmed the lead link, `INTERNAL_DRAFT` state and encrypted snapshot. This is internal draft functionality only; it does not approve pricing, enable public delivery or issue an invoice.
+
+CI at this commit passed **1,015/1,015 tests across 253 files**, lint, TypeScript, production build (**406 static pages generated**), inventory reconciliation, push full-history secret scan and dependency audit. These results do not establish Owner/QA acceptance, pixel parity or full accessibility.

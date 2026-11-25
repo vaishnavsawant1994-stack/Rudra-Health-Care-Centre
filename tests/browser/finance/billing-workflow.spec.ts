@@ -317,6 +317,32 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   expect(savedTask.rows[0]).toMatchObject({ centre_id: centreId, task_type: "FOLLOW_UP", status: "OPEN", action: "staff_task.created" });
   expect(savedTask.rows[0].private_data_ciphertext).not.toContain("Synthetic Browser Corporate");
 
+  // C010: protected partner directory and attributed enquiry remain separate from the public partner page.
+  await page.goto("/relationships/partners");
+  await expect(page.getByRole("heading", { name: "Protected partner directory" })).toBeVisible();
+  const partnerForm = page.locator("section").filter({ has: page.getByRole("heading", { name: "Register partner" }) });
+  await partnerForm.getByRole("textbox", { name: "Partner name" }).fill("Synthetic Browser Referral Partner");
+  await partnerForm.getByRole("textbox", { name: "Category" }).fill("REFERRAL_PARTNER");
+  const partnerResponsePromise = page.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith("/api/business-relationships"));
+  await partnerForm.getByRole("button", { name: "Save partner" }).click();
+  const partnerResponse = await partnerResponsePromise;
+  expect(partnerResponse.status()).toBe(201);
+  const partnerBody = await partnerResponse.json() as { relationship: { id: string; centreId: string; type: string; agreementStatus: string } };
+  expect(partnerBody.relationship).toMatchObject({ centreId, type: "PARTNER", agreementStatus: "NOT_RECORDED" });
+  await page.goto(`/relationships/partners/${partnerBody.relationship.id}`);
+  await expect(page.getByRole("heading", { name: "Partner relationship profile" })).toBeVisible();
+  await expect(page.getByText("Synthetic Browser Referral Partner", { exact: true })).toBeVisible();
+  await expect(page.getByText("Contact permission remains pending until documented; marketing consent is not requested.", { exact: false })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Create linked follow-up task" })).toBeVisible();
+  for (const width of [1280, 768, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.getByRole("heading", { name: "Partner relationship profile" })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `partner profile horizontal overflow at ${width}px`).toBe(true);
+  }
+  const partnerStorage = await workflowPool.query("SELECT private_data_ciphertext FROM business_relationships WHERE id=$1 AND centre_id=$2 AND relationship_type='PARTNER'", [partnerBody.relationship.id, centreId]);
+  expect(partnerStorage.rowCount).toBe(1);
+  expect(partnerStorage.rows[0].private_data_ciphertext).not.toContain("Synthetic Browser Referral Partner");
+
   // B005/B006: staff-entered evidence is persisted as RECORDED, not settled.
   const chargeLookup = await workflowPool.query(
     "SELECT id,charge_code FROM finance_charges WHERE order_id=$1 AND charge_type='DIAGNOSTIC' AND state='ACTIVE'",

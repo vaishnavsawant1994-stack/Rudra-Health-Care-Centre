@@ -5,7 +5,7 @@
     "path": "docs/SCREEN_SPEC_178.md",
     "sha256": "27c93e0b94a375a252b5ca784c6445eb63299f66285b863249883b097bfa11ed"
   },
-  "repositoryHead": "1f885d987883ac8ca7c5f1d37a37e9ef1587e90d",
+  "repositoryHead": "b7719963ed8eafe2aed8fb8b80b9654617aa0c5a",
   "evidenceScope": "source-reference and route-mapping only; not functional, QA, visual or acceptance proof",
   "screens": [
     {
@@ -19878,8 +19878,8 @@
         },
         {
           "path": "src/app/finance/quotes/[id]/page.tsx",
-          "sha256": "5930db643ddba6e500424b209d69b873ee84dcb702ebb3229d4ab8ee5e3b5bef",
-          "sourceModifiedAt": "2026-11-14T06:59:13.283Z"
+          "sha256": "1d367be198f84411608671a87ff210853ae52e10ebc852ae80177114879780e7",
+          "sourceModifiedAt": "2026-11-25T06:55:47.651Z"
         },
         {
           "path": "src/components/admin/admin-shell.test.ts",
