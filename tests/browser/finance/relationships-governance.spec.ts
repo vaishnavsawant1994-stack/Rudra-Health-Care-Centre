@@ -320,9 +320,11 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     ];
     for (const item of governanceDrafts) {
       await page.goto(item.route);
-      const form = page.locator("form").filter({ has: page.getByRole("heading", { name: "Create governance draft" }) });
+      const workbench = page.getByRole("region", { name: item.kind === "KNOWLEDGE" ? "Knowledge drafts" : `${item.channel} policy drafts` });
+      await expect(workbench).toBeVisible();
+      const form = workbench.locator("form").filter({ has: page.getByRole("heading", { name: "Create governance draft" }) });
       await expect(form).toBeVisible();
-      await page.getByLabel("Centre").selectOption(centreId!);
+      await workbench.getByLabel("Centre").selectOption(centreId!);
       await item.fill(form, item.title);
       const saveDraft = page.waitForResponse(response => response.request().method() === "POST" && response.url().endsWith("/api/communications/governance"));
       await form.getByRole("button", { name: "Save encrypted draft" }).click();
