@@ -322,7 +322,7 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
       await page.goto(item.route);
       const form = page.locator("form").filter({ has: page.getByRole("heading", { name: "Create governance draft" }) });
       await expect(form).toBeVisible();
-      await form.getByLabel("Centre").selectOption(centreId!);
+      await page.getByLabel("Centre").selectOption(centreId!);
       await item.fill(form, item.title);
       const saveDraft = page.waitForResponse(response => response.request().method() === "POST" && response.url().endsWith("/api/communications/governance"));
       await form.getByRole("button", { name: "Save encrypted draft" }).click();
