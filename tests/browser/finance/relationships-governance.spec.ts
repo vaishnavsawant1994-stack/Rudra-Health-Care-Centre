@@ -213,7 +213,9 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     const updateTemplatePromise = page.waitForResponse(response => response.request().method() === "PATCH" && response.url().endsWith(`/api/communications/templates/${createTemplateBody.template.id}`));
     await templateDetails.getByRole("button", { name: "Save draft changes" }).click();
     expect((await updateTemplatePromise).status()).toBe(200);
+    await expect(page.getByText("Draft updated.")).toBeVisible();
     await templateDetails.getByLabel("Activation reason").fill("Internal synthetic workflow validation.");
+    await expect(templateDetails.getByRole("button", { name: "Activate for internal use" })).toBeEnabled();
     const activateTemplatePromise = page.waitForResponse(response => response.request().method() === "PATCH" && response.url().endsWith(`/api/communications/templates/${createTemplateBody.template.id}`));
     await templateDetails.getByRole("button", { name: "Activate for internal use" }).click();
     expect((await activateTemplatePromise).status()).toBe(200);
