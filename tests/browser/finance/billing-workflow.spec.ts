@@ -270,7 +270,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
        FROM business_relationships r
        JOIN leads l ON l.source_relationship_id=r.id AND l.source_relationship_type='CORPORATE'
        JOIN lead_private_data p ON p.lead_id=l.id
-       JOIN audit_events e ON e.entity_id=r.id AND e.action='business_relationship.created'
+       JOIN audit_events e ON e.entity_id=r.id::text AND e.action='business_relationship.created'
       WHERE r.id=$1 AND l.id=$2 AND r.centre_id=$3 AND l.centre_id=$3`,
     [relationship.id, attributedLeadBody.lead.id, centreId],
   );
