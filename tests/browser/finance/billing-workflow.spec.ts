@@ -135,7 +135,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   const pool = new Pool({ connectionString: databaseUrl, max: 1, application_name: "rudra-finance-browser-assertions" });
   try {
     const saved = await pool.query(
-      `SELECT c.order_id,c.charge_type,c.amount_minor::text AS amount,c.snapshot->>'choice' AS choice,
+      `SELECT o.id AS order_id,c.charge_type,c.amount_minor::text AS amount,c.snapshot->>'choice' AS choice,
               c.snapshot->'items'->0->>'catalogueVersionId' AS catalogue_version_id,
               c.snapshot->'items'->0->>'catalogueItemId' AS catalogue_item_id,
               c.snapshot->'items'->0->>'verificationStatus' AS verification_status,
