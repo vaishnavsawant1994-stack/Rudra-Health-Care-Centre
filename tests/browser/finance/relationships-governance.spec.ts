@@ -62,7 +62,7 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     await doctorPicker.selectOption(doctorId!);
     // Wait for the doctor visit-history request to finish before acting on the form;
     // the workbench replaces its history panel when that response arrives.
-    await expect(visitSection.getByText("No visits recorded for this doctor.")).toBeVisible();
+    await expect(page.getByText("No visits recorded for this doctor.")).toBeVisible();
     const planForm = visitSection.locator("form").filter({ has: page.getByRole("button", { name: "Plan visit" }) });
     const plannedLocal = new Date(Date.now() + 24 * 60 * 60_000 - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
     await planForm.locator('input[name="scheduledAt"]').fill(plannedLocal);
