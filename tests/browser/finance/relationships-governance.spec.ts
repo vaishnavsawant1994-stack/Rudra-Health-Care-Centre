@@ -134,7 +134,9 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     await cancellationRow.locator('input[name="reason"]').fill("Synthetic schedule change for browser verification.");
     const cancellationResponsePromise = page.waitForResponse(response => response.request().method() === "POST" && response.url().endsWith("/visits"));
     await cancellationRow.getByRole("button", { name: "Cancel planned visit" }).click();
-    expect((await cancellationResponsePromise).status()).toBe(201);
+    const cancellationResponse = await cancellationResponsePromise;
+    expect(cancellationResponse.status()).toBe(201);
+    expect(await cancellationResponse.json()).toMatchObject({ visitEvent: { type: "VISIT_CANCELLED" } });
     await expect(cancellationRow).toContainText("Cancelled: Synthetic schedule change for browser verification.");
     const cancellationAudit = await workflowPool.query(
       "SELECT count(*)::int AS count FROM doctor_relationship_events WHERE doctor_id=$1 AND centre_id=$2 AND event_type='VISIT_CANCELLED'",
