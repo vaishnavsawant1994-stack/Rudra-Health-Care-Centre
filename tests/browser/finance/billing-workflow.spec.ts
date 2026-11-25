@@ -212,7 +212,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   expect(quoteBody.quote.snapshot.lines[0]?.catalogueVersionId).toBe(quoteCatalogueVersionId);
   await page.getByRole("link", { name: "Open quote details" }).click();
   await expect(page.getByRole("heading", { name: "Internal quote draft" })).toBeVisible();
-  await expect(page.getByText(quoteBody.quote.quoteNumber, { exact: false })).toBeVisible();
+  await expect(page.getByText(quoteBody.quote.quoteNumber, { exact: false }).first()).toBeVisible();
   await expect(page.getByText("Diagnostic services", { exact: false })).toBeVisible();
   const quoteStorage = await workflowPool.query("SELECT private_snapshot_ciphertext,status FROM lead_quotes WHERE id=$1 AND lead_id=$2", [quoteBody.quote.id, quoteLeadId]);
   expect(quoteStorage.rowCount).toBe(1);
