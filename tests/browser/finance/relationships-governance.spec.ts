@@ -419,6 +419,49 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     expect((await activateCampaign).status()).toBe(200);
     await expect(page.getByRole("row").filter({ hasText: campaignCode })).toContainText("ACTIVE");
     await expect(page.getByText("This workspace does not publish content, send communications or spend advertising funds.")).toBeVisible();
+
+    // M003: manage encrypted internal content drafts without publishing them.
+    await page.goto("/marketing/content");
+    await expect(page.getByRole("heading", { name: "Internal content calendar" })).toBeVisible();
+    const contentForm = page.locator("form").filter({ has: page.getByRole("heading", { name: "New content draft" }) });
+    const contentTitle = `Synthetic private content ${randomUUID().slice(0, 8)}`;
+    const updatedContentTitle = `${contentTitle} revised`;
+    await contentForm.getByLabel("Title").fill(contentTitle);
+    await contentForm.getByLabel("Copy").fill("Synthetic educational service copy for internal review only.");
+    await contentForm.getByLabel("Internal note").fill("No publication or patient targeting.");
+    await contentForm.getByLabel("Channel").selectOption("WEBSITE");
+    await contentForm.getByLabel("Content type").selectOption("POST");
+    const contentCreate = page.waitForResponse(response => response.request().method() === "POST" && response.url().endsWith("/api/marketing/content"));
+    await contentForm.getByRole("button", { name: "Save private draft" }).click();
+    const contentCreateResponse = await contentCreate;
+    expect(contentCreateResponse.status()).toBe(201);
+    const contentBody = await contentCreateResponse.json() as { item: { id: string; status: string; versionNumber: number } };
+    expect(contentBody.item).toMatchObject({ status: "DRAFT", versionNumber: 1 });
+    await expect(page.getByText("Saved as a private draft. No content was published or sent.")).toBeVisible();
+    const contentRow = page.getByRole("row").filter({ hasText: contentTitle });
+    await expect(contentRow).toBeVisible();
+    const storedContent = await workflowPool.query("SELECT status,version_number,private_data_ciphertext FROM marketing_content_items WHERE id=$1 AND centre_id=$2", [contentBody.item.id, centreId]);
+    expect(storedContent.rowCount).toBe(1);
+    expect(storedContent.rows[0]).toMatchObject({ status: "DRAFT", version_number: 1 });
+    expect(storedContent.rows[0].private_data_ciphertext).not.toContain(contentTitle);
+    await contentRow.getByRole("button", { name: "Edit" }).click();
+    const editContentForm = page.locator("form").filter({ has: page.getByRole("heading", { name: "Edit draft" }) });
+    await editContentForm.getByLabel("Title").fill(updatedContentTitle);
+    await editContentForm.getByLabel("Reason").fill("Synthetic copy correction for internal review.");
+    const updateContent = page.waitForResponse(response => response.request().method() === "PATCH" && response.url().endsWith(`/api/marketing/content/${contentBody.item.id}`));
+    await editContentForm.getByRole("button", { name: "Save draft changes" }).click();
+    expect((await updateContent).status()).toBe(200);
+    const updatedStoredContent = await workflowPool.query("SELECT status,version_number,private_data_ciphertext FROM marketing_content_items WHERE id=$1", [contentBody.item.id]);
+    expect(updatedStoredContent.rows[0]).toMatchObject({ status: "DRAFT", version_number: 2 });
+    expect(updatedStoredContent.rows[0].private_data_ciphertext).not.toContain(updatedContentTitle);
+    const contentEvents = await workflowPool.query("SELECT event_type FROM marketing_content_events WHERE content_item_id=$1 ORDER BY recorded_at", [contentBody.item.id]);
+    expect(contentEvents.rows.map(row => row.event_type)).toEqual(["CREATED", "UPDATED"]);
+    const updatedContentRow = page.getByRole("row").filter({ hasText: updatedContentTitle });
+    await expect(updatedContentRow).toBeVisible();
+    await updatedContentRow.getByRole("button", { name: "History" }).click();
+    await expect(page.getByRole("region", { name: "Content history" }).getByText(/CREATED/)).toBeVisible();
+    await expect(page.getByRole("region", { name: "Content history" }).getByText(/UPDATED/)).toBeVisible();
+    await expect(page.getByText("publishing, messaging and advertising spend are disabled.", { exact: false })).toBeVisible();
   } finally {
     await workflowPool.end();
   }
