@@ -243,6 +243,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   await page.goto(`/relationships/corporate/${relationship.id}`);
   await expect(page.getByRole("heading", { name: "Synthetic Browser Corporate" })).toBeVisible();
   await expect(page.getByText("Contact permission remains pending until documented; marketing consent is not requested.", { exact: false })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Create linked follow-up task" })).toBeVisible();
   for (const width of [1280, 768, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await expect(page.getByRole("heading", { name: "Synthetic Browser Corporate" })).toBeVisible();
