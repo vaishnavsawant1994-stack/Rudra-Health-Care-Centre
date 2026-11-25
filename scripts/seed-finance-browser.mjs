@@ -98,14 +98,25 @@ async function createOrder(client, centreId, suffix, homeCharge) {
      VALUES($1,$2,$3,$4,1,$5,'SYNTHETIC',450.00,'INR',$6,'2026-01-01','SYNTHETIC_TEST',$7)`, [versionId, ids.organizationId, centreId, itemId, `Synthetic test ${suffix}`, `TEST ONLY synthetic catalogue fixture ${versionId.slice(0, 8)}`, ids.staffId],
   );
   await client.query(
-    `INSERT INTO diagnostic_orders(id,organization_id,centre_id,order_number,patient_id,appointment_id,status,idempotency_key,request_hash,currency,total_amount,created_by_staff_id,confirmed_by_staff_id,confirmed_at)
-     VALUES($1,$2,$3,$4,$5,$6,'CONFIRMED',$7,$8,'INR',450.00,$9,$9,now())`,
+    `INSERT INTO diagnostic_orders(id,organization_id,centre_id,order_number,patient_id,appointment_id,status,idempotency_key,request_hash,currency,total_amount,created_by_staff_id)
+     VALUES($1,$2,$3,$4,$5,$6,'DRAFT',$7,$8,'INR',450.00,$9)`,
     [orderId, ids.organizationId, centreId, `SYN-ORD-${suffix}-${orderId.slice(0, 6)}`, patientId, appointmentId, randomUUID(), randomBytes(32).toString("hex"), ids.staffId],
   );
   await client.query(
     `INSERT INTO diagnostic_order_items(id,organization_id,centre_id,order_id,catalogue_item_id,catalogue_version_id,service_type,service_code,display_name,verification_status,price_amount,currency,price_source_reference,effective_from,service_snapshot)
      VALUES($1,$2,$3,$4,$5,$6,'TEST',$7,$8,'SYNTHETIC',450.00,'INR',$9,'2026-01-01',$10::jsonb)`,
     [randomUUID(), ids.organizationId, centreId, orderId, itemId, versionId, itemCode, `Synthetic test ${suffix}`, `TEST ONLY synthetic catalogue fixture ${versionId.slice(0, 8)}`, JSON.stringify({ source: "browser_fixture", synthetic: true })],
+  );
+  const confirmedAt = new Date();
+  await client.query(
+    `UPDATE diagnostic_orders SET status='CONFIRMED',confirmed_by_staff_id=$2,confirmed_at=$3,version_number=version_number+1,updated_at=$3
+     WHERE id=$1 AND status='DRAFT'`,
+    [orderId, ids.staffId, confirmedAt],
+  );
+  await client.query(
+    `INSERT INTO diagnostic_order_status_history(organization_id,centre_id,order_id,from_status,to_status,reason,version_number,actor_staff_id,recorded_at)
+     VALUES($1,$2,$3,'DRAFT','CONFIRMED','Synthetic browser fixture: source-verified test catalogue item',2,$4,$5)`,
+    [ids.organizationId, centreId, orderId, ids.staffId, confirmedAt],
   );
   return { orderId, appointmentId, catalogueItemId: itemId, catalogueVersionId: versionId };
 }
