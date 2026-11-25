@@ -196,7 +196,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   try {
   // B005/B006: staff-entered evidence is persisted as RECORDED, not settled.
   const chargeLookup = await workflowPool.query(
-    "SELECT id FROM finance_charges WHERE order_id=$1 AND charge_type='DIAGNOSTIC' AND state='ACTIVE'",
+    "SELECT id,charge_code FROM finance_charges WHERE order_id=$1 AND charge_type='DIAGNOSTIC' AND state='ACTIVE'",
     [orderIds[0]],
   );
   expect(chargeLookup.rowCount).toBe(1);
@@ -235,10 +235,12 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   await expect(page.getByRole("row").filter({ hasText: paymentLookup.rows[0].payment_number })).toContainText("RECORDED");
   await expect(page.getByRole("row").filter({ hasText: paymentLookup.rows[0].payment_number })).toContainText("upi");
 
-  // B008: the outstanding screen reflects the partial allocation.
+  // B008: unverified payment evidence must not reduce the outstanding balance.
   await page.goto("/finance/outstanding");
   await expect(page.getByRole("heading", { name: "Charges and balances" })).toBeVisible();
-  await expect(page.getByRole("cell", { name: "INR 350.00" })).toBeVisible();
+  const outstandingCharge = page.getByRole("row").filter({ hasText: chargeLookup.rows[0].charge_code });
+  await expect(outstandingCharge).toContainText("INR 450.00");
+  await expect(outstandingCharge).toContainText("UNPAID");
 
   // B011/B014: home fees are separated from diagnostic charges; export stays gated.
   await page.goto("/finance/home-fees");
