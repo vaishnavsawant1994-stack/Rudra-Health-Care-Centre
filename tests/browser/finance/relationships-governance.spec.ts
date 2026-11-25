@@ -133,11 +133,14 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     const cancellationRow = cancellationButton.locator("xpath=ancestor::tr");
     await cancellationRow.locator('input[name="reason"]').fill("Synthetic schedule change for browser verification.");
     const cancellationResponsePromise = page.waitForResponse(response => response.request().method() === "POST" && response.url().endsWith("/visits"));
+    const refreshedHistoryPromise = page.waitForResponse(response => response.request().method() === "GET" && response.url().includes(`/api/doctors/${doctorId}/visits?centreId=${centreId}`));
     await cancellationRow.getByRole("button", { name: "Cancel planned visit" }).click();
     const cancellationResponse = await cancellationResponsePromise;
     expect(cancellationResponse.status()).toBe(201);
     expect(await cancellationResponse.json()).toMatchObject({ visitEvent: { type: "VISIT_CANCELLED" } });
-    await expect(cancellationRow).toContainText("Cancelled: Synthetic schedule change for browser verification.");
+    const refreshedHistory = await (await refreshedHistoryPromise).json() as { visits: Array<{ cancelled: string | null }> };
+    expect(refreshedHistory.visits).toEqual(expect.arrayContaining([expect.objectContaining({ cancelled: "Synthetic schedule change for browser verification." })]));
+    await expect(page.getByText("Cancelled: Synthetic schedule change for browser verification.", { exact: true })).toBeVisible();
     const cancellationAudit = await workflowPool.query(
       "SELECT count(*)::int AS count FROM doctor_relationship_events WHERE doctor_id=$1 AND centre_id=$2 AND event_type='VISIT_CANCELLED'",
       [doctorId, centreId],
