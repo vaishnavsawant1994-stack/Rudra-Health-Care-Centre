@@ -270,7 +270,9 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   await page.goto("/relationships/referrals");
   const referralReport = page.locator('section[aria-labelledby="referral-report-title"]');
   await referralReport.getByLabel("Source type").selectOption("CORPORATE");
-  await expect(referralReport.getByLabel("Centre")).toHaveValue(centreId!);
+  const referralCentre = referralReport.getByLabel("Centre");
+  await expect(referralCentre.locator(`option[value="${centreId}"]`)).toHaveCount(1);
+  await referralCentre.selectOption(centreId!);
   await referralReport.getByRole("button", { name: "Apply filters" }).click();
   await expect(referralReport.getByRole("row").filter({ hasText: relationship.relationshipNumber })).toBeVisible();
   const corporateStorage = await workflowPool.query(
