@@ -40,3 +40,10 @@ The test used synthetic staff, a disposable PostgreSQL database and a test-issue
 These are specific functional paths, not complete-screen acceptance. The test does not establish keyboard/screen-reader accessibility or comparison with approved visual references; no Owner/QA acceptance fields were changed. Doctor and partner workflows (C001-C004 and C010-C012) were not browser-tested by this journey. C009 camp planning and C011 partner portal remain policy/contract gated as described above.
 
 The PR-triggered run [45611672221](https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45611672221) passed browser, dependency and quality jobs, but the historical secret-scan job remains blocked on previously documented findings.
+
+
+## Protected partner directory browser evidence ? 25 November 2026
+
+The same synthetic Chromium journey in GitHub Actions push run [45613005222](https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45613005222) passed the protected C010 directory and intake path: it opened `/relationships/partners`, created a centre-scoped PARTNER record (HTTP 201), opened `/relationships/partners/{id}`, verified the pending contact-permission notice, and checked the profile at 1280, 768 and 390px without horizontal overflow. Disposable PostgreSQL confirmed the encrypted relationship row. The public `/partners` W020 page was not used for staff directory records. No contract, consent, referral, patient access, partner portal, external communication or billing action was performed.
+
+C010 therefore has a limited functionally verified path. The broader full automated job on this run exposed two inventory-regression failures caused by changed classification prose in the matrix; the generated classifications are restored and the focused inventory tests now pass 23/23. The clean full CI rerun is pending. C010 remains partial; its broader partner verification lifecycle, keyboard/accessibility, visual comparison and Owner/QA sign-off are not established. C001-C004 and C011-C012 were not exercised by this browser journey.
