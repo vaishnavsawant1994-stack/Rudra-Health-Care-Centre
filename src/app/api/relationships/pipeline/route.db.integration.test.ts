@@ -69,4 +69,13 @@ describe("relationship aggregate pipeline PostgreSQL scope", () => {
     expect(response.status).toBe(403);
     expect(mocks.getApiAccess.mock.calls.length - before).toBe(3);
   });
+
+  it("aggregates an unselected centre only across the operator's granted centre scope", async () => {
+    const response = await handler(new Request("http://localhost/api/relationships/pipeline"));
+    const body = await response.json() as { relationships: Record<string, Array<{ count: number }>> };
+    expect(response.status).toBe(200);
+    expect(body.relationships.doctors.reduce((total, row) => total + row.count, 0)).toBe(2);
+    expect(body.relationships.corporate.reduce((total, row) => total + row.count, 0)).toBe(1);
+    expect(body.relationships.partners.reduce((total, row) => total + row.count, 0)).toBe(1);
+  });
 });
