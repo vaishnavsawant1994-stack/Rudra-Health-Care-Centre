@@ -351,8 +351,11 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
       expect(governanceStorage.rows[0]).toMatchObject({ status: "DRAFT", version_number: 2, event_count: 2 });
       expect(governanceStorage.rows[0].private_data_ciphertext).not.toContain(item.title);
     }
-    const deniedGovernance = await page.request.get(`/api/communications/governance?centreId=${encodeURIComponent(deniedCentreId!)}&recordKind=KNOWLEDGE`);
-    expect(deniedGovernance.status()).toBe(403);
+    // configuration.read is organization-scoped: an authorized governance operator may select another centre,
+    // but centre-filtered records and history must not leak from the selected centre.
+    const otherCentreGovernance = await page.request.get(`/api/communications/governance?centreId=${encodeURIComponent(deniedCentreId!)}&recordKind=KNOWLEDGE`);
+    expect(otherCentreGovernance.status()).toBe(200);
+    expect((await otherCentreGovernance.json() as { records: unknown[] }).records).toHaveLength(0);
   } finally {
     await workflowPool.end();
   }
