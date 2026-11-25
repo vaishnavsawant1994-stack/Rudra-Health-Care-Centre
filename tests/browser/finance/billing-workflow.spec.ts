@@ -31,7 +31,10 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   const catalogueVersionIds = JSON.parse(process.env.FINANCE_BROWSER_CATALOGUE_VERSION_IDS ?? "[]") as string[];
   const catalogueItemIds = JSON.parse(process.env.FINANCE_BROWSER_CATALOGUE_ITEM_IDS ?? "[]") as string[];
   const readOnlyOrderId = process.env.FINANCE_BROWSER_READ_ONLY_ORDER_ID;
-  expect(email && password && databaseUrl && centreId && readOnlyCentreId && deniedCentreId && orderIds.length === 6 && catalogueVersionIds.length === 6 && catalogueItemIds.length === 6 && readOnlyOrderId).toBeTruthy();
+  const quoteLeadId = process.env.FINANCE_BROWSER_QUOTE_LEAD_ID;
+  const crossCentreLeadId = process.env.FINANCE_BROWSER_CROSS_CENTRE_LEAD_ID;
+  const quoteCatalogueVersionId = process.env.FINANCE_BROWSER_QUOTE_VERSION_ID;
+  expect(email && password && databaseUrl && centreId && readOnlyCentreId && deniedCentreId && orderIds.length === 6 && catalogueVersionIds.length === 6 && catalogueItemIds.length === 6 && readOnlyOrderId && quoteLeadId && crossCentreLeadId && quoteCatalogueVersionId).toBeTruthy();
 
   await page.goto("/staff");
   await page.getByLabel("Work email").fill(email!);
@@ -194,6 +197,34 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
 
   const workflowPool = new Pool({ connectionString: databaseUrl, max: 1, application_name: "rudra-finance-workflow-assertions" });
   try {
+  // B003: create an internal draft for an authorized synthetic lead, then retrieve it by both quote and lead scope.
+  await page.goto(`/staff/quotes?leadId=${encodeURIComponent(quoteLeadId!)}`);
+  await expect(page.getByRole("heading", { name: "Prepare an internal price draft" })).toBeVisible();
+  const quoteService = page.getByLabel(/Synthetic quote browser item/);
+  await expect(quoteService).toBeVisible();
+  await quoteService.check();
+  const quoteResponsePromise = page.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith(`/api/leads/${quoteLeadId}/quotes`));
+  await page.getByRole("button", { name: "Save internal quote draft" }).click();
+  const quoteResponse = await quoteResponsePromise;
+  expect(quoteResponse.status()).toBe(201);
+  const quoteBody = await quoteResponse.json() as { quote: { id: string; quoteNumber: string; status: string; totalPaise: number; snapshot: { lines: Array<{ catalogueVersionId: string }> } } };
+  expect(quoteBody.quote).toMatchObject({ status: "INTERNAL_DRAFT", totalPaise: 12500 });
+  expect(quoteBody.quote.snapshot.lines[0]?.catalogueVersionId).toBe(quoteCatalogueVersionId);
+  await page.getByRole("link", { name: "Open quote details" }).click();
+  await expect(page.getByRole("heading", { name: "Internal quote draft" })).toBeVisible();
+  await expect(page.getByText(quoteBody.quote.quoteNumber, { exact: false })).toBeVisible();
+  await expect(page.getByText("Diagnostic services", { exact: false })).toBeVisible();
+  const quoteStorage = await workflowPool.query("SELECT private_snapshot_ciphertext,status FROM lead_quotes WHERE id=$1 AND lead_id=$2", [quoteBody.quote.id, quoteLeadId]);
+  expect(quoteStorage.rowCount).toBe(1);
+  expect(quoteStorage.rows[0].status).toBe("INTERNAL_DRAFT");
+  expect(quoteStorage.rows[0].private_snapshot_ciphertext).not.toContain('"totalPaise":12500');
+  await page.goto(`/finance/quotes/${quoteBody.quote.id}?leadId=${encodeURIComponent(crossCentreLeadId!)}`);
+  await expect(page.getByText("This quote is unavailable in the authorized lead scope. No quote data was disclosed.")).toBeVisible();
+  const crossCentreQuoteStatus = await page.request.get(`/api/leads/${encodeURIComponent(crossCentreLeadId!)}/quotes`);
+  expect(crossCentreQuoteStatus.status()).toBe(404);
+  await page.goto(`/finance/quotes/${crypto.randomUUID()}?leadId=${encodeURIComponent(quoteLeadId!)}`);
+  await expect(page.getByText("This quote is unavailable in the authorized lead scope. No quote data was disclosed.")).toBeVisible();
+
   // B005/B006: staff-entered evidence is persisted as RECORDED, not settled.
   const chargeLookup = await workflowPool.query(
     "SELECT id,charge_code FROM finance_charges WHERE order_id=$1 AND charge_type='DIAGNOSTIC' AND state='ACTIVE'",

@@ -12,7 +12,7 @@ if (!["127.0.0.1", "localhost"].includes(parsedDatabaseUrl.hostname) || decodeUR
 }
 
 const pool = new Pool({ connectionString: databaseUrl, max: 1, application_name: "rudra-finance-browser-fixtures" });
-const ids = { organizationId: randomUUID(), authorizedCentreId: randomUUID(), readOnlyCentreId: randomUUID(), deniedCentreId: randomUUID(), staffId: randomUUID(), authUserId: randomUUID(), readRoleId: randomUUID(), createRoleId: randomUUID(), paymentRoleId: randomUUID(), reconcileRoleId: randomUUID(), closerStaffId: randomUUID(), closerAuthUserId: randomUUID(), closerReadRoleId: randomUUID(), closerReconcileRoleId: randomUUID() };
+const ids = { organizationId: randomUUID(), authorizedCentreId: randomUUID(), readOnlyCentreId: randomUUID(), deniedCentreId: randomUUID(), staffId: randomUUID(), authUserId: randomUUID(), readRoleId: randomUUID(), createRoleId: randomUUID(), paymentRoleId: randomUUID(), reconcileRoleId: randomUUID(), closerStaffId: randomUUID(), closerAuthUserId: randomUUID(), closerReadRoleId: randomUUID(), closerReconcileRoleId: randomUUID(), quoteLeadId: randomUUID(), crossCentreLeadId: randomUUID(), quoteCatalogueItemId: randomUUID(), quoteCatalogueVersionId: randomUUID() };
 const patientKeyId = process.env.RUDRA_FIELD_ACTIVE_KEY_ID;
 const patientKey = Buffer.from(JSON.parse(process.env.RUDRA_FIELD_ENCRYPTION_KEYS ?? "{}")[patientKeyId] ?? "", "base64");
 const blindIndexKey = Buffer.from(process.env.RUDRA_BLIND_INDEX_KEY ?? "", "base64");
@@ -36,6 +36,15 @@ function encryptOperational(value, recordType, recordId, centreId) {
   const nonce = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", key, nonce);
   cipher.setAAD(Buffer.from(`rudra:operational-data:v1:${ids.organizationId}:${centreId}:${recordType}:${recordId}:${keyId}`));
+  const ciphertext = Buffer.concat([cipher.update(JSON.stringify(value), "utf8"), cipher.final()]);
+  return `v1.${keyId}.${nonce.toString("base64url")}.${cipher.getAuthTag().toString("base64url")}.${ciphertext.toString("base64url")}`;
+}
+function encryptLeadPrivateData(value, recordId, centreId) {
+  const keyId = process.env.RUDRA_FIELD_ACTIVE_KEY_ID;
+  if (!keyId || patientKey.length !== 32) throw new Error("lead_encryption_key_unavailable");
+  const nonce = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", patientKey, nonce);
+  cipher.setAAD(Buffer.from(`rudra:lead-data:v1:${ids.organizationId}:${centreId}:${recordId}:private-data:${keyId}`));
   const ciphertext = Buffer.concat([cipher.update(JSON.stringify(value), "utf8"), cipher.final()]);
   return `v1.${keyId}.${nonce.toString("base64url")}.${cipher.getAuthTag().toString("base64url")}.${ciphertext.toString("base64url")}`;
 }
@@ -145,6 +154,7 @@ try {
     await client.query("INSERT INTO roles(id,organization_id,key,name,scope) VALUES($1,$2,$3,'Synthetic finance read','CENTRE'),($4,$2,$5,'Synthetic finance charge creator','CENTRE'),($6,$2,$7,'Synthetic payment recorder','CENTRE'),($8,$2,$9,'Synthetic reconciliation operator','CENTRE'),($10,$2,$11,'Synthetic closer read','CENTRE'),($12,$2,$13,'Synthetic closer reconciliation','CENTRE')", [ids.readRoleId, ids.organizationId, `finance_read_${ids.staffId.slice(0, 8)}`, ids.createRoleId, `finance_create_${ids.staffId.slice(0, 8)}`, ids.paymentRoleId, `finance_payment_${ids.staffId.slice(0, 8)}`, ids.reconcileRoleId, `finance_reconcile_${ids.staffId.slice(0, 8)}`, ids.closerReadRoleId, `finance_read_${ids.closerStaffId.slice(0, 8)}`, ids.closerReconcileRoleId, `finance_reconcile_${ids.closerStaffId.slice(0, 8)}`]);
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='finance.read' ON CONFLICT DO NOTHING", [ids.readRoleId]);
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key IN ('finance.charge.create','appointments.home_charge.manage') ON CONFLICT DO NOTHING", [ids.createRoleId]);
+    await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key IN ('leads.read','catalogue.read','orders.create') ON CONFLICT DO NOTHING", [ids.createRoleId]);
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='finance.payment.record' ON CONFLICT DO NOTHING", [ids.paymentRoleId]);
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='finance.reconcile' ON CONFLICT DO NOTHING", [ids.reconcileRoleId]);
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='finance.read' ON CONFLICT DO NOTHING", [ids.closerReadRoleId]);
@@ -158,6 +168,26 @@ try {
       orders.push(await createOrder(client, ids.authorizedCentreId, choice, { choice, rupees, reason }));
     }
     const readOnlyOrder = await createOrder(client, ids.readOnlyCentreId, "READONLY", null);
+    await client.query(
+      "INSERT INTO leads(id,organization_id,centre_id,lead_number,enquiry_category,source,status,priority,assigned_staff_id,created_by_staff_id) VALUES($1,$2,$3,$4,'GENERAL','WEBSITE','QUALIFIED','NORMAL',$5,$5)",
+      [ids.quoteLeadId, ids.organizationId, ids.authorizedCentreId, `SYN-Q-${ids.quoteLeadId.slice(0, 8)}`, ids.staffId],
+    );
+    await client.query(
+      "INSERT INTO leads(id,organization_id,centre_id,lead_number,enquiry_category,source,status,priority,assigned_staff_id,created_by_staff_id) VALUES($1,$2,$3,$4,'GENERAL','WEBSITE','QUALIFIED','NORMAL',$5,$5)",
+      [ids.crossCentreLeadId, ids.organizationId, ids.readOnlyCentreId, `SYN-X-${ids.crossCentreLeadId.slice(0, 8)}`, ids.staffId],
+    );
+    await client.query(
+      "INSERT INTO lead_private_data(lead_id,organization_id,centre_id,payload_ciphertext) VALUES($1,$2,$3,$4)",
+      [ids.quoteLeadId, ids.organizationId, ids.authorizedCentreId, encryptLeadPrivateData({ firstName: "Synthetic", lastName: "Quote Lead", phone: null, email: null, interestedService: "Synthetic consultation", campaign: null, contactEvidenceReference: null, marketingEvidenceReference: null, lostReason: null }, ids.quoteLeadId, ids.authorizedCentreId)],
+    );
+    await client.query(
+      "INSERT INTO diagnostic_catalogue_items(id,organization_id,centre_id,service_type,service_code,current_version,created_by_staff_id) VALUES($1,$2,$3,'TEST',$4,1,$5)",
+      [ids.quoteCatalogueItemId, ids.organizationId, ids.authorizedCentreId, `SYN-Q-${ids.quoteCatalogueItemId.slice(0, 8)}`, ids.staffId],
+    );
+    await client.query(
+      "INSERT INTO diagnostic_catalogue_versions(id,organization_id,centre_id,catalogue_item_id,version_number,display_name,verification_status,price_amount,currency,price_source_reference,effective_from,effective_until,reviewed_by_staff_id,reviewed_at,source_type,created_by_staff_id) VALUES($1,$2,$3,$4,1,'Synthetic quote browser item','VERIFIED',125.00,'INR',$5,'2026-01-01','2099-12-31',$6,now(),'MANUAL',$6)",
+      [ids.quoteCatalogueVersionId, ids.organizationId, ids.authorizedCentreId, ids.quoteCatalogueItemId, `TEST ONLY isolated quote fixture ${ids.quoteCatalogueVersionId.slice(0, 8)}`, ids.staffId],
+    );
     await client.query("COMMIT");
 
     const lines = {
@@ -174,6 +204,9 @@ try {
       FINANCE_BROWSER_READ_ONLY_ORDER_ID: readOnlyOrder.orderId,
       FINANCE_BROWSER_STAFF_ID: ids.staffId,
       FINANCE_BROWSER_CLOSER_STAFF_ID: ids.closerStaffId,
+      FINANCE_BROWSER_QUOTE_LEAD_ID: ids.quoteLeadId,
+      FINANCE_BROWSER_CROSS_CENTRE_LEAD_ID: ids.crossCentreLeadId,
+      FINANCE_BROWSER_QUOTE_VERSION_ID: ids.quoteCatalogueVersionId,
     };
     for (const [key, value] of Object.entries(lines)) {
       if (/[\r\n]/.test(value)) throw new Error(`invalid_fixture_output:${key}`);
