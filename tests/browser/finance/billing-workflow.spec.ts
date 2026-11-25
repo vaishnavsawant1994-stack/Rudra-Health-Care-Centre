@@ -297,7 +297,7 @@ test("real MFA finance operator creates authorized internal snapshots and reads 
   expect(taskResult.task?.id).toBeTruthy();
   const savedTask = await workflowPool.query(
     `SELECT t.centre_id,t.task_type,t.status,t.private_data_ciphertext,e.action
-       FROM staff_tasks t JOIN audit_events e ON e.entity_id=t.id AND e.action='staff_task.created'
+       FROM staff_tasks t JOIN audit_events e ON e.entity_id=t.id::text AND e.action='staff_task.created'
       WHERE t.id=$1 AND t.centre_id=$2`,
     [taskResult.task!.id, centreId],
   );
