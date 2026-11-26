@@ -8,7 +8,7 @@
 
 The canonical Phase 11 routes now use current authentication, staff/RBAC, manual Metropolis, catalogue and communication-governance contracts where available. Every protected page is behind `AdminShell`; protected writes continue through APIs with server-side permission checks. A route and a build do not prove live authorization or screen acceptance.
 
-This wave adds no database migration. Source migrations remain through 0100; the persistent local development database was previously observed at 0093 and was not changed. No production records, credentials, secrets or provider connections were accessed. No provider was activated, no communication sent, no export/restore run, and no release/deployment action taken.
+The original Phase 11 checkpoint added no migration. A cross-phase correction now exists at migration 0102 to register the organization-scoped `audit.read` permission used by O015; migrations 0102 and prior were exercised only by the isolated GitHub Actions database. The persistent local development database was previously observed at 0093 and was not changed. No production records, credentials, secrets or provider connections were accessed. No provider was activated, no communication sent, no export/restore run, and no release/deployment action taken.
 
 ## Twelve-screen register
 
@@ -48,3 +48,7 @@ Verification completed 15 November 2026: full Vitest **951/951 across 239 files*
 - Full 178-screen desktop/mobile visual comparison, accessibility and manual UAT.
 
 Phase 11 does not establish production readiness. Keep all 12 screens pending manual review and do not enable unsupported administrative actions.
+
+## Cross-phase verification update â€” 26 November 2026
+
+GitHub Actions run [45767316515](https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515), commit `1a664c6d70f4415917b9819493116adb0edae566`, passed the migration-backed synthetic Chromium workflows. The staff login and first-login TOTP flow was exercised for the organization audit reviewer; O015's organization permission worked after migration 0102. This is synthetic session/browser evidence and does not complete S001, S003 or S012 acceptance. No protected development database was migrated.
