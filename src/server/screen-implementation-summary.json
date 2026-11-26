@@ -10,9 +10,9 @@
     "missing": 0
   },
   "functionalVerification": {
-    "pathVerified": 54,
+    "pathVerified": 53,
     "routeRendered": 14,
-    "restrictionVerified": 2,
+    "restrictionVerified": 3,
     "notAssessed": 108,
     "evidenceFile": "docs/SCREEN_FUNCTIONAL_EVIDENCE.json",
     "screens": [
@@ -122,7 +122,7 @@
       },
       {
         "id": "B014",
-        "status": "FUNCTIONAL_PATH_VERIFIED",
+        "status": "RESTRICTION_VERIFIED",
         "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45548280139",
         "testedAtCommit": "1f885d987883ac8ca7c5f1d37a37e9ef1587e90d",
         "evidence": "Chromium displayed the explicit finance export restriction.",
@@ -602,7 +602,7 @@
   },
   "evidenceSource": {
     "generator": "scripts/reconcile-screen-inventory.mjs",
-    "sourceRevision": "6b5600ae8b88e0f54c93b2455258f3dbf2889c9f",
+    "sourceRevision": "0220e01b65ad9805fb9953bf436c3569cf1ac041",
     "matrixSha256": "b539ba978892d2a7b271aa388ef64a57a7d07e814207833dd8e9d397a8c7df3b"
   }
 }
