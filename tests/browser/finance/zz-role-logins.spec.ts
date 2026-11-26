@@ -28,6 +28,12 @@ const identities = [
   { key: "RESTRICTED", finance: 403, leads: 403, collections: 403, deniedCentre: 403 },
 ] as const;
 
+// The finance/relationship/audit journeys sign in first on the same CI server.
+// Keep the production-equivalent 5 sign-ins / 60 seconds protection enabled.
+// Give the shared database rate window time to expire, then pace each new login.
+test.beforeAll(async () => { await new Promise(resolve => setTimeout(resolve, 65_000)); });
+test.beforeEach(async () => { await new Promise(resolve => setTimeout(resolve, 13_000)); });
+
 for (const identity of identities) {
   test("real MFA " + identity.key + " sign-in enforces role and centre permissions", async ({ page }) => {
     const email = process.env["ROLE_BROWSER_" + identity.key + "_EMAIL"];
@@ -39,7 +45,12 @@ for (const identity of identities) {
     await page.goto("/staff");
     await page.getByLabel("Work email").fill(email!);
     await page.getByLabel("Password", { exact: true }).fill(password!);
+    const signInResponse = page.waitForResponse(response =>
+      response.request().method() === "POST" && response.url().includes("/api/auth/sign-in/email"),
+    );
     await page.getByRole("button", { name: "Sign in securely" }).click();
+    const signInStatus = (await signInResponse).status();
+    expect(signInStatus, identity.key + " must not be rejected by the shared CI login rate limit").toBe(200);
     await expect(page).toHaveURL(/\/staff\/security-setup$/);
 
     await page.getByLabel("Account password").fill(password!);
