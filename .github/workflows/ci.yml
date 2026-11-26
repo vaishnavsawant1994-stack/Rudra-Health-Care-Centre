@@ -122,6 +122,9 @@ jobs:
       - name: Full automated tests
         run: npm test
 
+      - name: Rehearse migration upgrade 0093 to 0102 in a disposable schema
+        run: node scripts/qualify-ci-migration-upgrade.mjs
+
       - name: Production build
         run: npm run build
 

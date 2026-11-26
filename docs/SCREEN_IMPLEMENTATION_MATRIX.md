@@ -23,6 +23,8 @@ Each row preserves the proposed ID, title, URL, access group, controls and autho
 
 The source/API/test associations are deliberately labeled as candidates. They are produced from route/module structure and imports; they do not prove that a candidate endpoint serves a particular screen, that every control works, or that its test covers all listed requirements. The acceptance column remains pending because the consolidated manual desktop/mobile campaign has not been completed.
 
+Scoped functional browser evidence is tracked separately in `SCREEN_FUNCTIONAL_EVIDENCE.json` and summarized by S012. Each entry names a canonical screen, exact run, tested source commit, tested path and limitations. A missing entry means functional browser evidence is not assessed in that ledger; it does not mean the screen has no implementation. Functional path verification does not promote implementation, technical completion, visual/accessibility acceptance or Owner/QA approval. The current focused ledger contains 9 evidenced IDs; technical completion and final Owner/QA acceptance remain 0/178.
+
 The implementation classifications are evidence-conservative:
 
 1. **Fully implemented for local development:** none promoted automatically. Requires verified functional requirements and relevant automated evidence.

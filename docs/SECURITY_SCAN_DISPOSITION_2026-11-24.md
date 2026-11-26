@@ -23,3 +23,9 @@ Reviewed the nine `generic-api-key` matches reported by the full-history Gitleak
 For each finding, the source is a test file and the matched value is used as an idempotency key, not as an authentication secret. The surrounding request and data are synthetic and local-test-only. No evidence in these nine locations indicates a live credential or reusable provider key. The values themselves are intentionally omitted from this report.
 
 This is a source-context disposition, not a scanner suppression. No broad rule bypass, path exclusion, or `.gitleaksignore` entry was added. The full-history Gitleaks job remains blocking until the repository's approved security process accepts this disposition or a reviewed history remediation is performed. Do not treat the latest-commit-only push scan as a substitute for the full-history PR scan.
+
+## Picomatch advisory status recheck — 26 November 2026
+
+GitHub Advisory Database now marks GHSA-fc5q-39xc-vjpf / CVE-2026-112366 **withdrawn on 18 November 2026**, stating that it was withdrawn because it is not a security issue. The earlier project notes describing this advisory as an active unresolved vulnerability are superseded by that source status. See the [current advisory record](https://github.com/advisories/GHSA-fc5q-39xc-vjpf).
+
+Against the current unchanged dependency lockfile, `npm explain picomatch` shows the installed picomatch copies only beneath the development dependency chain (ESLint tooling, TypeScript ESLint, Vite and Vitest). `npm audit` and `npm audit --omit=dev` both returned zero vulnerabilities on 26 November 2026. No override or finding suppression was added. This does not resolve the separate full-history Gitleaks check or constitute a fresh CI/build review.

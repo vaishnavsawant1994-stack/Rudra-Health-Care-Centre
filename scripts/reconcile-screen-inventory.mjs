@@ -11,6 +11,7 @@ const outputPath = path.join(root, "docs", "SCREEN_IMPLEMENTATION_MATRIX.csv");
 const releaseSummaryPath = path.join(root, "src", "server", "screen-implementation-summary.json");
 const routeEvidencePath = path.join(root, "docs", "SCREEN_ROUTE_EVIDENCE.json");
 const acceptanceBaselinePath = path.join(root, "docs", "SCREEN_ACCEPTANCE_BASELINE.json");
+const functionalEvidencePath = path.join(root, "docs", "SCREEN_FUNCTIONAL_EVIDENCE.json");
 
 // Explicit mappings reconcile proposed screen IDs with validated source where
 // the canonical implementation route differs from the proposal. Each entry is
@@ -496,6 +497,16 @@ const generated = parseCsv(`${output.join("\n")}\n`);
 const existingText = await readFile(outputPath, "utf8");
 const existing = parseCsv(existingText);
 const merged = mergeGeneratedMatrix({ generated: generated.rows, existing: existing.rows, expectedIds: specIds });
+const functionalEvidence = JSON.parse(await readFile(functionalEvidencePath, "utf8"));
+const canonicalIds = new Set(merged.rows.map((row) => row.ID));
+const functionalIds = functionalEvidence.screens.map((screen) => screen.id);
+if (functionalEvidence.schemaVersion !== 1 || new Set(functionalIds).size !== functionalIds.length
+  || functionalIds.some((id) => !canonicalIds.has(id))
+  || functionalEvidence.screens.some((screen) => screen.status !== "FUNCTIONAL_PATH_VERIFIED"
+    || !/^https:\/\//.test(screen.run) || !/^[a-f0-9]{40}$/.test(screen.testedAtCommit)
+    || !screen.evidence?.trim() || !screen.limitations?.trim())) {
+  throw new Error("screen_functional_evidence_invalid");
+}
 const currentHead = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
 let baselineDocument = null;
 try { baselineDocument = JSON.parse(await readFile(acceptanceBaselinePath, "utf8")); }
@@ -524,6 +535,13 @@ const releaseSummary = {
   exactRouteEvidence: merged.rows.filter((row) => !row["Exact source route"].startsWith("No ")).length,
   missingRouteEvidence: merged.rows.filter((row) => row["Exact source route"].startsWith("No ")).length,
   implementation: { fullyImplemented: 0, partiallyImplemented: 0, restricted: 0, previewOnly: 0, missing: 0 },
+  functionalVerification: {
+    pathVerified: functionalIds.length,
+    notAssessed: merged.rows.length - functionalIds.length,
+    evidenceFile: "docs/SCREEN_FUNCTIONAL_EVIDENCE.json",
+    screens: functionalEvidence.screens,
+  },
+  technicalCompletion: { complete: 0, pending: merged.rows.length },
   acceptance: { manuallyAccepted: 0, pendingManual: 0 },
   phases: {},
   evidenceSource: { generator: "scripts/reconcile-screen-inventory.mjs", sourceRevision, matrixSha256: createHash("sha256").update(serializeCsv(merged.headers, merged.rows)).digest("hex") },

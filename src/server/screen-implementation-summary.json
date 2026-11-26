@@ -9,6 +9,89 @@
     "previewOnly": 0,
     "missing": 0
   },
+  "functionalVerification": {
+    "pathVerified": 9,
+    "notAssessed": 169,
+    "evidenceFile": "docs/SCREEN_FUNCTIONAL_EVIDENCE.json",
+    "screens": [
+      {
+        "id": "M001",
+        "status": "FUNCTIONAL_PATH_VERIFIED",
+        "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+        "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+        "evidence": "Synthetic Chromium dashboard counts, navigation, retry and delayed-response centre switching.",
+        "limitations": "No external reach, engagement, spend, payments or diagnostic completion evidence; accessibility, visual comparison and Owner/QA pending."
+      },
+      {
+        "id": "M003",
+        "status": "FUNCTIONAL_PATH_VERIFIED",
+        "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+        "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+        "evidence": "Synthetic private content draft creation, encrypted persistence, edit/version history and append-only events.",
+        "limitations": "No publishing, sending, or external review; accessibility, visual comparison and Owner/QA pending."
+      },
+      {
+        "id": "M005",
+        "status": "FUNCTIONAL_PATH_VERIFIED",
+        "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+        "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+        "evidence": "Synthetic content calendar state and planned date persisted through the UI.",
+        "limitations": "Planned date is not a provider schedule or publication; accessibility, visual comparison and Owner/QA pending."
+      },
+      {
+        "id": "M006",
+        "status": "FUNCTIONAL_PATH_VERIFIED",
+        "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+        "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+        "evidence": "Synthetic in-review content; creator self-approval denied; separate reviewer approval and audit/version state persisted.",
+        "limitations": "Internal editorial approval only, not clinical/legal claim approval; accessibility, visual comparison and Owner/QA pending."
+      },
+      {
+        "id": "M012",
+        "status": "FUNCTIONAL_PATH_VERIFIED",
+        "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+        "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+        "evidence": "Synthetic campaign draft, centre switching under delayed response, persistence and internal attribution activation.",
+        "limitations": "No external publication, outreach or advertising spend; accessibility, visual comparison and Owner/QA pending."
+      },
+      {
+        "id": "M017",
+        "status": "FUNCTIONAL_PATH_VERIFIED",
+        "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+        "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+        "evidence": "Synthetic campaign-linked lead cohort and scoped aggregate attribution result verified in Chromium/API.",
+        "limitations": "No patient rows, payment attribution, or completed diagnostic evidence; accessibility, visual comparison and Owner/QA pending."
+      },
+      {
+        "id": "O005",
+        "status": "FUNCTIONAL_PATH_VERIFIED",
+        "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+        "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+        "evidence": "Synthetic planned roster shift created through UI and persisted with status/version.",
+        "limitations": "No actual attendance, staffing sufficiency, payroll or capacity-feasibility evidence; accessibility, visual comparison and Owner/QA pending."
+      },
+      {
+        "id": "O006",
+        "status": "FUNCTIONAL_PATH_VERIFIED",
+        "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+        "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+        "evidence": "Synthetic support action opened in the authorized operational queue through Chromium.",
+        "limitations": "Opening an action does not prove its source workflow is completed; accessibility, visual comparison and Owner/QA pending."
+      },
+      {
+        "id": "O015",
+        "status": "FUNCTIONAL_PATH_VERIFIED",
+        "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+        "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+        "evidence": "Synthetic MFA session queried organization audit records, applied filters and verified centre-only access boundaries after migration 0102.",
+        "limitations": "No anomaly detector or controlled export; accessibility, visual comparison and Owner/QA acceptance pending."
+      }
+    ]
+  },
+  "technicalCompletion": {
+    "complete": 0,
+    "pending": 178
+  },
   "acceptance": {
     "manuallyAccepted": 0,
     "pendingManual": 178
@@ -28,7 +111,7 @@
   },
   "evidenceSource": {
     "generator": "scripts/reconcile-screen-inventory.mjs",
-    "sourceRevision": "b7417f2fd8d7b28413d7fb72dbbb33c9af369599",
-    "matrixSha256": "e2dd89f98c730cef6f650bc042e18cdc29cc22085dbb33194e740336219d4efb"
+    "sourceRevision": "eceecbcbf49c509863095d3d1c0e0a67e5c08030",
+    "matrixSha256": "b539ba978892d2a7b271aa388ef64a57a7d07e814207833dd8e9d397a8c7df3b"
   }
 }
