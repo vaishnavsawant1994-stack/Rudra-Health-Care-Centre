@@ -219,6 +219,9 @@ jobs:
       - name: Create synthetic finance operator and order fixtures
         run: npm run seed:browser:finance
 
+      - name: Provision additional scoped synthetic staff logins
+        run: node scripts/seed-role-browser.mjs
+
       - name: Build production application
         run: npm run build
 
