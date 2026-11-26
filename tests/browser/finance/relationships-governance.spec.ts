@@ -312,6 +312,14 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     await expect(page.getByText("Recorded service outcome: internal operational resolved")).toBeVisible();
     await page.unroute(url => url.pathname === "/api/tasks" && url.searchParams.get("type") === "SUPPORT_REQUEST");
 
+    // O006: the unified action centre opens the same authorized task record.
+    const actionQueue = page.waitForResponse(response => response.request().method() === "GET" && new URL(response.url()).pathname === "/api/tasks");
+    await page.goto("/actions");
+    expect((await actionQueue).status()).toBe(200);
+    await expect(page.getByRole("heading", { name: "Rudra Action Centre" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Tasks and follow-ups" })).toBeVisible();
+    await expect(page.getByText(supportTitle, { exact: true })).toBeVisible();
+
     // A002/A003/A008: encrypted governance drafts are centre-scoped and stay inactive.
     const governanceDrafts: Array<{ route: string; kind: "PROVIDER_POLICY" | "KNOWLEDGE"; channel?: "WHATSAPP" | "VOICE"; title: string; fill: (form: ReturnType<typeof page.locator>, title: string) => Promise<void> }> = [
       { route: "/communications/whatsapp", kind: "PROVIDER_POLICY", channel: "WHATSAPP", title: `Synthetic WhatsApp policy ${randomUUID().slice(0, 8)}`, fill: async (form, title) => { await form.getByLabel("Internal policy name").fill(title); await form.getByLabel("Supported language codes").fill("en, hi"); await form.getByLabel("Routing and human escalation instructions").fill("Route all uncertain requests to an authorized human reviewer."); } },
@@ -592,6 +600,89 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     await expect(dashboardTotals.nth(0)).toHaveText(alternateDashboardCentre === centreId ? "1" : "0");
     await expect(dashboardTotals.nth(4)).toHaveText(alternateDashboardCentre === centreId ? "1" : "0");
     await page.unroute(url => url.pathname === "/api/marketing/campaigns");
+
+    // O005: create a synthetic planned shift; this is not attendance or payroll evidence.
+    const rosterLoad = page.waitForResponse(response => response.request().method() === "GET" && new URL(response.url()).pathname === "/api/roster");
+    await page.goto("/manage/roster");
+    expect((await rosterLoad).status()).toBe(200);
+    await expect(page.getByRole("heading", { name: "Staff roster and availability" })).toBeVisible();
+    const staffPicker = page.getByLabel("Staff member");
+    expect(await staffPicker.locator("option").count()).toBeGreaterThan(1);
+    await staffPicker.selectOption({ index: 1 });
+    const centreTimeZone = await page.getByLabel("Centre timezone").inputValue();
+    const shiftTimes = await page.evaluate((timeZone) => {
+      const inputValue = (date: Date) => {
+        const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(date).filter(part => part.type !== "literal").map(part => [part.type, part.value]));
+        return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+      };
+      return { starts: inputValue(new Date(Date.now() + 60 * 60_000)), ends: inputValue(new Date(Date.now() + 120 * 60_000)) };
+    }, centreTimeZone);
+    await page.getByLabel("Starts").fill(shiftTimes.starts);
+    await page.getByLabel("Ends").fill(shiftTimes.ends);
+    await page.getByLabel("Private note").fill("Synthetic planned roster record; not proof of attendance.");
+    const createShift = page.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/api/roster");
+    await page.getByRole("button", { name: "Save roster entry" }).click();
+    const shiftResponse = await createShift;
+    expect(shiftResponse.status()).toBe(201);
+    const shiftBody = await shiftResponse.json() as { shift: { id: string; replayed: boolean } };
+    expect(shiftBody.shift.replayed).toBe(false);
+    const storedShift = await workflowPool.query("SELECT centre_id,shift_type,status,version_number FROM staff_shifts WHERE id=$1", [shiftBody.shift.id]);
+    expect(storedShift.rows[0]).toMatchObject({ centre_id: centreId, shift_type: "SCHEDULED", status: "ACTIVE", version_number: 1 });
+    await expect(page.getByText("Synthetic planned roster record; not proof of attendance.")).toBeVisible();
+
+    // A centre-scoped operator cannot open the organization-wide audit stream.
+    const scopedAudit = await page.evaluate(async () => (await fetch("/api/admin/audit?page=1", { cache: "no-store" })).status);
+    expect(scopedAudit).toBe(403);
+
+    // O015: use an independently authenticated, organization-scoped synthetic auditor.
+    const auditEmail = process.env.AUDIT_REVIEWER_BROWSER_EMAIL;
+    const auditPassword = process.env.AUDIT_REVIEWER_BROWSER_PASSWORD;
+    expect(auditEmail && auditPassword).toBeTruthy();
+    const auditContext = await page.context().browser()!.newContext();
+    const auditPage = await auditContext.newPage();
+    try {
+      await auditPage.goto("/staff");
+      await auditPage.getByLabel("Work email").fill(auditEmail!);
+      await auditPage.getByLabel("Password", { exact: true }).fill(auditPassword!);
+      await auditPage.getByRole("button", { name: "Sign in securely" }).click();
+      await expect(auditPage).toHaveURL(/\/staff\/security-setup$/);
+      await auditPage.getByLabel("Account password").fill(auditPassword!);
+      const enrollmentResponse = auditPage.waitForResponse(response => response.request().method() === "POST" && response.url().includes("/api/auth/two-factor/enable"));
+      await auditPage.getByRole("button", { name: "Begin authenticator setup" }).click();
+      const enrollment = await (await enrollmentResponse).json() as { totpURI: string; method: string };
+      expect(enrollment.method).toBe("totp");
+      const secret = new URL(enrollment.totpURI).searchParams.get("secret");
+      expect(secret).toBeTruthy();
+      if (Date.now() % 30_000 > 27_000) await auditPage.waitForTimeout(3_000);
+      await auditPage.getByLabel("Current six-digit authenticator code").fill(totp(secret!));
+      await auditPage.getByRole("button", { name: "Verify and finish setup" }).click();
+      await expect(auditPage).toHaveURL(/\/staff\/workspace$/);
+      const auditLoad = auditPage.waitForResponse(response => response.request().method() === "GET" && new URL(response.url()).pathname === "/api/admin/audit");
+      await auditPage.goto("/manage/audit");
+      expect((await auditLoad).status()).toBe(200);
+      await expect(auditPage.getByRole("heading", { name: "Authorized audit events" })).toBeVisible();
+      const organizationAudit = await auditPage.evaluate(async () => {
+        const response = await fetch("/api/admin/audit?page=1", { cache: "no-store" });
+        return { status: response.status, body: await response.json() as { events: Array<{ centreId: string | null; action: string }> } };
+      });
+      expect(organizationAudit.status).toBe(200);
+      expect(organizationAudit.body.events.length).toBeGreaterThan(0);
+      const centreAudit = await auditPage.evaluate(async (allowedId) => {
+        const response = await fetch(`/api/admin/audit?centreId=${encodeURIComponent(allowedId)}`, { cache: "no-store" });
+        return { status: response.status, body: await response.json() as { events: Array<{ centreId: string | null }> } };
+      }, centreId!);
+      expect(centreAudit.status).toBe(200);
+      expect(centreAudit.body.events.every(event => event.centreId === centreId)).toBe(true);
+      const deniedAuditStatus = await auditPage.evaluate(async (deniedId) => (await fetch(`/api/admin/audit?centreId=${encodeURIComponent(deniedId)}`, { cache: "no-store" })).status, deniedCentreId!);
+      expect(deniedAuditStatus).toBe(403);
+      await auditPage.getByLabel("Action").fill("marketing.campaign_created");
+      const filteredAuditLoad = auditPage.waitForResponse(response => { const url = new URL(response.url()); return url.pathname === "/api/admin/audit" && url.searchParams.get("action") === "marketing.campaign_created"; });
+      await auditPage.getByRole("button", { name: "Apply filters" }).click();
+      expect((await filteredAuditLoad).status()).toBe(200);
+      await expect(auditPage.getByRole("row").filter({ hasText: "marketing.campaign_created" })).toBeVisible();
+    } finally {
+      await auditContext.close();
+    }
   } finally {
     await workflowPool.end();
   }
