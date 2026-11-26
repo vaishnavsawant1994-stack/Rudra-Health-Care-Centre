@@ -38,6 +38,15 @@ try {
   );
   if (source.rowCount !== 1) throw new Error("existing_synthetic_organization_not_found");
   const organizationId = source.rows[0].organization_id;
+  // Owner bootstrap normally installs the canonical permission catalogue. The
+  // finance-only fixture did not need every permission, so mirror that bootstrap
+  // safely in this isolated test transaction before assigning additional roles.
+  for (const [key, description, scope] of catalogue.permissions) {
+    await client.query(
+      "INSERT INTO permissions(key,description,scope) VALUES($1,$2,$3) ON CONFLICT(key) DO NOTHING",
+      [key, description, scope],
+    );
+  }
   const rolesByKey = new Map(catalogue.roles.map(([key, name, scope]) => [key, { name, scope }]));
   const outputs = {};
   for (const spec of roleSpecs) {
