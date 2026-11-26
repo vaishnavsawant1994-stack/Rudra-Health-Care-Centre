@@ -66,7 +66,20 @@ for (const identity of identities) {
       response.request().method() === "POST" && response.url().includes("/api/auth/two-factor/enable"),
     );
     await page.getByRole("button", { name: "Begin authenticator setup" }).click();
-    const enrollment = await (await enrollResponse).json() as { method: string; totpURI: string };
+    let enrollmentHttp = await enrollResponse;
+    if (enrollmentHttp.status() === 429) {
+      // Enrollment also has a server-enforced limiter. Never change the limiter
+      // for CI; retry the same actual UI action after its window expires.
+      await expect(page.locator(".auth-error")).toBeVisible();
+      await page.waitForTimeout(65_000);
+      const enrollmentRetry = page.waitForResponse(response =>
+        response.request().method() === "POST" && response.url().includes("/api/auth/two-factor/enable"),
+      );
+      await page.getByRole("button", { name: "Begin authenticator setup" }).click();
+      enrollmentHttp = await enrollmentRetry;
+    }
+    expect(enrollmentHttp.status(), identity.key + " MFA enrollment HTTP status").toBe(200);
+    const enrollment = await enrollmentHttp.json() as { method: string; totpURI: string };
     expect(enrollment.method).toBe("totp");
     const secret = new URL(enrollment.totpURI).searchParams.get("secret");
     expect(secret).toBeTruthy();
