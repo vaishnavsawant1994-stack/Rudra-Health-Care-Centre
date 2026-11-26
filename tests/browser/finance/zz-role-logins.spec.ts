@@ -28,11 +28,8 @@ const identities = [
   { key: "RESTRICTED", finance: 403, leads: 403, collections: 403, deniedCentre: 403 },
 ] as const;
 
-// The finance/relationship/audit journeys sign in first on the same CI server.
-// Keep the production-equivalent 5 sign-ins / 60 seconds protection enabled.
-// Give the shared database rate window time to expire, then pace each new login.
-test.beforeAll(async () => { await new Promise(resolve => setTimeout(resolve, 65_000)); });
-test.beforeEach(async () => { await new Promise(resolve => setTimeout(resolve, 13_000)); });
+// Multiple synthetic accounts share the same CI IP and application rate limiter.
+// A 429 is verified and retried after the real limit window, never bypassed.
 
 for (const identity of identities) {
   test("real MFA " + identity.key + " sign-in enforces role and centre permissions", async ({ page }) => {
