@@ -109,7 +109,7 @@ for (const identity of identities) {
       await expect(page.getByRole("button", { name: "Create lead" })).toBeVisible();
       await page.getByLabel("First name").fill("Synthetic");
       await page.getByLabel("Last name").fill(leadName);
-      await page.getByLabel("Email").fill(leadEmail);
+      await page.getByRole("textbox", { name: "Email" }).fill(leadEmail);
       const create = page.waitForResponse(response =>
         response.request().method() === "POST" && new URL(response.url()).pathname === "/api/leads",
       );
