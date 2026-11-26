@@ -50,7 +50,7 @@ for (const identity of identities) {
     if (signInStatus === 429) {
       // Better Auth intentionally limits sign-in attempts from the shared CI IP.
       // Respect that production security control; retry only after its window.
-      await expect(page.getByRole("alert")).toBeVisible();
+      await expect(page.locator(".auth-error")).toBeVisible();
       await page.waitForTimeout(65_000);
       const retryResponse = page.waitForResponse(response =>
         response.request().method() === "POST" && response.url().includes("/api/auth/sign-in/email"),
