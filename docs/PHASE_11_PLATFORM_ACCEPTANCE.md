@@ -62,6 +62,8 @@ An isolated GitHub Actions step rehearses 0093 → 0102 in its own randomly name
 
 ## Unresolved Phase 01–10 blockers carried forward
 
+See [`FINAL_DEFECT_REGISTER.md`](FINAL_DEFECT_REGISTER.md) for the deduplicated blocker register, owners and closure criteria.
+
 - Patient identity proofing and patient/representative authority; sensitive report access and encryption key recovery.
 - Clinical report release, critical-result protocol and approved SOPs.
 - Metropolis permission, import contract, data-use terms and provider verification.

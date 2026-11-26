@@ -22,7 +22,7 @@ Reviewed the nine `generic-api-key` matches reported by the full-history Gitleak
 
 For each finding, the source is a test file and the matched value is used as an idempotency key, not as an authentication secret. The surrounding request and data are synthetic and local-test-only. No evidence in these nine locations indicates a live credential or reusable provider key. The values themselves are intentionally omitted from this report.
 
-This is a source-context disposition, not a scanner suppression. No broad rule bypass, path exclusion, or `.gitleaksignore` entry was added. The full-history Gitleaks job remains blocking until the repository's approved security process accepts this disposition or a reviewed history remediation is performed. Do not treat the latest-commit-only push scan as a substitute for the full-history PR scan.
+The owner’s final completion directive authorizes a narrow disposition for these reviewed fixtures. `.gitleaksignore` now contains exactly the nine full-history fingerprints listed by the scanner (commit, file, rule and line); it has no path-wide or rule-wide exclusions. This keeps detection active for new values, new commits, other lines and all other rules. CI must confirm the current Gitleaks action honors these fingerprints before the exception is considered effective. If a future scan reports a different fingerprint, it remains blocking until separately reviewed. The underlying values are intentionally omitted from this report.
 
 ## Picomatch advisory status recheck — 26 November 2026
 

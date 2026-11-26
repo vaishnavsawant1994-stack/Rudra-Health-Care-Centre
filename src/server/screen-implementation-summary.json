@@ -602,7 +602,7 @@
   },
   "evidenceSource": {
     "generator": "scripts/reconcile-screen-inventory.mjs",
-    "sourceRevision": "0220e01b65ad9805fb9953bf436c3569cf1ac041",
+    "sourceRevision": "0daac05a4b27055b5392b7b5fa688b68cfd7c826",
     "matrixSha256": "b539ba978892d2a7b271aa388ef64a57a7d07e814207833dd8e9d397a8c7df3b"
   }
 }
