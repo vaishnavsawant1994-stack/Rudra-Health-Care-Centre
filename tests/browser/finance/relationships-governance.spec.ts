@@ -551,11 +551,18 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
       const calendarRow = reviewerPage.getByRole("row").filter({ hasText: updatedContentTitle });
       await expect(calendarRow).toContainText("APPROVED");
       const plannedDate = new Date(Date.now() + 48 * 60 * 60_000).toISOString();
-      reviewerPage.once("dialog", dialog => dialog.accept(plannedDate));
-      reviewerPage.once("dialog", dialog => dialog.accept("Synthetic internal calendar planning only."));
+      const plannedDialogAnswers = [plannedDate, "Synthetic internal calendar planning only."];
+      const acceptPlannedDialog = async (dialog: import("@playwright/test").Dialog) => {
+        const answer = plannedDialogAnswers.shift();
+        if (answer === undefined) await dialog.dismiss();
+        else await dialog.accept(answer);
+      };
+      reviewerPage.on("dialog", acceptPlannedDialog);
       const scheduleResponse = reviewerPage.waitForResponse(response => response.request().method() === "PATCH" && response.url().endsWith(`/api/marketing/content/${contentBody.item.id}`));
       await calendarRow.getByRole("button", { name: "Add planned date" }).click();
       expect((await scheduleResponse).status()).toBe(200);
+      reviewerPage.off("dialog", acceptPlannedDialog);
+      expect(plannedDialogAnswers).toHaveLength(0);
       const scheduledContent = await workflowPool.query("SELECT status,planned_publish_at FROM marketing_content_items WHERE id=$1", [contentBody.item.id]);
       expect(scheduledContent.rows[0].status).toBe("SCHEDULED");
       expect(new Date(scheduledContent.rows[0].planned_publish_at).getTime()).toBe(new Date(plannedDate).getTime());
