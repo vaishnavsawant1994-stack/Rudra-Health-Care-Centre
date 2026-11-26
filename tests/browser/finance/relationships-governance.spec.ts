@@ -421,6 +421,8 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     expect(storedCampaign.rowCount).toBe(1);
     expect(storedCampaign.rows[0]).toMatchObject({ centre_id: centreId, status: "DRAFT" });
     expect(storedCampaign.rows[0].private_data_ciphertext).not.toContain(campaignName);
+    const campaignAuditRecord = await workflowPool.query("SELECT action,centre_id FROM audit_events WHERE entity_id=$1 ORDER BY sequence DESC LIMIT 5", [campaignBody.campaign.id]);
+    expect(campaignAuditRecord.rows).toContainEqual(expect.objectContaining({ action: "marketing.campaign_created", centre_id: centreId }));
 
     page.once("dialog", dialog => dialog.accept("Synthetic internal tracking validation."));
     const activateCampaign = page.waitForResponse(response => response.request().method() === "PATCH" && response.url().includes("/api/marketing/campaigns/"));
@@ -685,8 +687,11 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
       await auditPage.getByLabel("Action").fill("marketing.campaign_created");
       const filteredAuditLoad = auditPage.waitForResponse(response => { const url = new URL(response.url()); return url.pathname === "/api/admin/audit" && url.searchParams.get("action") === "marketing.campaign_created"; });
       await auditPage.getByRole("button", { name: "Apply filters" }).click();
-      expect((await filteredAuditLoad).status()).toBe(200);
-      await expect(auditPage.getByRole("row").filter({ hasText: "marketing.campaign_created" })).toBeVisible();
+      const filteredAuditResponse = await filteredAuditLoad;
+      expect(filteredAuditResponse.status()).toBe(200);
+      const filteredAuditBody = await filteredAuditResponse.json() as { events: Array<{ action: string; entityId: string | null }> };
+      expect(filteredAuditBody.events).toContainEqual(expect.objectContaining({ action: "marketing.campaign_created", entityId: campaignBody.campaign.id }));
+      await expect(auditPage.getByRole("row").filter({ hasText: "marketing.campaign_created" })).toBeVisible({ timeout: 5_000 });
     } finally {
       await auditContext.close();
     }
