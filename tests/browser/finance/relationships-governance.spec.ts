@@ -405,6 +405,7 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     await campaignForm.getByRole("button", { name: "Save draft" }).click();
     const campaignCreateResponse = await campaignCreate;
     expect(campaignCreateResponse.status()).toBe(201);
+    const campaignBody = await campaignCreateResponse.json() as { campaign: { id: string } };
     await expect(page.getByText("Campaign saved as an internal draft. No publication, messaging or advertising spend occurred.")).toBeVisible();
     const campaignRow = page.getByRole("row").filter({ hasText: campaignCode });
     await expect(campaignRow).toContainText(campaignName);
@@ -419,6 +420,31 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     expect((await activateCampaign).status()).toBe(200);
     await expect(page.getByRole("row").filter({ hasText: campaignCode })).toContainText("ACTIVE");
     await expect(page.getByText("This workspace does not publish content, send communications or spend advertising funds.")).toBeVisible();
+
+    const attributionLead = await page.evaluate(async ({ centreId: selectedCentre, campaignId }) => {
+      const response = await fetch("/api/leads", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ centreId: selectedCentre, firstName: "Synthetic", lastName: "Campaign Lead", email: `campaign-${crypto.randomUUID()}@example.test`, enquiryCategory: "GENERAL", source: "CAMPAIGN", marketingCampaignId: campaignId, campaign: "Synthetic internal attribution", preferredChannel: "NONE" }) });
+      return { status: response.status, body: await response.json() as { lead?: { id: string; status: string } } };
+    }, { centreId: centreId!, campaignId: campaignBody.campaign.id });
+    expect(attributionLead.status).toBe(201);
+    expect(attributionLead.body.lead).toMatchObject({ status: "NEW" });
+
+    // M017: view campaign-linked lead cohort counts through the read-only attribution screen.
+    await page.goto("/marketing/attribution");
+    await expect(page.getByRole("heading", { name: "Recorded lead attribution and booking funnel" })).toBeVisible();
+    const attributionRow = page.getByRole("row").filter({ hasText: campaignCode });
+    await expect(attributionRow).toBeVisible();
+    await expect(attributionRow.locator("td").nth(5)).toHaveText("1");
+    await expect(attributionRow.locator("td").nth(6)).toHaveText("0");
+    const cohortDate = new Date().toISOString().slice(0, 10);
+    await page.getByLabel("Lead created from").fill(cohortDate);
+    await page.getByLabel("Lead created through").fill(cohortDate);
+    const filteredAttribution = page.waitForResponse(response => response.request().method() === "GET" && response.url().includes("/api/marketing/campaigns?") && response.url().includes("from=") && response.url().includes("to="));
+    await page.getByRole("button", { name: "Apply period" }).click();
+    const attributionResponse = await filteredAttribution;
+    expect(attributionResponse.status()).toBe(200);
+    const attributionBody = await attributionResponse.json() as { attributionWindow: { basis: string }; campaigns: Array<{ campaignCode: string; attributedLeadCount: number; convertedLeadCount: number }> };
+    expect(attributionBody.attributionWindow.basis).toBe("LEAD_CREATED_COHORT");
+    expect(attributionBody.campaigns.find(campaign => campaign.campaignCode === campaignCode)).toMatchObject({ attributedLeadCount: 1, convertedLeadCount: 0 });
 
     // M003: manage encrypted internal content drafts without publishing them.
     await page.goto("/marketing/content");
@@ -462,6 +488,110 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     await expect(page.getByRole("region", { name: "Content history" }).getByText(/CREATED/)).toBeVisible();
     await expect(page.getByRole("region", { name: "Content history" }).getByText(/UPDATED/)).toBeVisible();
     await expect(page.getByText("publishing, messaging and advertising spend are disabled.", { exact: false })).toBeVisible();
+
+    // M006: the author may submit but may not approve their own draft.
+    page.once("dialog", dialog => dialog.accept("Synthetic internal editorial review request."));
+    const submitForReview = page.waitForResponse(response => response.request().method() === "PATCH" && response.url().endsWith(`/api/marketing/content/${contentBody.item.id}`));
+    await updatedContentRow.getByRole("button", { name: "Submit review" }).click();
+    expect((await submitForReview).status()).toBe(200);
+    const inReviewRow = page.getByRole("row").filter({ hasText: updatedContentTitle });
+    await expect(inReviewRow).toContainText("IN_REVIEW");
+    page.once("dialog", dialog => dialog.accept("Synthetic invalid self-review attempt."));
+    const selfReview = page.waitForResponse(response => response.request().method() === "PATCH" && response.url().endsWith(`/api/marketing/content/${contentBody.item.id}`));
+    await inReviewRow.getByRole("button", { name: "Approve" }).click();
+    expect((await selfReview).status()).toBe(409);
+    await expect(page.getByText("The draft creator cannot approve their own content.")).toBeVisible();
+    const rejectedSelfApproval = await workflowPool.query("SELECT status,reviewed_by_staff_id FROM marketing_content_items WHERE id=$1", [contentBody.item.id]);
+    expect(rejectedSelfApproval.rows[0]).toMatchObject({ status: "IN_REVIEW", reviewed_by_staff_id: null });
+
+    const reviewerEmail = process.env.MARKETING_REVIEWER_BROWSER_EMAIL;
+    const reviewerPassword = process.env.MARKETING_REVIEWER_BROWSER_PASSWORD;
+    const reviewerStaffId = process.env.MARKETING_REVIEWER_BROWSER_STAFF_ID;
+    expect(reviewerEmail && reviewerPassword && reviewerStaffId).toBeTruthy();
+    const reviewerContext = await page.context().browser()!.newContext();
+    const reviewerPage = await reviewerContext.newPage();
+    try {
+      await reviewerPage.goto("/staff");
+      await reviewerPage.getByLabel("Work email").fill(reviewerEmail!);
+      await reviewerPage.getByLabel("Password", { exact: true }).fill(reviewerPassword!);
+      await reviewerPage.getByRole("button", { name: "Sign in securely" }).click();
+      await expect(reviewerPage).toHaveURL(/\/staff\/security-setup$/);
+      await reviewerPage.getByLabel("Account password").fill(reviewerPassword!);
+      const reviewerEnrollmentResponse = reviewerPage.waitForResponse(response => response.request().method() === "POST" && response.url().includes("/api/auth/two-factor/enable"));
+      await reviewerPage.getByRole("button", { name: "Begin authenticator setup" }).click();
+      const reviewerEnrollment = await (await reviewerEnrollmentResponse).json() as { totpURI: string; method: string };
+      expect(reviewerEnrollment.method).toBe("totp");
+      const reviewerSecret = new URL(reviewerEnrollment.totpURI).searchParams.get("secret");
+      expect(reviewerSecret).toBeTruthy();
+      if (Date.now() % 30_000 > 27_000) await reviewerPage.waitForTimeout(3_000);
+      await reviewerPage.getByLabel("Current six-digit authenticator code").fill(totp(reviewerSecret!));
+      await reviewerPage.getByRole("button", { name: "Verify and finish setup" }).click();
+      await expect(reviewerPage).toHaveURL(/\/staff\/workspace$/);
+
+      await reviewerPage.goto("/marketing/approvals");
+      const reviewRow = reviewerPage.getByRole("row").filter({ hasText: updatedContentTitle });
+      await expect(reviewRow).toContainText("IN_REVIEW");
+      reviewerPage.once("dialog", dialog => dialog.accept("Synthetic internal copy review passed; no clinical claims assessed."));
+      const approvalResponse = reviewerPage.waitForResponse(response => response.request().method() === "PATCH" && response.url().endsWith(`/api/marketing/content/${contentBody.item.id}`));
+      await reviewRow.getByRole("button", { name: "Approve" }).click();
+      expect((await approvalResponse).status()).toBe(200);
+      const approvedContent = await workflowPool.query("SELECT status,version_number,reviewed_by_staff_id FROM marketing_content_items WHERE id=$1", [contentBody.item.id]);
+      expect(approvedContent.rows[0]).toMatchObject({ status: "APPROVED", version_number: 4, reviewed_by_staff_id: reviewerStaffId });
+
+      // M005: scheduling remains an internal calendar plan, never a publishing command.
+      await reviewerPage.goto("/marketing/calendar");
+      const calendarRow = reviewerPage.getByRole("row").filter({ hasText: updatedContentTitle });
+      await expect(calendarRow).toContainText("APPROVED");
+      const plannedDate = new Date(Date.now() + 48 * 60 * 60_000).toISOString();
+      reviewerPage.once("dialog", dialog => dialog.accept(plannedDate));
+      reviewerPage.once("dialog", dialog => dialog.accept("Synthetic internal calendar planning only."));
+      const scheduleResponse = reviewerPage.waitForResponse(response => response.request().method() === "PATCH" && response.url().endsWith(`/api/marketing/content/${contentBody.item.id}`));
+      await calendarRow.getByRole("button", { name: "Add planned date" }).click();
+      expect((await scheduleResponse).status()).toBe(200);
+      const scheduledContent = await workflowPool.query("SELECT status,planned_publish_at FROM marketing_content_items WHERE id=$1", [contentBody.item.id]);
+      expect(scheduledContent.rows[0].status).toBe("SCHEDULED");
+      expect(new Date(scheduledContent.rows[0].planned_publish_at).getTime()).toBe(new Date(plannedDate).getTime());
+      await expect(reviewerPage.getByText("Scheduled dates are planning records only; publishing, messaging and advertising spend are disabled.")).toBeVisible();
+    } finally {
+      await reviewerContext.close();
+    }
+
+    // M001: retry transient dashboard errors and ignore an older response after a centre switch.
+    let failFirstDashboardCampaignRequest = true;
+    let delayedCentreId: string | null = null;
+    let delayedRequestSeen = false;
+    let markDelayedRequest!: () => void;
+    const delayedRequest = new Promise<void>(resolve => { markDelayedRequest = resolve; });
+    await page.route(url => url.pathname === "/api/marketing/campaigns", async route => {
+      if (failFirstDashboardCampaignRequest) { failFirstDashboardCampaignRequest = false; await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "campaign_unavailable" }) }); return; }
+      if (delayedCentreId && route.request().url().includes(`centreId=${delayedCentreId}`) && !delayedRequestSeen) { delayedRequestSeen = true; markDelayedRequest(); await new Promise(resolve => setTimeout(resolve, 1_200)); }
+      await route.continue();
+    });
+    await page.goto("/marketing");
+    await expect(page.getByText("Marketing records could not be loaded for this authorized centre. Retry or verify access.")).toBeVisible();
+    const dashboardCentre = page.getByLabel("Marketing dashboard centre");
+    const initialDashboardCentre = await dashboardCentre.inputValue();
+    const alternateDashboardCentre = initialDashboardCentre === centreId ? readOnlyCentreId! : centreId!;
+    await page.getByRole("button", { name: "Retry" }).click();
+    await expect(page.getByRole("region", { name: "Recorded marketing summary" })).toBeVisible();
+    await dashboardCentre.selectOption(alternateDashboardCentre);
+    if (alternateDashboardCentre === readOnlyCentreId) await expect(page.getByText("No content records are recorded for this centre.")).toBeVisible();
+    else await expect(page.getByText(updatedContentTitle)).toBeVisible();
+    delayedCentreId = initialDashboardCentre;
+    await dashboardCentre.selectOption(initialDashboardCentre === centreId ? readOnlyCentreId! : centreId!);
+    await expect(page.getByLabel("Marketing dashboard centre")).toHaveValue(initialDashboardCentre === centreId ? readOnlyCentreId! : centreId!);
+    await dashboardCentre.selectOption(initialDashboardCentre);
+    await delayedRequest;
+    await dashboardCentre.selectOption(alternateDashboardCentre);
+    await expect(page.getByRole("region", { name: "Recorded marketing summary" })).toBeVisible();
+    if (alternateDashboardCentre === readOnlyCentreId) await expect(page.getByText("No content records are recorded for this centre.")).toBeVisible();
+    else await expect(page.getByText(updatedContentTitle)).toBeVisible();
+    await page.waitForTimeout(1_300);
+    await expect(dashboardCentre).toHaveValue(alternateDashboardCentre);
+    const dashboardTotals = page.locator(".marketing-summary-grid article strong");
+    await expect(dashboardTotals.nth(0)).toHaveText(alternateDashboardCentre === centreId ? "1" : "0");
+    await expect(dashboardTotals.nth(4)).toHaveText(alternateDashboardCentre === centreId ? "1" : "0");
+    await page.unroute(url => url.pathname === "/api/marketing/campaigns");
   } finally {
     await workflowPool.end();
   }

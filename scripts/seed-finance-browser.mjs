@@ -12,7 +12,7 @@ if (!["127.0.0.1", "localhost"].includes(parsedDatabaseUrl.hostname) || decodeUR
 }
 
 const pool = new Pool({ connectionString: databaseUrl, max: 1, application_name: "rudra-finance-browser-fixtures" });
-const ids = { organizationId: randomUUID(), authorizedCentreId: randomUUID(), readOnlyCentreId: randomUUID(), deniedCentreId: randomUUID(), staffId: randomUUID(), authUserId: randomUUID(), relationshipStaffId: randomUUID(), relationshipAuthUserId: randomUUID(), readRoleId: randomUUID(), createRoleId: randomUUID(), relationshipReadRoleId: randomUUID(), governanceRoleId: randomUUID(), supportRoleId: randomUUID(), marketingRoleId: randomUUID(), paymentRoleId: randomUUID(), reconcileRoleId: randomUUID(), closerStaffId: randomUUID(), closerAuthUserId: randomUUID(), closerReadRoleId: randomUUID(), closerReconcileRoleId: randomUUID(), quoteLeadId: randomUUID(), crossCentreLeadId: randomUUID(), quoteCatalogueItemId: randomUUID(), quoteCatalogueVersionId: randomUUID() };
+const ids = { organizationId: randomUUID(), authorizedCentreId: randomUUID(), readOnlyCentreId: randomUUID(), deniedCentreId: randomUUID(), staffId: randomUUID(), authUserId: randomUUID(), relationshipStaffId: randomUUID(), relationshipAuthUserId: randomUUID(), marketingReviewerStaffId: randomUUID(), marketingReviewerAuthUserId: randomUUID(), marketingReviewerRoleId: randomUUID(), readRoleId: randomUUID(), createRoleId: randomUUID(), relationshipReadRoleId: randomUUID(), governanceRoleId: randomUUID(), supportRoleId: randomUUID(), marketingRoleId: randomUUID(), paymentRoleId: randomUUID(), reconcileRoleId: randomUUID(), closerStaffId: randomUUID(), closerAuthUserId: randomUUID(), closerReadRoleId: randomUUID(), closerReconcileRoleId: randomUUID(), quoteLeadId: randomUUID(), crossCentreLeadId: randomUUID(), quoteCatalogueItemId: randomUUID(), quoteCatalogueVersionId: randomUUID() };
 const patientKeyId = process.env.RUDRA_FIELD_ACTIVE_KEY_ID;
 const patientKey = Buffer.from(JSON.parse(process.env.RUDRA_FIELD_ENCRYPTION_KEYS ?? "{}")[patientKeyId] ?? "", "base64");
 const blindIndexKey = Buffer.from(process.env.RUDRA_BLIND_INDEX_KEY ?? "", "base64");
@@ -137,9 +137,12 @@ try {
   const closerEmail = `finance-closer-${randomUUID().slice(0, 8)}@invalid.test`;
   const relationshipPassword = `Synthetic-CI-${randomBytes(24).toString("base64url")}!`;
   const relationshipEmail = `relationship-browser-${randomUUID().slice(0, 8)}@invalid.test`;
+  const marketingReviewerPassword = `Synthetic-CI-${randomBytes(24).toString("base64url")}!`;
+  const marketingReviewerEmail = `marketing-reviewer-${randomUUID().slice(0, 8)}@invalid.test`;
   const passwordHash = await hashPassword(password);
   const closerPasswordHash = await hashPassword(closerPassword);
   const relationshipPasswordHash = await hashPassword(relationshipPassword);
+  const marketingReviewerPasswordHash = await hashPassword(marketingReviewerPassword);
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -154,6 +157,9 @@ try {
     await client.query('INSERT INTO "user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)', [ids.relationshipAuthUserId, "Synthetic Relationship Operator", relationshipEmail]);
     await client.query('INSERT INTO "account"(id,"accountId","providerId","userId",password) VALUES($1,$2,\'credential\',$3,$4)', [randomUUID(), ids.relationshipAuthUserId, ids.relationshipAuthUserId, relationshipPasswordHash]);
     await client.query("INSERT INTO staff_users(id,auth_user_id,organization_id,staff_code,display_name,status) VALUES($1,$2,$3,$4,$5,'ACTIVE')", [ids.relationshipStaffId, ids.relationshipAuthUserId, ids.organizationId, `REL-${ids.relationshipStaffId.slice(0, 8)}`, "Synthetic Relationship Operator"]);
+    await client.query('INSERT INTO "user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)', [ids.marketingReviewerAuthUserId, "Synthetic Marketing Reviewer", marketingReviewerEmail]);
+    await client.query('INSERT INTO "account"(id,"accountId","providerId","userId",password) VALUES($1,$2,\'credential\',$3,$4)', [randomUUID(), ids.marketingReviewerAuthUserId, ids.marketingReviewerAuthUserId, marketingReviewerPasswordHash]);
+    await client.query("INSERT INTO staff_users(id,auth_user_id,organization_id,staff_code,display_name,status) VALUES($1,$2,$3,$4,$5,'ACTIVE')", [ids.marketingReviewerStaffId, ids.marketingReviewerAuthUserId, ids.organizationId, `MKT-${ids.marketingReviewerStaffId.slice(0, 8)}`, "Synthetic Marketing Reviewer"]);
     await client.query('INSERT INTO "user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)', [ids.closerAuthUserId, "Synthetic Finance Closer", closerEmail]);
     await client.query('INSERT INTO "account"(id,"accountId","providerId","userId",password) VALUES($1,$2,\'credential\',$3,$4)', [randomUUID(), ids.closerAuthUserId, ids.closerAuthUserId, closerPasswordHash]);
     await client.query("INSERT INTO staff_users(id,auth_user_id,organization_id,staff_code,display_name,status) VALUES($1,$2,$3,$4,$5,'ACTIVE')", [ids.closerStaffId, ids.closerAuthUserId, ids.organizationId, `CI-${ids.closerStaffId.slice(0, 8)}`, "Synthetic Finance Closer"]);
@@ -165,16 +171,19 @@ try {
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key IN ('doctors.read','corporate.read','partners.read') ON CONFLICT DO NOTHING", [ids.relationshipReadRoleId]);
     await client.query("INSERT INTO roles(id,organization_id,key,name,scope) VALUES($1,$2,$3,'Synthetic governance manager','ORGANIZATION'),($4,$2,$5,'Synthetic support manager','CENTRE')", [ids.governanceRoleId, ids.organizationId, `governance_${ids.staffId.slice(0, 8)}`, ids.supportRoleId, `support_${ids.staffId.slice(0, 8)}`]);
     await client.query("INSERT INTO roles(id,organization_id,key,name,scope) VALUES($1,$2,$3,'Synthetic campaign manager','CENTRE')", [ids.marketingRoleId, ids.organizationId, `marketing_${ids.relationshipStaffId.slice(0, 8)}`]);
+    await client.query("INSERT INTO roles(id,organization_id,key,name,scope) VALUES($1,$2,$3,'Synthetic independent marketing reviewer','CENTRE')", [ids.marketingReviewerRoleId, ids.organizationId, `marketing_review_${ids.marketingReviewerStaffId.slice(0, 8)}`]);
     await client.query("INSERT INTO permissions(key,description,scope) VALUES('configuration.read','View application configuration status','ORGANIZATION'),('configuration.manage','Change approved non-secret application settings','ORGANIZATION') ON CONFLICT(key) DO NOTHING");
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key IN ('configuration.read','configuration.manage') ON CONFLICT DO NOTHING", [ids.governanceRoleId]);
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key IN ('tasks.support.read','tasks.support.create','tasks.support.manage','tasks.update') ON CONFLICT DO NOTHING", [ids.supportRoleId]);
-    await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key IN ('marketing.read','marketing.manage') ON CONFLICT DO NOTHING", [ids.marketingRoleId]);
+    await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key IN ('marketing.read','marketing.manage','leads.create') ON CONFLICT DO NOTHING", [ids.marketingRoleId]);
+    await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key IN ('marketing.read','marketing.manage') ON CONFLICT DO NOTHING", [ids.marketingReviewerRoleId]);
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='finance.payment.record' ON CONFLICT DO NOTHING", [ids.paymentRoleId]);
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='finance.reconcile' ON CONFLICT DO NOTHING", [ids.reconcileRoleId]);
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='finance.read' ON CONFLICT DO NOTHING", [ids.closerReadRoleId]);
     await client.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='finance.reconcile' ON CONFLICT DO NOTHING", [ids.closerReconcileRoleId]);
     await client.query("INSERT INTO staff_role_assignments(organization_id,staff_user_id,role_id,centre_id) VALUES($1,$2,$3,$4),($1,$2,$3,$5),($1,$2,$6,$4),($1,$2,$7,$4),($1,$2,$8,$4),($1,$2,$9,$5),($1,$10,$11,$4),($1,$10,$12,$4)", [ids.organizationId, ids.staffId, ids.readRoleId, ids.authorizedCentreId, ids.readOnlyCentreId, ids.createRoleId, ids.paymentRoleId, ids.reconcileRoleId, ids.relationshipReadRoleId, ids.closerStaffId, ids.closerReadRoleId, ids.closerReconcileRoleId]);
     await client.query("INSERT INTO staff_role_assignments(organization_id,staff_user_id,role_id,centre_id) VALUES($1,$2,$3,$4),($1,$2,$5,$6),($1,$2,$7,NULL),($1,$2,$8,$4),($1,$2,$9,$4),($1,$2,$9,$6)", [ids.organizationId, ids.relationshipStaffId, ids.createRoleId, ids.authorizedCentreId, ids.relationshipReadRoleId, ids.readOnlyCentreId, ids.governanceRoleId, ids.supportRoleId, ids.marketingRoleId]);
+    await client.query("INSERT INTO staff_role_assignments(organization_id,staff_user_id,role_id,centre_id) VALUES($1,$2,$3,$4)", [ids.organizationId, ids.marketingReviewerStaffId, ids.marketingReviewerRoleId, ids.authorizedCentreId]);
     const homeFeeFixtures = [
       ["75", 75, null], ["99", 99, null], ["150", 150, null], ["CUSTOM", 125, "Authorized synthetic custom fee"], ["WAIVED", 0, "Synthetic fee waiver test"], ["ZERO", 0, null],
     ];
@@ -210,6 +219,9 @@ try {
       FINANCE_BROWSER_PASSWORD: password,
       RELATIONSHIP_BROWSER_EMAIL: relationshipEmail,
       RELATIONSHIP_BROWSER_PASSWORD: relationshipPassword,
+      MARKETING_REVIEWER_BROWSER_EMAIL: marketingReviewerEmail,
+      MARKETING_REVIEWER_BROWSER_PASSWORD: marketingReviewerPassword,
+      MARKETING_REVIEWER_BROWSER_STAFF_ID: ids.marketingReviewerStaffId,
       FINANCE_BROWSER_CLOSER_EMAIL: closerEmail,
       FINANCE_BROWSER_CLOSER_PASSWORD: closerPassword,
       FINANCE_BROWSER_CENTRE_ID: ids.authorizedCentreId,

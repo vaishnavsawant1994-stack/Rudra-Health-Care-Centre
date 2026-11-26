@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 type Centre = { id: string; code: string; name: string };
@@ -13,9 +13,13 @@ export function MarketingHomeDashboard() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [content, setContent] = useState<ContentItem[]>([]);
   const [message, setMessage] = useState("Loading authorized marketing records…");
+  const latestRequest = useRef(0);
 
   const load = useCallback(async (id: string) => {
     if (!id) return;
+    const requestId = ++latestRequest.current;
+    setCampaigns([]);
+    setContent([]);
     setMessage("Loading centre-scoped campaign and content records…");
     try {
       const [campaignResponse, contentResponse] = await Promise.all([
@@ -26,11 +30,13 @@ export function MarketingHomeDashboard() {
         campaignResponse.json() as Promise<{ campaigns?: Campaign[] }>,
         contentResponse.json() as Promise<{ items?: ContentItem[] }>,
       ]);
+      if (requestId !== latestRequest.current) return;
       if (!campaignResponse.ok || !contentResponse.ok) throw new Error("unavailable");
       setCampaigns(campaignBody.campaigns ?? []);
       setContent(contentBody.items ?? []);
       setMessage("");
     } catch {
+      if (requestId !== latestRequest.current) return;
       setCampaigns([]); setContent([]); setMessage("Marketing records could not be loaded for this authorized centre. Retry or verify access.");
     }
   }, []);
@@ -44,7 +50,7 @@ export function MarketingHomeDashboard() {
       if (available[0]) void load(available[0].id);
       else setMessage("No centre is available under your marketing read permission.");
     }).catch(() => { if (active) setMessage("Marketing summary is unavailable."); });
-    return () => { active = false; };
+    return () => { active = false; latestRequest.current += 1; };
   }, [load]);
 
   const countStatus = (status: string) => content.filter((item) => item.status === status).length;
@@ -57,10 +63,11 @@ export function MarketingHomeDashboard() {
       <Link className="button button-secondary" href="/marketing/design/m001">Synthetic design preview</Link>
     </nav>
     <section className="admin-card">
-      <div className="task-toolbar"><div><h2>Recorded marketing activity</h2><p>Centre-scoped campaign, lead, conversion, appointment and content records only. No external reach, views, engagement, advertising spend, payment or diagnostic completion is inferred.</p></div><label>Authorized centre<select value={centreId} onChange={(event) => { setCentreId(event.target.value); void load(event.target.value); }}>{centres.map((centre) => <option key={centre.id} value={centre.id}>{centre.name} ({centre.code})</option>)}</select></label></div>
+      <div className="task-toolbar"><div><h2>Recorded marketing activity</h2><p>Centre-scoped campaign, lead, conversion, appointment and content records only. No external reach, views, engagement, advertising spend, payment or diagnostic completion is inferred.</p></div><label>Authorized centre<select aria-label="Marketing dashboard centre" value={centreId} onChange={(event) => { const nextCentreId = event.target.value; setCentreId(nextCentreId); void load(nextCentreId); }}>{centres.map((centre) => <option key={centre.id} value={centre.id}>{centre.name} ({centre.code})</option>)}</select></label></div>
       {message && <p role="status">{message}</p>}
+      {message.includes("could not be loaded") && <button type="button" className="button button-secondary" onClick={() => void load(centreId)}>Retry</button>}
       {!message && <>
-        <div className="marketing-summary-grid" aria-label="Recorded marketing summary">
+        <div className="marketing-summary-grid" role="region" aria-label="Recorded marketing summary">
           {[ ["Campaign records", campaigns.length], ["Draft content", countStatus("DRAFT")], ["In review", countStatus("IN_REVIEW")], ["Scheduled plans", countStatus("SCHEDULED")], ["Attributed leads", totalLeads], ["Recorded conversions", totalConversions], ["Linked appointments", totalAppointments] ].map(([label, value]) => <article className="admin-card" key={String(label)}><strong>{value}</strong><span>{label}</span><small>From Rudra records</small></article>)}
         </div>
         <h3>Recent internal content records</h3>
