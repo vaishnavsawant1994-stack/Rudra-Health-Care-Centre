@@ -5,7 +5,7 @@
     "path": "docs/SCREEN_SPEC_178.md",
     "sha256": "27c93e0b94a375a252b5ca784c6445eb63299f66285b863249883b097bfa11ed"
   },
-  "repositoryHead": "642ae6fbfeb1b50db577eaf1b3335c0361b2c8b5",
+  "repositoryHead": "b7417f2fd8d7b28413d7fb72dbbb33c9af369599",
   "evidenceScope": "source-reference and route-mapping only; not functional, QA, visual or acceptance proof",
   "screens": [
     {
@@ -22112,8 +22112,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -22446,8 +22446,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -22507,8 +22507,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -22568,8 +22568,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -22629,8 +22629,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -22690,8 +22690,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -22751,8 +22751,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -22812,8 +22812,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -22873,8 +22873,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -22934,8 +22934,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -22995,8 +22995,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -23056,8 +23056,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -23117,8 +23117,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -23178,8 +23178,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -23239,8 +23239,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -23300,8 +23300,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -23361,8 +23361,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -23422,13 +23422,13 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         },
         {
           "path": "src/components/marketing/campaign-workbench.tsx",
-          "sha256": "e270e5ce1754190f89b4b371327c30938339b573b793b843dd31b10243c68077",
-          "sourceModifiedAt": "2026-11-25T21:48:08.813Z"
+          "sha256": "032a30f7299dc32d2c0db78de350f8b51a733456f215c3650bd7721cbfafa1ad",
+          "sourceModifiedAt": "2026-11-26T05:34:44.115Z"
         }
       ]
     },
@@ -23488,8 +23488,8 @@
         },
         {
           "path": "src/components/marketing/campaign-workbench.test.ts",
-          "sha256": "e25873fa0b340f6de9f181622cea42d6ce5429d9d4544cd30518d9fed00782bb",
-          "sourceModifiedAt": "2026-11-03T04:33:09.034Z"
+          "sha256": "c88d5673ca4117d3ac5559dbdbb27b00bf8225d09006050755b6f037ce0e7bb0",
+          "sourceModifiedAt": "2026-11-26T05:35:05.279Z"
         }
       ]
     },
@@ -23508,9 +23508,14 @@
           "sourceModifiedAt": "2026-10-28T06:40:50.053Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/audit/route.ts",
-          "sha256": "1c447e801d6522e1cf398e33779f3ff14c5e282dfb76bd6c292ae590e1ce216b",
-          "sourceModifiedAt": "2026-10-28T06:07:39.308Z"
+          "sha256": "c182c71592ed2bf0a7d7e27c3ceb9437c0765daec0ca7d791cf3d1e74a905495",
+          "sourceModifiedAt": "2026-11-26T05:08:23.045Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -23639,9 +23644,14 @@
           "sourceModifiedAt": "2026-10-28T06:40:50.053Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/audit/route.ts",
-          "sha256": "1c447e801d6522e1cf398e33779f3ff14c5e282dfb76bd6c292ae590e1ce216b",
-          "sourceModifiedAt": "2026-10-28T06:07:39.308Z"
+          "sha256": "c182c71592ed2bf0a7d7e27c3ceb9437c0765daec0ca7d791cf3d1e74a905495",
+          "sourceModifiedAt": "2026-11-26T05:08:23.045Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -23765,9 +23775,14 @@
           "sourceModifiedAt": "2026-10-28T06:40:50.053Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/audit/route.ts",
-          "sha256": "1c447e801d6522e1cf398e33779f3ff14c5e282dfb76bd6c292ae590e1ce216b",
-          "sourceModifiedAt": "2026-10-28T06:07:39.308Z"
+          "sha256": "c182c71592ed2bf0a7d7e27c3ceb9437c0765daec0ca7d791cf3d1e74a905495",
+          "sourceModifiedAt": "2026-11-26T05:08:23.045Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -23891,9 +23906,14 @@
           "sourceModifiedAt": "2026-10-28T06:40:50.053Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/audit/route.ts",
-          "sha256": "1c447e801d6522e1cf398e33779f3ff14c5e282dfb76bd6c292ae590e1ce216b",
-          "sourceModifiedAt": "2026-10-28T06:07:39.308Z"
+          "sha256": "c182c71592ed2bf0a7d7e27c3ceb9437c0765daec0ca7d791cf3d1e74a905495",
+          "sourceModifiedAt": "2026-11-26T05:08:23.045Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -24017,9 +24037,14 @@
           "sourceModifiedAt": "2026-10-28T06:40:50.053Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/audit/route.ts",
-          "sha256": "1c447e801d6522e1cf398e33779f3ff14c5e282dfb76bd6c292ae590e1ce216b",
-          "sourceModifiedAt": "2026-10-28T06:07:39.308Z"
+          "sha256": "c182c71592ed2bf0a7d7e27c3ceb9437c0765daec0ca7d791cf3d1e74a905495",
+          "sourceModifiedAt": "2026-11-26T05:08:23.045Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -24148,9 +24173,14 @@
           "sourceModifiedAt": "2026-10-28T06:40:50.053Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/audit/route.ts",
-          "sha256": "1c447e801d6522e1cf398e33779f3ff14c5e282dfb76bd6c292ae590e1ce216b",
-          "sourceModifiedAt": "2026-10-28T06:07:39.308Z"
+          "sha256": "c182c71592ed2bf0a7d7e27c3ceb9437c0765daec0ca7d791cf3d1e74a905495",
+          "sourceModifiedAt": "2026-11-26T05:08:23.045Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -24279,9 +24309,14 @@
           "sourceModifiedAt": "2026-10-28T06:40:50.053Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/audit/route.ts",
-          "sha256": "1c447e801d6522e1cf398e33779f3ff14c5e282dfb76bd6c292ae590e1ce216b",
-          "sourceModifiedAt": "2026-10-28T06:07:39.308Z"
+          "sha256": "c182c71592ed2bf0a7d7e27c3ceb9437c0765daec0ca7d791cf3d1e74a905495",
+          "sourceModifiedAt": "2026-11-26T05:08:23.045Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -24405,9 +24440,14 @@
           "sourceModifiedAt": "2026-10-28T06:40:50.053Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/audit/route.ts",
-          "sha256": "1c447e801d6522e1cf398e33779f3ff14c5e282dfb76bd6c292ae590e1ce216b",
-          "sourceModifiedAt": "2026-10-28T06:07:39.308Z"
+          "sha256": "c182c71592ed2bf0a7d7e27c3ceb9437c0765daec0ca7d791cf3d1e74a905495",
+          "sourceModifiedAt": "2026-11-26T05:08:23.045Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -24536,9 +24576,14 @@
           "sourceModifiedAt": "2026-10-28T06:40:50.053Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/audit/route.ts",
-          "sha256": "1c447e801d6522e1cf398e33779f3ff14c5e282dfb76bd6c292ae590e1ce216b",
-          "sourceModifiedAt": "2026-10-28T06:07:39.308Z"
+          "sha256": "c182c71592ed2bf0a7d7e27c3ceb9437c0765daec0ca7d791cf3d1e74a905495",
+          "sourceModifiedAt": "2026-11-26T05:08:23.045Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -24667,9 +24712,14 @@
           "sourceModifiedAt": "2026-10-28T06:40:50.053Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/audit/route.ts",
-          "sha256": "1c447e801d6522e1cf398e33779f3ff14c5e282dfb76bd6c292ae590e1ce216b",
-          "sourceModifiedAt": "2026-10-28T06:07:39.308Z"
+          "sha256": "c182c71592ed2bf0a7d7e27c3ceb9437c0765daec0ca7d791cf3d1e74a905495",
+          "sourceModifiedAt": "2026-11-26T05:08:23.045Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -24793,9 +24843,14 @@
           "sourceModifiedAt": "2026-10-28T06:40:50.053Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/audit/route.ts",
-          "sha256": "1c447e801d6522e1cf398e33779f3ff14c5e282dfb76bd6c292ae590e1ce216b",
-          "sourceModifiedAt": "2026-10-28T06:07:39.308Z"
+          "sha256": "c182c71592ed2bf0a7d7e27c3ceb9437c0765daec0ca7d791cf3d1e74a905495",
+          "sourceModifiedAt": "2026-11-26T05:08:23.045Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -24919,9 +24974,14 @@
           "sourceModifiedAt": "2026-10-28T06:40:50.053Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/audit/route.ts",
-          "sha256": "1c447e801d6522e1cf398e33779f3ff14c5e282dfb76bd6c292ae590e1ce216b",
-          "sourceModifiedAt": "2026-10-28T06:07:39.308Z"
+          "sha256": "c182c71592ed2bf0a7d7e27c3ceb9437c0765daec0ca7d791cf3d1e74a905495",
+          "sourceModifiedAt": "2026-11-26T05:08:23.045Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -25055,9 +25115,14 @@
           "sourceModifiedAt": "2026-10-28T06:40:50.053Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/audit/route.ts",
-          "sha256": "1c447e801d6522e1cf398e33779f3ff14c5e282dfb76bd6c292ae590e1ce216b",
-          "sourceModifiedAt": "2026-10-28T06:07:39.308Z"
+          "sha256": "c182c71592ed2bf0a7d7e27c3ceb9437c0765daec0ca7d791cf3d1e74a905495",
+          "sourceModifiedAt": "2026-11-26T05:08:23.045Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -25186,9 +25251,14 @@
           "sourceModifiedAt": "2026-10-28T06:40:50.053Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/audit/route.ts",
-          "sha256": "1c447e801d6522e1cf398e33779f3ff14c5e282dfb76bd6c292ae590e1ce216b",
-          "sourceModifiedAt": "2026-10-28T06:07:39.308Z"
+          "sha256": "c182c71592ed2bf0a7d7e27c3ceb9437c0765daec0ca7d791cf3d1e74a905495",
+          "sourceModifiedAt": "2026-11-26T05:08:23.045Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -25312,9 +25382,14 @@
           "sourceModifiedAt": "2026-10-28T06:40:50.053Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/audit/route.ts",
-          "sha256": "1c447e801d6522e1cf398e33779f3ff14c5e282dfb76bd6c292ae590e1ce216b",
-          "sourceModifiedAt": "2026-10-28T06:07:39.308Z"
+          "sha256": "c182c71592ed2bf0a7d7e27c3ceb9437c0765daec0ca7d791cf3d1e74a905495",
+          "sourceModifiedAt": "2026-11-26T05:08:23.045Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -25413,8 +25488,8 @@
         },
         {
           "path": "src/app/manage/audit/page.tsx",
-          "sha256": "b492c4da586c8fe622123d83bb58a905e129736ea5ceeac72f8a7da074b81461",
-          "sourceModifiedAt": "2026-11-14T17:45:30.993Z"
+          "sha256": "478c6d4eef2c065b3f016c11e1e9ebd607addad5db836761eac738f9b1113736",
+          "sourceModifiedAt": "2026-11-26T05:21:38.261Z"
         },
         {
           "path": "src/components/admin/admin-shell.test.ts",
@@ -25438,9 +25513,14 @@
           "sourceModifiedAt": "2026-10-28T06:40:50.053Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/audit/route.ts",
-          "sha256": "1c447e801d6522e1cf398e33779f3ff14c5e282dfb76bd6c292ae590e1ce216b",
-          "sourceModifiedAt": "2026-10-28T06:07:39.308Z"
+          "sha256": "c182c71592ed2bf0a7d7e27c3ceb9437c0765daec0ca7d791cf3d1e74a905495",
+          "sourceModifiedAt": "2026-11-26T05:08:23.045Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -25620,6 +25700,11 @@
           "sourceModifiedAt": "2026-11-15T04:23:30.213Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
           "sha256": "c253cb5afe478e11b6426b3a936d8f1c8311141f9d77c2127c1665a018d1afc7",
           "sourceModifiedAt": "2026-10-30T21:56:55.233Z"
@@ -25709,6 +25794,11 @@
           "path": "src/app/api/admin/assignments/route.test.ts",
           "sha256": "c1ee2493d361e89695a193ac4175d23f7bc31cf7aca8497b598443a94c7ae6fe",
           "sourceModifiedAt": "2026-11-15T04:23:30.213Z"
+        },
+        {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -25802,6 +25892,11 @@
           "sourceModifiedAt": "2026-11-15T04:23:30.213Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
           "sha256": "c253cb5afe478e11b6426b3a936d8f1c8311141f9d77c2127c1665a018d1afc7",
           "sourceModifiedAt": "2026-10-30T21:56:55.233Z"
@@ -25891,6 +25986,11 @@
           "path": "src/app/api/admin/assignments/route.test.ts",
           "sha256": "c1ee2493d361e89695a193ac4175d23f7bc31cf7aca8497b598443a94c7ae6fe",
           "sourceModifiedAt": "2026-11-15T04:23:30.213Z"
+        },
+        {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -25984,6 +26084,11 @@
           "sourceModifiedAt": "2026-11-15T04:23:30.213Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
           "sha256": "c253cb5afe478e11b6426b3a936d8f1c8311141f9d77c2127c1665a018d1afc7",
           "sourceModifiedAt": "2026-10-30T21:56:55.233Z"
@@ -26073,6 +26178,11 @@
           "path": "src/app/api/admin/assignments/route.test.ts",
           "sha256": "c1ee2493d361e89695a193ac4175d23f7bc31cf7aca8497b598443a94c7ae6fe",
           "sourceModifiedAt": "2026-11-15T04:23:30.213Z"
+        },
+        {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -26166,6 +26276,11 @@
           "sourceModifiedAt": "2026-11-15T04:23:30.213Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
           "sha256": "c253cb5afe478e11b6426b3a936d8f1c8311141f9d77c2127c1665a018d1afc7",
           "sourceModifiedAt": "2026-10-30T21:56:55.233Z"
@@ -26255,6 +26370,11 @@
           "path": "src/app/api/admin/assignments/route.test.ts",
           "sha256": "c1ee2493d361e89695a193ac4175d23f7bc31cf7aca8497b598443a94c7ae6fe",
           "sourceModifiedAt": "2026-11-15T04:23:30.213Z"
+        },
+        {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
@@ -26348,6 +26468,11 @@
           "sourceModifiedAt": "2026-11-15T04:23:30.213Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
           "sha256": "c253cb5afe478e11b6426b3a936d8f1c8311141f9d77c2127c1665a018d1afc7",
           "sourceModifiedAt": "2026-10-30T21:56:55.233Z"
@@ -26439,6 +26564,11 @@
           "sourceModifiedAt": "2026-11-15T04:23:30.213Z"
         },
         {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
+        },
+        {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
           "sha256": "c253cb5afe478e11b6426b3a936d8f1c8311141f9d77c2127c1665a018d1afc7",
           "sourceModifiedAt": "2026-10-30T21:56:55.233Z"
@@ -26528,6 +26658,11 @@
           "path": "src/app/api/admin/assignments/route.test.ts",
           "sha256": "c1ee2493d361e89695a193ac4175d23f7bc31cf7aca8497b598443a94c7ae6fe",
           "sourceModifiedAt": "2026-11-15T04:23:30.213Z"
+        },
+        {
+          "path": "src/app/api/admin/audit/route.test.ts",
+          "sha256": "756b9d9fe5da3dab1b00ff6e4a193df4b59468c0ecb1f05bd681a6fd0feedba8",
+          "sourceModifiedAt": "2026-11-26T05:20:39.790Z"
         },
         {
           "path": "src/app/api/admin/centres/[id]/public-profile/route.test.ts",
