@@ -91,9 +91,14 @@ describe("178-screen inventory reconciliation", () => {
     expect(Object.values(readiness.implementation).reduce((total, count) => total + count, 0)).toBe(178);
     expect(readiness.implementation.fullyImplemented).toBe(0);
     expect(readiness.acceptance).toEqual({ manuallyAccepted: 0, pendingManual: 178 });
-    expect(readiness.functionalVerification.pathVerified).toBe(9);
-    expect(readiness.functionalVerification.notAssessed).toBe(169);
-    expect(readiness.functionalVerification.screens.map((screen) => screen.id)).toEqual(["M001", "M003", "M005", "M006", "M012", "M017", "O005", "O006", "O015"]);
+    expect(readiness.functionalVerification.pathVerified).toBe(54);
+    expect(readiness.functionalVerification.routeRendered).toBe(14);
+    expect(readiness.functionalVerification.restrictionVerified).toBe(2);
+    expect(readiness.functionalVerification.notAssessed).toBe(108);
+    expect(readiness.functionalVerification.pathVerified + readiness.functionalVerification.routeRendered + readiness.functionalVerification.restrictionVerified + readiness.functionalVerification.notAssessed).toBe(178);
+    expect(readiness.functionalVerification.screens.some((screen) => screen.id === "W003" && screen.status === "FUNCTIONAL_PATH_VERIFIED")).toBe(true);
+    expect(readiness.functionalVerification.screens.some((screen) => screen.id === "L006" && screen.status === "FUNCTIONAL_PATH_VERIFIED")).toBe(true);
+    expect(readiness.functionalVerification.screens.some((screen) => screen.id === "M001" && screen.status === "FUNCTIONAL_PATH_VERIFIED")).toBe(true);
     expect(readiness.technicalCompletion).toEqual({ complete: 0, pending: 178 });
     expect(Object.values(readiness.phases).reduce((total, count) => total + count, 0)).toBe(178);
   });
@@ -101,7 +106,10 @@ describe("178-screen inventory reconciliation", () => {
   it("rejects invalid or duplicate screen functional evidence records", async () => {
     const ledger = JSON.parse(await readFile(path.join(root, "docs", "SCREEN_FUNCTIONAL_EVIDENCE.json"), "utf8"));
     expect(new Set(ledger.screens.map((screen) => screen.id)).size).toBe(ledger.screens.length);
-    expect(ledger.screens.every((screen) => screen.status === "FUNCTIONAL_PATH_VERIFIED" && screen.run.startsWith("https://") && /^[a-f0-9]{40}$/.test(screen.testedAtCommit) && screen.limitations.length > 0)).toBe(true);
+    expect(ledger.screens.every((screen) => ["FUNCTIONAL_PATH_VERIFIED", "BROWSER_ROUTE_RENDERED", "RESTRICTION_VERIFIED"].includes(screen.status)
+      && (screen.run?.startsWith("https://") || screen.evidenceUrl?.startsWith("https://"))
+      && /^[a-f0-9]{40}$/.test(screen.testedAtCommit ?? screen.evidenceRecordCommit)
+      && screen.limitations.length > 0)).toBe(true);
     expect(ledger.screens.some((screen) => screen.status === "TECHNICALLY_COMPLETE" || screen.status === "OWNER_QA_ACCEPTED")).toBe(false);
   });
 

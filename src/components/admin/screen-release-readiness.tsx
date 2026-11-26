@@ -20,16 +20,18 @@ export function ScreenReleaseReadiness() {
     </dl>
     <section className="admin-card" aria-labelledby="functional-evidence-heading">
       <h2 id="functional-evidence-heading">Screen-level verification states</h2>
-      <p>Functional path verification is reported separately from full technical completion, restrictions, and Owner/QA acceptance. A scoped browser path does not complete a screen.</p>
+      <p>Functional browser paths, route-only rendering, and tested restrictions are counted separately from full technical completion and Owner/QA acceptance. A scoped browser path does not complete a screen.</p>
       <dl className="sample-stat-grid" aria-label="Separate screen verification counts">
-        <div className="admin-card"><dt>Scoped functional paths verified</dt><dd><strong>{summary.functionalVerification.pathVerified}</strong> / {summary.screenCount}</dd></div>
-        <div className="admin-card"><dt>Functional evidence not assessed</dt><dd><strong>{summary.functionalVerification.notAssessed}</strong></dd></div>
+        <div className="admin-card"><dt>Functional paths verified</dt><dd><strong>{summary.functionalVerification.pathVerified}</strong></dd></div>
+        <div className="admin-card"><dt>Browser routes rendered only</dt><dd><strong>{summary.functionalVerification.routeRendered}</strong></dd></div>
+        <div className="admin-card"><dt>Restrictions verified in browser</dt><dd><strong>{summary.functionalVerification.restrictionVerified}</strong></dd></div>
+        <div className="admin-card"><dt>No browser evidence in this register</dt><dd><strong>{summary.functionalVerification.notAssessed}</strong></dd></div>
         <div className="admin-card"><dt>Technically complete</dt><dd><strong>{summary.technicalCompletion.complete}</strong></dd></div>
         <div className="admin-card"><dt>Technical completion pending</dt><dd><strong>{summary.technicalCompletion.pending}</strong></dd></div>
         <div className="admin-card"><dt>Restricted by policy or dependency</dt><dd><strong>{summary.implementation.restricted}</strong></dd></div>
         <div className="admin-card"><dt>Owner/QA accepted</dt><dd><strong>{summary.acceptance.manuallyAccepted}</strong></dd></div>
       </dl>
-      {summary.functionalVerification.screens.length ? <div className="table-scroll"><table className="admin-table"><caption>Scoped synthetic browser evidence; limitations remain in force</caption><thead><tr><th>Screen</th><th>Verified path</th><th>Evidence</th><th>Limits</th><th>Run</th></tr></thead><tbody>{summary.functionalVerification.screens.map((screen) => <tr key={screen.id}><th scope="row">{screen.id}</th><td>{screen.status.replaceAll("_", " ")}</td><td>{screen.evidence}</td><td>{screen.limitations}</td><td><a href={screen.run} target="_blank" rel="noreferrer">GitHub Actions run</a></td></tr>)}</tbody></table></div> : <p>No per-screen functional browser evidence is recorded.</p>}
+      {summary.functionalVerification.screens.length ? <div className="table-scroll"><table className="admin-table"><caption>Historical screen-specific browser evidence; limitations remain in force</caption><thead><tr><th>Screen</th><th>Evidence status</th><th>Verified behavior</th><th>Limits</th><th>Evidence source</th></tr></thead><tbody>{summary.functionalVerification.screens.map((screen) => <tr key={screen.id}><th scope="row">{screen.id}</th><td>{screen.status.replaceAll("_", " ")}</td><td>{screen.evidence}</td><td>{screen.limitations}</td><td><a href={screen.run ?? screen.evidenceUrl} target="_blank" rel="noreferrer">{screen.run ? "GitHub Actions run" : "Recorded browser evidence"}</a></td></tr>)}</tbody></table></div> : <p>No per-screen browser evidence is recorded.</p>}
     </section>
     <section className="admin-card"><h2>Source route gaps</h2><p>{summary.missingRouteEvidence} screen route(s) do not have an exact canonical source match. Review the 178-row implementation matrix; grouped mappings and route aliases are recorded separately.</p></section>
     <section className="admin-card"><h2>Inventory by screen ID family</h2><ul>{Object.entries(summary.phases).sort(([a], [b]) => a.localeCompare(b)).map(([key, count]) => <li key={key}>{groups[key] ?? key}: {count}</li>)}</ul></section>

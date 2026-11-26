@@ -502,8 +502,9 @@ const canonicalIds = new Set(merged.rows.map((row) => row.ID));
 const functionalIds = functionalEvidence.screens.map((screen) => screen.id);
 if (functionalEvidence.schemaVersion !== 1 || new Set(functionalIds).size !== functionalIds.length
   || functionalIds.some((id) => !canonicalIds.has(id))
-  || functionalEvidence.screens.some((screen) => screen.status !== "FUNCTIONAL_PATH_VERIFIED"
-    || !/^https:\/\//.test(screen.run) || !/^[a-f0-9]{40}$/.test(screen.testedAtCommit)
+  || functionalEvidence.screens.some((screen) => !["FUNCTIONAL_PATH_VERIFIED", "BROWSER_ROUTE_RENDERED", "RESTRICTION_VERIFIED"].includes(screen.status)
+    || (!/^https:\/\//.test(screen.run ?? "") && !/^https:\/\//.test(screen.evidenceUrl ?? ""))
+    || !/^[a-f0-9]{40}$/.test(screen.testedAtCommit ?? screen.evidenceRecordCommit ?? "")
     || !screen.evidence?.trim() || !screen.limitations?.trim())) {
   throw new Error("screen_functional_evidence_invalid");
 }
@@ -536,7 +537,9 @@ const releaseSummary = {
   missingRouteEvidence: merged.rows.filter((row) => row["Exact source route"].startsWith("No ")).length,
   implementation: { fullyImplemented: 0, partiallyImplemented: 0, restricted: 0, previewOnly: 0, missing: 0 },
   functionalVerification: {
-    pathVerified: functionalIds.length,
+    pathVerified: functionalEvidence.screens.filter((screen) => screen.status === "FUNCTIONAL_PATH_VERIFIED").length,
+    routeRendered: functionalEvidence.screens.filter((screen) => screen.status === "BROWSER_ROUTE_RENDERED").length,
+    restrictionVerified: functionalEvidence.screens.filter((screen) => screen.status === "RESTRICTION_VERIFIED").length,
     notAssessed: merged.rows.length - functionalIds.length,
     evidenceFile: "docs/SCREEN_FUNCTIONAL_EVIDENCE.json",
     screens: functionalEvidence.screens,

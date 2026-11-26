@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import pg from "pg";
 import { getMigrationFiles, runMigrations } from "./migrate.mjs";
+import { createCiMigrationSchema } from "./ci-migration-schema.mjs";
 
 const databaseUrl = process.env.DATABASE_MIGRATION_URL;
 if (process.env.GITHUB_ACTIONS !== "true" || !databaseUrl) throw new Error("This migration rehearsal is restricted to the disposable GitHub Actions PostgreSQL service.");
@@ -9,8 +10,7 @@ if (!/^\/rudra_health_test$/.test(target.pathname) || !["127.0.0.1", "localhost"
   throw new Error("Refusing migration rehearsal outside the loopback rudra_health_test database.");
 }
 
-const schema = `ci_upgrade_${process.pid}_${randomBytes(5).toString("hex")}`;
-if (!/^ci_upgrade_[0-9]+_[a-f0-9]{10}$/.test(schema)) throw new Error("Invalid disposable migration schema name.");
+const schema = createCiMigrationSchema({ pid: process.pid, suffix: randomBytes(5).toString("hex") });
 const client = new pg.Client({ connectionString: databaseUrl, application_name: "rudra-ci-migration-upgrade-qualification" });
 let created = false;
 try {
