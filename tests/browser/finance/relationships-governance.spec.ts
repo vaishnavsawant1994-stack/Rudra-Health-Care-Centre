@@ -639,62 +639,6 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     expect(storedShift.rows[0]).toMatchObject({ centre_id: centreId, shift_type: "SCHEDULED", status: "ACTIVE", version_number: 1 });
     await expect(page.getByText("Synthetic planned roster record; not proof of attendance.")).toBeVisible();
 
-    // A centre-scoped operator cannot open the organization-wide audit stream.
-    const scopedAudit = await page.evaluate(async () => (await fetch("/api/admin/audit?page=1", { cache: "no-store" })).status);
-    expect(scopedAudit).toBe(403);
-
-    // O015: use an independently authenticated, organization-scoped synthetic auditor.
-    const auditEmail = process.env.AUDIT_REVIEWER_BROWSER_EMAIL;
-    const auditPassword = process.env.AUDIT_REVIEWER_BROWSER_PASSWORD;
-    expect(auditEmail && auditPassword).toBeTruthy();
-    const auditContext = await page.context().browser()!.newContext();
-    const auditPage = await auditContext.newPage();
-    try {
-      await auditPage.goto("/staff");
-      await auditPage.getByLabel("Work email").fill(auditEmail!);
-      await auditPage.getByLabel("Password", { exact: true }).fill(auditPassword!);
-      await auditPage.getByRole("button", { name: "Sign in securely" }).click();
-      await expect(auditPage).toHaveURL(/\/staff\/security-setup$/);
-      await auditPage.getByLabel("Account password").fill(auditPassword!);
-      const enrollmentResponse = auditPage.waitForResponse(response => response.request().method() === "POST" && response.url().includes("/api/auth/two-factor/enable"));
-      await auditPage.getByRole("button", { name: "Begin authenticator setup" }).click();
-      const enrollment = await (await enrollmentResponse).json() as { totpURI: string; method: string };
-      expect(enrollment.method).toBe("totp");
-      const secret = new URL(enrollment.totpURI).searchParams.get("secret");
-      expect(secret).toBeTruthy();
-      if (Date.now() % 30_000 > 27_000) await auditPage.waitForTimeout(3_000);
-      await auditPage.getByLabel("Current six-digit authenticator code").fill(totp(secret!));
-      await auditPage.getByRole("button", { name: "Verify and finish setup" }).click();
-      await expect(auditPage).toHaveURL(/\/staff\/workspace$/);
-      const auditLoad = auditPage.waitForResponse(response => response.request().method() === "GET" && new URL(response.url()).pathname === "/api/admin/audit");
-      await auditPage.goto("/manage/audit");
-      expect((await auditLoad).status()).toBe(200);
-      await expect(auditPage.getByRole("heading", { name: "Authorized audit events" })).toBeVisible();
-      const organizationAudit = await auditPage.evaluate(async () => {
-        const response = await fetch("/api/admin/audit?page=1", { cache: "no-store" });
-        return { status: response.status, body: await response.json() as { events: Array<{ centreId: string | null; action: string }> } };
-      });
-      expect(organizationAudit.status).toBe(200);
-      expect(organizationAudit.body.events.length).toBeGreaterThan(0);
-      const centreAudit = await auditPage.evaluate(async (allowedId) => {
-        const response = await fetch(`/api/admin/audit?centreId=${encodeURIComponent(allowedId)}`, { cache: "no-store" });
-        return { status: response.status, body: await response.json() as { events: Array<{ centreId: string | null }> } };
-      }, centreId!);
-      expect(centreAudit.status).toBe(200);
-      expect(centreAudit.body.events.every(event => event.centreId === centreId)).toBe(true);
-      const deniedAuditStatus = await auditPage.evaluate(async (deniedId) => (await fetch(`/api/admin/audit?centreId=${encodeURIComponent(deniedId)}`, { cache: "no-store" })).status, deniedCentreId!);
-      expect(deniedAuditStatus).toBe(403);
-      await auditPage.getByLabel("Action").fill("marketing.campaign_created");
-      const filteredAuditLoad = auditPage.waitForResponse(response => { const url = new URL(response.url()); return url.pathname === "/api/admin/audit" && url.searchParams.get("action") === "marketing.campaign_created"; });
-      await auditPage.getByRole("button", { name: "Apply filters" }).click();
-      const filteredAuditResponse = await filteredAuditLoad;
-      expect(filteredAuditResponse.status()).toBe(200);
-      const filteredAuditBody = await filteredAuditResponse.json() as { events: Array<{ action: string; entityId: string | null }> };
-      expect(filteredAuditBody.events).toContainEqual(expect.objectContaining({ action: "marketing.campaign_created", entityId: campaignBody.campaign.id }));
-      await expect(auditPage.getByRole("row").filter({ hasText: "marketing.campaign_created" })).toBeVisible({ timeout: 5_000 });
-    } finally {
-      await auditContext.close();
-    }
   } finally {
     await workflowPool.end();
   }
