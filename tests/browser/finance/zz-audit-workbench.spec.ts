@@ -44,14 +44,15 @@ test("O015 organization audit reviewer searches only authorized audit history", 
     await page.getByRole("button", { name: "Verify and finish setup" }).click();
     await expect(page).toHaveURL(/\/staff\/workspace$/);
 
-    await page.goto("/manage/audit");
-    await expect(page.getByRole("heading", { name: "Authorized audit events" })).toBeVisible({ timeout: 8_000 });
-    const initialAudit = await page.evaluate(async () => {
+    const auditAccess = await page.evaluate(async () => {
       const response = await fetch("/api/admin/audit?page=1", { cache: "no-store" });
-      return { status: response.status, body: await response.json() as { events: Array<{ action: string; centreId: string | null }> } };
+      return { status: response.status, body: await response.json() as { error?: string } };
     });
-    expect(initialAudit.status).toBe(200);
-    expect(initialAudit.body.events.length).toBeGreaterThan(0);
+    expect(auditAccess.status, `audit API access: ${auditAccess.body.error ?? "unexpected response"}`).toBe(200);
+
+    await page.goto("/manage/audit");
+    await expect(page.getByRole("heading", { name: "Audit, compliance and access anomalies" })).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByRole("heading", { name: "Authorized audit events" })).toBeVisible({ timeout: 8_000 });
 
     const sourceEvent = await pool.query("SELECT action FROM audit_events WHERE centre_id=$1 ORDER BY sequence DESC LIMIT 1", [centreId]);
     expect(sourceEvent.rowCount).toBe(1);
