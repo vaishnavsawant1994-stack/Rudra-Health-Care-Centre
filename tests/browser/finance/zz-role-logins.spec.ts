@@ -113,7 +113,9 @@ for (const identity of identities) {
       const queueBody = await assignedQueue.json() as { jobs: Array<{ id: string; jobNumber: string }> };
       expect(queueBody.jobs).toContainEqual(expect.objectContaining({ id: syntheticAssignedJob.id, jobNumber: syntheticAssignedJob.number }));
       await page.goto(`/field/jobs/${syntheticAssignedJob.id}`);
-      await expect(page.getByRole("heading", { name: syntheticAssignedJob.number })).toBeVisible();
+      // The job number is rendered as the detail card's eyebrow; the heading
+      // describes the current status. Assert the actual semantic element.
+      await expect(page.getByText(syntheticAssignedJob.number, { exact: true })).toBeVisible();
       await expect(page.getByRole("button", { name: "Accept assignment" })).toBeVisible();
       // Stop at the assigned job. No arrival, identity claim, collection,
       // custody or branch receipt is recorded while consent is absent and no

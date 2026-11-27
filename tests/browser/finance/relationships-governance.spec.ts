@@ -616,7 +616,9 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     expect((await rosterLoad).status()).toBe(200);
     await expect(page.getByRole("heading", { name: "Staff roster and availability" })).toBeVisible();
     const staffPicker = page.getByLabel("Staff member");
-    expect(await staffPicker.locator("option").count()).toBeGreaterThan(1);
+    // The centre/staff options load independently of the roster page request.
+    // Wait for the eligible staff list instead of racing the React effect.
+    await expect.poll(() => staffPicker.locator("option").count()).toBeGreaterThan(1);
     await staffPicker.selectOption({ index: 1 });
     const centreTimeZone = await page.getByLabel("Centre timezone").inputValue();
     const shiftTimes = await page.evaluate((timeZone) => {
