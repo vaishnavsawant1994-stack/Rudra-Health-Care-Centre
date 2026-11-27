@@ -319,6 +319,21 @@ for (const identity of identities) {
         expect((await confirmAppointmentResponse).status(), "manager confirms appointment through scheduling controls").toBe(200);
         await expect(managerPage.getByText("CONFIRMED", { exact: true })).toBeVisible();
 
+        const appointmentAssignmentForm = managerPage.locator("form.admin-form").filter({ has: managerPage.getByRole("heading", { name: "Staff assignment", exact: true }) });
+        const appointmentStaffSelect = appointmentAssignmentForm.getByLabel("Staff");
+        const appointmentCollectorOption = appointmentStaffSelect.locator("option").filter({ hasText: "Synthetic Field Collector" });
+        await expect(appointmentCollectorOption).toHaveCount(1);
+        const appointmentCollectorId = await appointmentCollectorOption.getAttribute("value");
+        expect(appointmentCollectorId).toBeTruthy();
+        await appointmentStaffSelect.selectOption(appointmentCollectorId!);
+        await appointmentAssignmentForm.getByLabel("Reason", { exact: true }).fill("Synthetic centre manager assigned the verified collector in the schedule");
+        const assignAppointmentResponse = managerPage.waitForResponse(response =>
+          response.request().method() === "PATCH" && new URL(response.url()).pathname === `/api/appointments/${appointmentBody.appointment.id}`,
+        );
+        await appointmentAssignmentForm.getByRole("button", { name: "Save assignment" }).click();
+        expect((await assignAppointmentResponse).status(), "manager assignment validates active staff and scheduling conflicts").toBe(200);
+        await expect(managerPage.getByText("ASSIGNED", { exact: true })).toBeVisible();
+
         await managerPage.goto("/collections");
         const createJobSection = managerPage.locator("section.admin-card").filter({ has: managerPage.getByRole("heading", { name: "Start from a confirmed appointment and order" }) });
         const createJobForm = createJobSection.locator("form.admin-form");
@@ -339,30 +354,16 @@ for (const identity of identities) {
         const createdJobRead = await managerPage.request.get(`/api/collections/${createdJobBody.job.id}`);
         expect(createdJobRead.status(), "manager reads the newly created collection job").toBe(200);
         const createdJobDetail = await createdJobRead.json() as { job: { status: string } };
-        expect(createdJobDetail.job.status).toBe("PENDING_ASSIGNMENT");
-        const assignmentForm = managerPage.locator("form.admin-form").filter({ has: managerPage.getByRole("heading", { name: "Staff assignment" }) });
-        const collectorSelect = assignmentForm.getByLabel("Authorized collector");
-        const collectorOption = collectorSelect.locator("option").filter({ hasText: "Synthetic Field Collector" });
-        await expect(collectorOption).toHaveCount(1);
-        const collectorId = await collectorOption.getAttribute("value");
-        expect(collectorId).toBeTruthy();
-        await collectorSelect.selectOption(collectorId!);
-        await assignmentForm.getByLabel("Assignment reason").fill("Synthetic manager assignment for isolated workflow verification");
-        const assignCollectorResponse = managerPage.waitForResponse(response =>
-          response.request().method() === "PATCH" && new URL(response.url()).pathname === `/api/collections/${createdJobBody.job.id}`,
-        );
-        await assignmentForm.getByRole("button", { name: "Assign collector" }).click();
-        expect((await assignCollectorResponse).status(), "manager assigns an active collector through collection controls").toBe(200);
-        await expect(managerPage.getByText("Collection workflow updated.")).toBeVisible();
+        expect(createdJobDetail.job.status).toBe("ASSIGNED");
 
         const completionPool = new pg.Pool({ connectionString: process.env.DATABASE_TEST_URL, max: 1 });
         try {
           const verified = await completionPool.query(
-            "SELECT o.status AS order_status,o.total_amount,a.status AS appointment_status,j.status AS job_status,j.assigned_staff_id,cs.display_name AS collector_name,(SELECT count(*)::int FROM diagnostic_order_status_history h WHERE h.order_id=o.id AND h.to_status='CONFIRMED') AS order_history,(SELECT count(*)::int FROM appointment_status_history h WHERE h.appointment_id=a.id AND h.to_status='CONFIRMED') AS appointment_history,(SELECT count(*)::int FROM collection_job_events e WHERE e.job_id=j.id AND e.event_type='ASSIGNED' AND e.staff_id=j.assigned_staff_id) AS assignment_events,(SELECT count(*)::int FROM audit_events e WHERE e.entity_id=o.id::text AND e.action='diagnostic_order.confirmed') AS order_audits,(SELECT count(*)::int FROM audit_events e WHERE e.entity_id=a.id::text AND e.action='appointment.updated') AS appointment_audits,(SELECT count(*)::int FROM audit_events e WHERE e.entity_id=j.id::text AND e.action='collection_job.assigned') AS assignment_audits,p.consent_status,(SELECT count(*)::int FROM sample_procedure_approvals sp WHERE sp.centre_id=a.centre_id AND sp.operation='COLLECTION' AND sp.status='ACTIVE') AS active_collection_procedures,(SELECT count(*)::int FROM specimens s WHERE s.job_id=j.id) AS specimen_count FROM diagnostic_orders o JOIN appointments a ON a.id=o.appointment_id AND a.centre_id=o.centre_id JOIN collection_jobs j ON j.order_id=o.id AND j.appointment_id=a.id JOIN patients p ON p.id=o.patient_id AND p.centre_id=o.centre_id JOIN staff_users cs ON cs.id=j.assigned_staff_id WHERE o.id=$1 AND j.id=$2 AND o.centre_id=$3 GROUP BY o.id,a.id,j.id,p.id,cs.id",
+            "SELECT o.status AS order_status,o.total_amount,a.status AS appointment_status,j.status AS job_status,j.assigned_staff_id,cs.display_name AS collector_name,(SELECT count(*)::int FROM diagnostic_order_status_history h WHERE h.order_id=o.id AND h.to_status='CONFIRMED') AS order_history,(SELECT count(*)::int FROM appointment_status_history h WHERE h.appointment_id=a.id AND h.to_status='CONFIRMED') AS appointment_confirmation_history,(SELECT count(*)::int FROM appointment_assignment_history h WHERE h.appointment_id=a.id AND h.action='ASSIGNED' AND h.staff_id=j.assigned_staff_id) AS appointment_assignment_history,(SELECT count(*)::int FROM collection_job_events e WHERE e.job_id=j.id AND e.event_type='ASSIGNED' AND e.staff_id=j.assigned_staff_id) AS job_assignment_events,(SELECT count(*)::int FROM audit_events e WHERE e.entity_id=o.id::text AND e.action='diagnostic_order.confirmed') AS order_audits,(SELECT count(*)::int FROM audit_events e WHERE e.entity_id=a.id::text AND e.action='appointment.updated') AS appointment_confirmation_audits,(SELECT count(*)::int FROM audit_events e WHERE e.entity_id=a.id::text AND e.action='appointment.assigned') AS appointment_assignment_audits,(SELECT count(*)::int FROM audit_events e WHERE e.entity_id=j.id::text AND e.action='collection_job.created') AS collection_job_audits,p.consent_status,(SELECT count(*)::int FROM sample_procedure_approvals sp WHERE sp.centre_id=a.centre_id AND sp.operation='COLLECTION' AND sp.status='ACTIVE') AS active_collection_procedures,(SELECT count(*)::int FROM specimens s WHERE s.job_id=j.id) AS specimen_count FROM diagnostic_orders o JOIN appointments a ON a.id=o.appointment_id AND a.centre_id=o.centre_id JOIN collection_jobs j ON j.order_id=o.id AND j.appointment_id=a.id JOIN patients p ON p.id=o.patient_id AND p.centre_id=o.centre_id JOIN staff_users cs ON cs.id=j.assigned_staff_id WHERE o.id=$1 AND j.id=$2 AND o.centre_id=$3 GROUP BY o.id,a.id,j.id,p.id,cs.id",
             [orderBody.order.id, createdJobBody.job.id, centreId],
           );
           expect(verified.rowCount).toBe(1);
-          expect(verified.rows[0]).toMatchObject({ order_status: "CONFIRMED", total_amount: "125.00", appointment_status: "CONFIRMED", job_status: "ASSIGNED", collector_name: "Synthetic Field Collector", order_history: 1, appointment_history: 1, assignment_events: 1, order_audits: 1, appointment_audits: 1, assignment_audits: 1, consent_status: "NOT_RECORDED", active_collection_procedures: 0, specimen_count: 0 });
+          expect(verified.rows[0]).toMatchObject({ order_status: "CONFIRMED", total_amount: "125.00", appointment_status: "ASSIGNED", job_status: "ASSIGNED", collector_name: "Synthetic Field Collector", order_history: 1, appointment_confirmation_history: 1, appointment_assignment_history: 1, job_assignment_events: 1, order_audits: 1, appointment_confirmation_audits: 1, appointment_assignment_audits: 1, collection_job_audits: 1, consent_status: "NOT_RECORDED", active_collection_procedures: 0, specimen_count: 0 });
         } finally {
           await completionPool.end();
         }
