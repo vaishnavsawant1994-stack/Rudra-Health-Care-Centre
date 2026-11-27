@@ -140,6 +140,73 @@ for (const identity of identities) {
       await page.getByRole("link", { name: /open Lead 360/ }).click();
       await expect(page).toHaveURL(new RegExp("/leads/" + body.lead.id + "$"));
       await expect(page.getByRole("heading", { name: "Synthetic " + leadName })).toBeVisible();
+
+      // Continue the same synthetic record through qualified lead conversion
+      // and a CRM-linked appointment request. Consent remains NOT_RECORDED and
+      // the appointment remains REQUESTED: this is not identity proofing or a
+      // confirmed slot.
+      await page.getByLabel("Status").selectOption("QUALIFIED");
+      await page.getByLabel("Reason", { exact: true }).fill("Synthetic browser workflow qualification");
+      const qualify = page.waitForResponse(response =>
+        response.request().method() === "PATCH" && new URL(response.url()).pathname === "/api/leads/" + body.lead.id,
+      );
+      await page.getByRole("button", { name: "Save stage" }).click();
+      expect((await qualify).status(), "synthetic lead qualification persisted").toBe(200);
+
+      await expect(page.getByRole("button", { name: "Convert", exact: true })).toBeEnabled();
+      await page.getByLabel("Patient phone for new registration").fill("+15551234567");
+      await page.getByLabel("Date of birth for new registration").fill("1990-01-01");
+      const conversionResponse = page.waitForResponse(response =>
+        response.request().method() === "POST" && new URL(response.url()).pathname === "/api/leads/" + body.lead.id + "/convert",
+      );
+      await page.getByRole("button", { name: "Convert", exact: true }).click();
+      const conversionHttp = await conversionResponse;
+      expect(conversionHttp.status(), "synthetic patient conversion persisted").toBe(200);
+      const conversionBody = await conversionHttp.json() as { conversion: { patientId: string } };
+      expect(conversionBody.conversion.patientId).toBeTruthy();
+      await expect(page.getByRole("link", { name: "Create appointment request" })).toBeVisible();
+
+      const conversionPool = new pg.Pool({ connectionString: process.env.DATABASE_TEST_URL, max: 1 });
+      try {
+        const conversionAudit = await conversionPool.query(
+          "SELECT count(*)::int AS events FROM audit_events WHERE (entity_id=$1 AND action='lead.converted') OR (entity_id=$2 AND action='patient.registered')",
+          [body.lead.id, conversionBody.conversion.patientId],
+        );
+        expect(conversionAudit.rows[0].events).toBe(2);
+      } finally {
+        await conversionPool.end();
+      }
+
+      await page.getByRole("link", { name: "Create appointment request" }).click();
+      await expect(page).toHaveURL(/\/appointments\/new\?leadId=/);
+      await expect(page.getByText(/Patient is fixed by this verified CRM conversion/)).toBeVisible();
+      await page.getByLabel(/Requested date and time/).fill("2099-05-10T10:00");
+      await page.getByLabel("Requested tests/packages or service references").fill("Synthetic test workflow reference; pending catalogue verification");
+      const appointmentResponse = page.waitForResponse(response =>
+        response.request().method() === "POST" && new URL(response.url()).pathname === "/api/appointments",
+      );
+      await expect(page.getByRole("button", { name: "Create booking request" })).toBeEnabled();
+      await page.getByRole("button", { name: "Create booking request" }).click();
+      const appointmentHttp = await appointmentResponse;
+      expect(appointmentHttp.status(), "CRM-linked appointment request saved").toBe(201);
+      const appointmentBody = await appointmentHttp.json() as { appointment: { id: string; status: string } };
+      expect(appointmentBody.appointment.status).toBe("REQUESTED");
+      await expect(page.getByText("Booking request saved. Confirmation is still pending.")).toBeVisible();
+      const appointmentPool = new pg.Pool({ connectionString: process.env.DATABASE_TEST_URL, max: 1 });
+      try {
+        const persisted = await appointmentPool.query(
+          "SELECT a.status, a.patient_id, a.lead_id, count(DISTINCT h.id)::int AS history_count, count(DISTINCT e.id)::int AS audit_count FROM appointments a LEFT JOIN appointment_status_history h ON h.appointment_id=a.id LEFT JOIN audit_events e ON e.entity_id=a.id AND e.action='appointment.created' WHERE a.id=$1 AND a.centre_id=$2 GROUP BY a.id",
+          [appointmentBody.appointment.id, centreId],
+        );
+        expect(persisted.rowCount).toBe(1);
+        expect(persisted.rows[0].status).toBe("REQUESTED");
+        expect(persisted.rows[0].patient_id).toBe(conversionBody.conversion.patientId);
+        expect(persisted.rows[0].lead_id).toBe(body.lead.id);
+        expect(persisted.rows[0].history_count).toBe(1);
+        expect(persisted.rows[0].audit_count).toBe(1);
+      } finally {
+        await appointmentPool.end();
+      }
     }
   });
 }
