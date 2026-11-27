@@ -196,7 +196,7 @@ for (const identity of identities) {
       const appointmentPool = new pg.Pool({ connectionString: process.env.DATABASE_TEST_URL, max: 1 });
       try {
         const persisted = await appointmentPool.query(
-          "SELECT a.status, a.patient_id, a.lead_id, count(DISTINCT h.id)::int AS history_count, count(DISTINCT e.id)::int AS audit_count FROM appointments a LEFT JOIN appointment_status_history h ON h.appointment_id=a.id LEFT JOIN audit_events e ON e.entity_id=a.id AND e.action='appointment.created' WHERE a.id=$1 AND a.centre_id=$2 GROUP BY a.id",
+          "SELECT a.status, a.patient_id, a.lead_id, count(DISTINCT h.id)::int AS history_count, count(DISTINCT e.id)::int AS audit_count FROM appointments a LEFT JOIN appointment_status_history h ON h.appointment_id=a.id LEFT JOIN audit_events e ON e.entity_id=a.id::text AND e.action='appointment.created' WHERE a.id=$1 AND a.centre_id=$2 GROUP BY a.id",
           [appointmentBody.appointment.id, centreId],
         );
         expect(persisted.rowCount).toBe(1);
