@@ -166,7 +166,7 @@ for (const identity of identities) {
       try {
         const publicPage = await publicContext.newPage();
         await publicPage.goto("/book");
-        await publicPage.getByLabel("Centre").selectOption(centreId!);
+        await publicPage.locator("form.r-book-layout").getByLabel("Centre").selectOption(centreId!);
         const publicService = publicPage.getByLabel(/Synthetic public booking browser item/);
         await expect(publicService).toBeVisible();
         await expect.poll(() => publicPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
