@@ -320,7 +320,8 @@ for (const identity of identities) {
         await expect(managerPage.getByText("CONFIRMED", { exact: true })).toBeVisible();
 
         await managerPage.goto("/collections");
-        const createJobForm = managerPage.locator("form.admin-form").filter({ has: managerPage.getByRole("heading", { name: "Start from a confirmed appointment and order" }) });
+        const createJobSection = managerPage.locator("section.admin-card").filter({ has: managerPage.getByRole("heading", { name: "Start from a confirmed appointment and order" }) });
+        const createJobForm = createJobSection.locator("form.admin-form");
         await expect(createJobForm.getByLabel("Eligible booking")).toBeVisible();
         await createJobForm.getByLabel("Eligible booking").selectOption(orderBody.order.id);
         const createJobResponse = managerPage.waitForResponse(response =>
