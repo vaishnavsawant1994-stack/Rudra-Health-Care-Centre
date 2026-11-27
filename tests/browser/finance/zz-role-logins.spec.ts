@@ -181,6 +181,12 @@ for (const identity of identities) {
       await page.getByRole("link", { name: "Create appointment request" }).click();
       await expect(page).toHaveURL(/\/appointments\/new\?leadId=/);
       await expect(page.getByText(/Patient is fixed by this verified CRM conversion/)).toBeVisible();
+      await page.getByLabel("Visit type").selectOption("HOME_COLLECTION");
+      await page.getByLabel("Address", { exact: true }).fill("100 Synthetic Test Lane");
+      await page.getByLabel("City", { exact: true }).fill("Test City");
+      await page.getByLabel("State", { exact: true }).fill("Test State");
+      await page.getByLabel("Postal code").fill("000000");
+      await page.getByLabel("Preferred time window").fill("10:00-12:00 synthetic test window");
       await page.getByLabel(/Requested date and time/).fill("2099-05-10T10:00");
       await page.getByLabel("Requested tests/packages or service references").fill("Synthetic test workflow reference; pending catalogue verification");
       const appointmentResponse = page.waitForResponse(response =>
@@ -190,9 +196,11 @@ for (const identity of identities) {
       await page.getByRole("button", { name: "Create booking request" }).click();
       const appointmentHttp = await appointmentResponse;
       expect(appointmentHttp.status(), "CRM-linked appointment request saved").toBe(201);
-      const appointmentBody = await appointmentHttp.json() as { appointment: { id: string; status: string } };
+      const appointmentBody = await appointmentHttp.json() as { appointment: { id: string; appointmentNumber: string; status: string } };
       expect(appointmentBody.appointment.status).toBe("REQUESTED");
       await expect(page.getByText("Booking request saved. Confirmation is still pending.")).toBeVisible();
+      await page.goto("/appointments/" + appointmentBody.appointment.id);
+      await expect(page.getByText("REQUESTED", { exact: true })).toBeVisible();
       const appointmentPool = new pg.Pool({ connectionString: process.env.DATABASE_TEST_URL, max: 1 });
       try {
         const persisted = await appointmentPool.query(
@@ -207,6 +215,53 @@ for (const identity of identities) {
         expect(persisted.rows[0].audit_count).toBe(1);
       } finally {
         await appointmentPool.end();
+      }
+
+      // Create an internal synthetic order for the same appointment, then
+      // verify collection creation fails closed while the order is still a
+      // draft. No appointment confirmation, collector assignment, collection,
+      // physical custody, payment, or external receipt is fabricated here.
+      await page.goto("/orders/new");
+      await page.getByLabel("Search booking number or patient name").fill(appointmentBody.appointment.appointmentNumber);
+      await page.getByRole("button", { name: "Find appointments" }).click();
+      await page.getByRole("button", { name: new RegExp(appointmentBody.appointment.appointmentNumber) }).click();
+      await page.getByLabel(/Synthetic quote browser item/).check();
+      const orderResponse = page.waitForResponse(response =>
+        response.request().method() === "POST" && new URL(response.url()).pathname === "/api/orders",
+      );
+      await page.getByRole("button", { name: "Create order draft" }).click();
+      const orderHttp = await orderResponse;
+      expect(orderHttp.status(), "same-patient synthetic order draft created").toBe(201);
+      const orderBody = await orderHttp.json() as { order: { id: string; status: string } };
+      expect(orderBody.order.status).toBe("DRAFT");
+      const collectionAttempt = await page.evaluate(async ({ appointmentId, orderId, idempotencyKey }) => {
+        const response = await fetch("/api/collections", {
+          method: "POST",
+          headers: { "content-type": "application/json", "idempotency-key": idempotencyKey },
+          body: JSON.stringify({ appointmentId, orderId }),
+        });
+        return { status: response.status, body: await response.json() as { error?: string } };
+      }, { appointmentId: appointmentBody.appointment.id, orderId: orderBody.order.id, idempotencyKey: randomUUID() });
+      expect(collectionAttempt.status).toBe(409);
+      expect(collectionAttempt.body.error).toBe("order_not_confirmed");
+
+      const sameJourney = new pg.Pool({ connectionString: process.env.DATABASE_TEST_URL, max: 1 });
+      try {
+        const rows = await sameJourney.query(
+          "SELECT o.status AS order_status, o.patient_id AS order_patient_id, o.appointment_id, a.status AS appointment_status, a.patient_id AS appointment_patient_id, p.consent_status, count(DISTINCT e.id)::int AS order_audit_count, count(DISTINCT j.id)::int AS collection_jobs FROM diagnostic_orders o JOIN appointments a ON a.id=o.appointment_id AND a.centre_id=o.centre_id JOIN patients p ON p.id=o.patient_id AND p.centre_id=o.centre_id LEFT JOIN audit_events e ON e.entity_id=o.id::text AND e.action='diagnostic_order.created' LEFT JOIN collection_jobs j ON j.order_id=o.id WHERE o.id=$1 AND o.centre_id=$2 GROUP BY o.id,a.id,p.id",
+          [orderBody.order.id, centreId],
+        );
+        expect(rows.rowCount).toBe(1);
+        expect(rows.rows[0].order_status).toBe("DRAFT");
+        expect(rows.rows[0].appointment_status).toBe("REQUESTED");
+        expect(rows.rows[0].order_patient_id).toBe(conversionBody.conversion.patientId);
+        expect(rows.rows[0].appointment_patient_id).toBe(conversionBody.conversion.patientId);
+        expect(rows.rows[0].appointment_id).toBe(appointmentBody.appointment.id);
+        expect(rows.rows[0].consent_status).toBe("NOT_RECORDED");
+        expect(rows.rows[0].order_audit_count).toBe(1);
+        expect(rows.rows[0].collection_jobs).toBe(0);
+      } finally {
+        await sameJourney.end();
       }
     }
   });
