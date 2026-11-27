@@ -247,7 +247,7 @@ for (const identity of identities) {
         const reviewPool = new pg.Pool({ connectionString: process.env.DATABASE_TEST_URL, max: 1 });
         try {
           const result = await reviewPool.query(
-            "SELECT e.status,e.reviewed_by_staff_id,e.resulting_lead_id,l.status AS lead_status,l.source,d.payload_ciphertext,array(SELECT h.event_type FROM public_enquiry_events h WHERE h.enquiry_id=e.id ORDER BY h.recorded_at,h.id) AS event_types,(SELECT count(*)::int FROM audit_events a WHERE a.entity_id=l.id AND a.action='public_enquiry.converted_to_lead') AS audit_count FROM public_enquiries e JOIN leads l ON l.id=e.resulting_lead_id AND l.organization_id=e.organization_id AND l.centre_id=e.centre_id JOIN lead_private_data d ON d.lead_id=l.id AND d.organization_id=l.organization_id AND d.centre_id=l.centre_id WHERE e.id=$1 AND l.id=$2",
+            "SELECT e.status,e.reviewed_by_staff_id,e.resulting_lead_id,l.status AS lead_status,l.source,d.payload_ciphertext,array(SELECT h.event_type FROM public_enquiry_events h WHERE h.enquiry_id=e.id ORDER BY h.recorded_at,h.id) AS event_types,(SELECT count(*)::int FROM audit_events a WHERE a.entity_id=l.id::text AND a.action='public_enquiry.converted_to_lead') AS audit_count FROM public_enquiries e JOIN leads l ON l.id=e.resulting_lead_id AND l.organization_id=e.organization_id AND l.centre_id=e.centre_id JOIN lead_private_data d ON d.lead_id=l.id AND d.organization_id=l.organization_id AND d.centre_id=l.centre_id WHERE e.id=$1 AND l.id=$2",
             [publicReceipt.receiptId, publicReviewBody.leadId],
           );
           expect(result.rowCount).toBe(1);
