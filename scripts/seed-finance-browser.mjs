@@ -12,7 +12,7 @@ if (!["127.0.0.1", "localhost"].includes(parsedDatabaseUrl.hostname) || decodeUR
 }
 
 const pool = new Pool({ connectionString: databaseUrl, max: 1, application_name: "rudra-finance-browser-fixtures" });
-const ids = { organizationId: randomUUID(), authorizedCentreId: randomUUID(), readOnlyCentreId: randomUUID(), deniedCentreId: randomUUID(), staffId: randomUUID(), authUserId: randomUUID(), relationshipStaffId: randomUUID(), relationshipAuthUserId: randomUUID(), marketingReviewerStaffId: randomUUID(), marketingReviewerAuthUserId: randomUUID(), marketingReviewerRoleId: randomUUID(), auditReviewerStaffId: randomUUID(), auditReviewerAuthUserId: randomUUID(), auditRoleId: randomUUID(), readRoleId: randomUUID(), createRoleId: randomUUID(), relationshipReadRoleId: randomUUID(), governanceRoleId: randomUUID(), supportRoleId: randomUUID(), marketingRoleId: randomUUID(), paymentRoleId: randomUUID(), reconcileRoleId: randomUUID(), closerStaffId: randomUUID(), closerAuthUserId: randomUUID(), closerReadRoleId: randomUUID(), closerReconcileRoleId: randomUUID(), quoteLeadId: randomUUID(), crossCentreLeadId: randomUUID(), quoteCatalogueItemId: randomUUID(), quoteCatalogueVersionId: randomUUID() };
+const ids = { organizationId: randomUUID(), authorizedCentreId: randomUUID(), readOnlyCentreId: randomUUID(), deniedCentreId: randomUUID(), staffId: randomUUID(), authUserId: randomUUID(), relationshipStaffId: randomUUID(), relationshipAuthUserId: randomUUID(), marketingReviewerStaffId: randomUUID(), marketingReviewerAuthUserId: randomUUID(), marketingReviewerRoleId: randomUUID(), auditReviewerStaffId: randomUUID(), auditReviewerAuthUserId: randomUUID(), auditRoleId: randomUUID(), readRoleId: randomUUID(), createRoleId: randomUUID(), relationshipReadRoleId: randomUUID(), governanceRoleId: randomUUID(), supportRoleId: randomUUID(), marketingRoleId: randomUUID(), paymentRoleId: randomUUID(), reconcileRoleId: randomUUID(), closerStaffId: randomUUID(), closerAuthUserId: randomUUID(), closerReadRoleId: randomUUID(), closerReconcileRoleId: randomUUID(), quoteLeadId: randomUUID(), crossCentreLeadId: randomUUID(), quoteCatalogueItemId: randomUUID(), quoteCatalogueVersionId: randomUUID(), publicBookingCatalogueItemId: randomUUID(), publicBookingCatalogueVersionId: randomUUID() };
 const patientKeyId = process.env.RUDRA_FIELD_ACTIVE_KEY_ID;
 const patientKey = Buffer.from(JSON.parse(process.env.RUDRA_FIELD_ENCRYPTION_KEYS ?? "{}")[patientKeyId] ?? "", "base64");
 const blindIndexKey = Buffer.from(process.env.RUDRA_BLIND_INDEX_KEY ?? "", "base64");
@@ -221,6 +221,17 @@ try {
       "INSERT INTO diagnostic_catalogue_versions(id,organization_id,centre_id,catalogue_item_id,version_number,display_name,verification_status,price_amount,currency,price_source_reference,effective_from,effective_until,reviewed_by_staff_id,reviewed_at,source_type,created_by_staff_id) VALUES($1,$2,$3,$4,1,'Synthetic quote browser item','VERIFIED',125.00,'INR',$5,'2026-01-01','2099-12-31',$6,now(),'MANUAL',$6)",
       [ids.quoteCatalogueVersionId, ids.organizationId, ids.authorizedCentreId, ids.quoteCatalogueItemId, `TEST ONLY isolated quote fixture ${ids.quoteCatalogueVersionId.slice(0, 8)}`, ids.staffId],
     );
+    // This explicitly synthetic, verified service is published only inside the
+    // disposable CI database so Chromium can exercise the real public booking
+    // flow. It is not a production catalogue or price approval.
+    await client.query(
+      "INSERT INTO diagnostic_catalogue_items(id,organization_id,centre_id,service_type,service_code,current_version,public_visible,public_visibility_updated_at,public_visibility_updated_by_staff_id,created_by_staff_id) VALUES($1,$2,$3,'TEST',$4,1,true,now(),$5,$5)",
+      [ids.publicBookingCatalogueItemId, ids.organizationId, ids.authorizedCentreId, `SYN-PUB-${ids.publicBookingCatalogueItemId.slice(0, 8)}`, ids.staffId],
+    );
+    await client.query(
+      "INSERT INTO diagnostic_catalogue_versions(id,organization_id,centre_id,catalogue_item_id,version_number,display_name,verification_status,price_amount,currency,price_source_reference,effective_from,effective_until,reviewed_by_staff_id,reviewed_at,source_type,created_by_staff_id) VALUES($1,$2,$3,$4,1,'Synthetic public booking browser item','VERIFIED',125.00,'INR',$5,'2026-01-01','2099-12-31',$6,now(),'MANUAL',$6)",
+      [ids.publicBookingCatalogueVersionId, ids.organizationId, ids.authorizedCentreId, ids.publicBookingCatalogueItemId, `TEST ONLY isolated public booking fixture ${ids.publicBookingCatalogueVersionId.slice(0, 8)}`, ids.staffId],
+    );
     await client.query("COMMIT");
 
     const lines = {
@@ -248,6 +259,7 @@ try {
       FINANCE_BROWSER_QUOTE_LEAD_ID: ids.quoteLeadId,
       FINANCE_BROWSER_CROSS_CENTRE_LEAD_ID: ids.crossCentreLeadId,
       FINANCE_BROWSER_QUOTE_VERSION_ID: ids.quoteCatalogueVersionId,
+      FINANCE_BROWSER_PUBLIC_BOOKING_CATALOGUE_ITEM_ID: ids.publicBookingCatalogueItemId,
     };
     for (const [key, value] of Object.entries(lines)) {
       if (/[\r\n]/.test(value)) throw new Error(`invalid_fixture_output:${key}`);

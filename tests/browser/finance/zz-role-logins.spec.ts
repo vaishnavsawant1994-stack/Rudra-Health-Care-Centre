@@ -109,6 +109,10 @@ for (const identity of identities) {
     expect(leads.status(), identity.key + " CRM access").toBe(identity.leads);
     expect(collections.status(), identity.key + " collection access").toBe(identity.collections);
     expect(otherCentreFinance.status(), identity.key + " other-centre finance access").toBe(identity.deniedCentre);
+    if (identity.key === "FINANCE") {
+      const privateEnquiryQueue = await page.request.get("/api/public/enquiries?centreId=" + centreId);
+      expect(privateEnquiryQueue.status(), "finance-only staff cannot read private reception enquiries").toBe(403);
+    }
     if (identity.key === "FINANCE" && syntheticConfirmedOrder) {
       const orderId = syntheticConfirmedOrder.id;
       await page.goto(`/finance/orders/${orderId}`);
@@ -152,6 +156,112 @@ for (const identity of identities) {
       // active collection procedure exists in this synthetic centre.
     }
     if (identity.key === "RECEPTION") {
+      test.setTimeout(180_000);
+      // Public visitor -> real booking request -> authenticated receptionist
+      // review. The public catalogue fixture is published only in the
+      // disposable CI database; this does not publish a real service/price.
+      const publicItemId = process.env.FINANCE_BROWSER_PUBLIC_BOOKING_CATALOGUE_ITEM_ID;
+      expect(publicItemId).toBeTruthy();
+      const publicContext = await browser.newContext({ baseURL: "http://127.0.0.1:3000", viewport: { width: 390, height: 844 } });
+      try {
+        const publicPage = await publicContext.newPage();
+        await publicPage.goto("/book");
+        await publicPage.getByLabel("Centre").selectOption(centreId!);
+        const publicService = publicPage.getByLabel(/Synthetic public booking browser item/);
+        await expect(publicService).toBeVisible();
+        await expect.poll(() => publicPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+        await publicService.check();
+        const publicFirstName = "Synthetic Public " + randomUUID().slice(0, 8);
+        const publicLastName = "Booking";
+        const publicEmail = "public-booking-" + randomUUID().slice(0, 8) + "@invalid.test";
+        const publicPhone = "+1555" + String(Number.parseInt(randomUUID().replaceAll("-", "").slice(0, 7), 16) % 10_000_000).padStart(7, "0");
+        const preferredDate = new Date(Date.now() + 24 * 60 * 60 * 1000 - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+        await publicPage.getByLabel("First name").fill(publicFirstName);
+        await publicPage.getByLabel("Last name").fill(publicLastName);
+        await publicPage.getByLabel("Mobile number").fill(publicPhone);
+        await publicPage.getByLabel("Email address").fill(publicEmail);
+        await publicPage.getByLabel("Preferred date").fill(preferredDate);
+        await publicPage.getByRole("checkbox", { name: /Rudra staff may contact me about this specific request/ }).check();
+        const reviewRequest = publicPage.getByRole("button", { name: /Review request/ });
+        await reviewRequest.focus();
+        await publicPage.keyboard.press("Enter");
+        await expect(publicPage).toHaveURL(/\/book\/review$/);
+        await expect(publicPage.getByRole("heading", { name: "Not a confirmed booking" })).toBeVisible();
+        await expect(publicPage.getByText(/It does not create an appointment, reserve a time, authorize a fee, or submit a payment/)).toBeVisible();
+        await expect.poll(() => publicPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+        const submitRequest = publicPage.getByRole("button", { name: "Send request for staff review" });
+        const publicSubmission = publicPage.waitForResponse(response =>
+          response.request().method() === "POST" && new URL(response.url()).pathname === "/api/public/enquiries",
+        );
+        await submitRequest.focus();
+        await publicPage.keyboard.press("Enter");
+        const publicSubmissionResponse = await publicSubmission;
+        expect(publicSubmissionResponse.status(), "anonymous visitor submits a public booking enquiry").toBe(202);
+        const publicReceipt = await publicSubmissionResponse.json() as { accepted: boolean; reference: string; receiptId: string };
+        expect(publicReceipt.accepted).toBe(true);
+        expect(publicReceipt.receiptId).toMatch(/^[0-9a-f-]{36}$/i);
+        await expect(publicPage).toHaveURL(new RegExp("/booking/success/" + publicReceipt.receiptId));
+        await expect(publicPage.getByRole("heading", { name: "Enquiry received for staff review" })).toBeVisible();
+        await expect(publicPage.getByRole("heading", { name: "This is not an appointment confirmation." })).toBeVisible();
+        await expect(publicPage.getByText(publicEmail)).toHaveCount(0);
+        await expect(publicPage.getByText(publicPhone)).toHaveCount(0);
+
+        const publicPool = new pg.Pool({ connectionString: process.env.DATABASE_TEST_URL, max: 1 });
+        let enquiryNumber = "";
+        try {
+          const saved = await publicPool.query(
+            "SELECT e.enquiry_number,e.status,e.centre_id,e.private_data_ciphertext,e.resulting_lead_id,array(SELECT h.event_type FROM public_enquiry_events h WHERE h.enquiry_id=e.id ORDER BY h.recorded_at,h.id) AS event_types FROM public_enquiries e WHERE e.id=$1",
+            [publicReceipt.receiptId],
+          );
+          expect(saved.rowCount).toBe(1);
+          expect(saved.rows[0]).toMatchObject({ status: "PENDING_REVIEW", centre_id: centreId, resulting_lead_id: null, event_types: ["SUBMITTED"] });
+          enquiryNumber = saved.rows[0].enquiry_number as string;
+          expect(saved.rows[0].private_data_ciphertext).not.toContain(publicFirstName);
+          expect(saved.rows[0].private_data_ciphertext).not.toContain(publicEmail);
+          expect(saved.rows[0].private_data_ciphertext).not.toContain(publicPhone);
+        } finally {
+          await publicPool.end();
+        }
+
+        await page.goto("/leads/public-enquiries");
+        const reviewCard = page.locator("article.public-enquiry-item").filter({ hasText: enquiryNumber });
+        await expect(reviewCard).toBeVisible();
+        await expect(reviewCard).toContainText("BOOKING REQUEST");
+        await expect(reviewCard).toContainText("NOT CONFIRMED");
+        await expect(reviewCard).toContainText("Synthetic public booking browser item");
+        await expect(reviewCard).toContainText(preferredDate);
+        await expect(reviewCard).toContainText("Requested; contact permission remains pending staff review");
+        await expect(reviewCard.getByLabel("Assign new CRM lead to")).toHaveCount(0);
+        await expect(reviewCard.getByRole("button", { name: "Create CRM lead" })).toBeVisible();
+        const publicReview = page.waitForResponse(response =>
+          response.request().method() === "PATCH" && new URL(response.url()).pathname === "/api/public/enquiries",
+        );
+        await reviewCard.getByRole("button", { name: "Create CRM lead" }).click();
+        const publicReviewResponse = await publicReview;
+        expect(publicReviewResponse.status(), "receptionist reviews the public request into the CRM").toBe(200);
+        const publicReviewBody = await publicReviewResponse.json() as { status: string; leadId: string; leadNumber: string };
+        expect(publicReviewBody.status).toBe("CONVERTED_TO_LEAD");
+        expect(publicReviewBody.leadId).toBeTruthy();
+        await expect(page.getByRole("status")).toContainText("Enquiry converted to " + publicReviewBody.leadNumber);
+
+        const reviewPool = new pg.Pool({ connectionString: process.env.DATABASE_TEST_URL, max: 1 });
+        try {
+          const result = await reviewPool.query(
+            "SELECT e.status,e.reviewed_by_staff_id,e.resulting_lead_id,l.status AS lead_status,l.source,d.payload_ciphertext,array(SELECT h.event_type FROM public_enquiry_events h WHERE h.enquiry_id=e.id ORDER BY h.recorded_at,h.id) AS event_types,(SELECT count(*)::int FROM audit_events a WHERE a.entity_id=l.id AND a.action='public_enquiry.converted_to_lead') AS audit_count FROM public_enquiries e JOIN leads l ON l.id=e.resulting_lead_id AND l.organization_id=e.organization_id AND l.centre_id=e.centre_id JOIN lead_private_data d ON d.lead_id=l.id AND d.organization_id=l.organization_id AND d.centre_id=l.centre_id WHERE e.id=$1 AND l.id=$2",
+            [publicReceipt.receiptId, publicReviewBody.leadId],
+          );
+          expect(result.rowCount).toBe(1);
+          expect(result.rows[0]).toMatchObject({ status: "CONVERTED_TO_LEAD", resulting_lead_id: publicReviewBody.leadId, lead_status: "NEW", source: "WEBSITE", event_types: ["SUBMITTED", "CONVERTED_TO_LEAD"], audit_count: 1 });
+          expect(result.rows[0].reviewed_by_staff_id).toBeTruthy();
+          expect(result.rows[0].payload_ciphertext).not.toContain(publicEmail);
+          expect(result.rows[0].payload_ciphertext).not.toContain(publicPhone);
+        } finally {
+          await reviewPool.end();
+        }
+      } finally {
+        await publicContext.close();
+      }
+
       // A connected real UI -> API -> PostgreSQL CRM creation journey, using
       // the MFA-authenticated receptionist rather than a test-only direct insert.
       const leadName = "Synthetic Reception " + randomUUID().slice(0, 8);
