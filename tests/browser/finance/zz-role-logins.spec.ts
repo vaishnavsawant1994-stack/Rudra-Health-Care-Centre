@@ -111,7 +111,7 @@ for (const identity of identities) {
       const assignedQueue = await page.request.get(`/api/collections?centreId=${centreId}&assignedToMe=1`);
       expect(assignedQueue.status(), "collector reads only the permitted assigned queue").toBe(200);
       const queueBody = await assignedQueue.json() as { jobs: Array<{ id: string; jobNumber: string }> };
-      expect(queueBody.jobs).toContainEqual(expect.objectContaining(syntheticAssignedJob));
+      expect(queueBody.jobs).toContainEqual(expect.objectContaining({ id: syntheticAssignedJob.id, jobNumber: syntheticAssignedJob.number }));
       await page.goto(`/field/jobs/${syntheticAssignedJob.id}`);
       await expect(page.getByRole("heading", { name: syntheticAssignedJob.number })).toBeVisible();
       await expect(page.getByRole("button", { name: "Accept assignment" })).toBeVisible();
