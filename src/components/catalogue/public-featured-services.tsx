@@ -27,7 +27,7 @@ export function PublicFeaturedServices() {
     return () => controller.abort();
   }, [reloadKey]);
 
-  return <div className="ref-featured-grid" aria-live="polite">
+  return <div className="ref-featured-grid" aria-busy={status.startsWith("Loading ")}>
     {status && <p className="ref-inline-state" role="status">{status}</p>}
     {status.includes("temporarily unavailable") && <button className="button button-secondary" type="button" onClick={() => setReloadKey((current) => current + 1)}>Retry catalogue</button>}
     {items.map((item) => <article className="ref-service-card" key={item.id}>
