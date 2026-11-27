@@ -131,7 +131,7 @@ describe("sample collection API PostgreSQL integration", () => {
 
     const beforeArrival = await send(body);
     expect(beforeArrival.status).toBe(409);
-    expect(await beforeArrival.json()).toEqual({ error: "collection_arrival_required" });
+    expect(await beforeArrival.json()).toEqual({ error: "patient_consent_required" });
     expect((await pool!.query("SELECT count(*)::int AS count FROM specimens WHERE organization_id=$1 AND idempotency_key=$2", [organizationId, idempotencyKey])).rows[0].count).toBe(0);
     const arrivalEventId = randomUUID();
     const arrivalPrivateData = encryptOperationalData({ reason: "Synthetic collector arrived", evidenceReference: null }, operationalContext({ organizationId, centreId, recordId: arrivalEventId }, "collection-job-event"));

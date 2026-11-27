@@ -120,7 +120,7 @@ for (const identity of identities) {
       );
       await page.getByRole("button", { name: "Create internal charge snapshot" }).click();
       expect((await chargeSave).status(), "finance staff creates only an internal charge snapshot").toBe(201);
-      await expect(page.getByRole("status")).toContainText("No legal invoice was issued.");
+      await expect(page.locator("section[aria-labelledby='order-billing-heading']").getByRole("status")).toContainText("No legal invoice was issued.");
       const financePool = new pg.Pool({ connectionString: process.env.DATABASE_TEST_URL, max: 1 });
       try {
         const records = await financePool.query(

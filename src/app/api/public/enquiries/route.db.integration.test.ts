@@ -653,7 +653,7 @@ describe("public enquiry PostgreSQL integration", () => {
     expect((await collectorStep("start", 3)).status).toBe(200);
     const noArrivalCollect = await sampleAction(new Request("http://localhost/api/samples", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() }, body: JSON.stringify({ action: "collect", jobId: job.id, specimenType: "Synthetic EDTA tube", requirementReference: "TEST ONLY synthetic CBC fixture", identityCheckConfirmed: true, procedureApprovalId: procedures.COLLECTION, reason: "TEST ONLY collection before arrival" }) }));
     expect(noArrivalCollect.status).toBe(409);
-    expect(await noArrivalCollect.json()).toEqual({ error: "collection_arrival_required" });
+    expect(await noArrivalCollect.json()).toEqual({ error: "patient_consent_required" });
     expect((await collectorStep("arrive", 3)).status).toBe(409);
     expect((await collectorStep("arrive", 4)).status).toBe(200);
     const collectKey = randomUUID();
