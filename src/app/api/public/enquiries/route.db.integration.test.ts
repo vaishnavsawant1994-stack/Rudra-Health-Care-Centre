@@ -40,8 +40,6 @@ describe("public enquiry PostgreSQL integration", () => {
   let updateOrder: typeof import("../../orders/[id]/route").PATCH;
   let updateCollectionJob: typeof import("../../collections/[id]/route").PATCH;
   let sampleAction: typeof import("../../samples/route").POST;
-  let createDispatchBatch: typeof import("../../samples/dispatch/route").POST;
-  let dispatchAction: typeof import("../../samples/dispatch/[id]/route").POST;
   let registerReport: typeof import("../../reports/route").POST;
   let uploadReportDocument: typeof import("../../reports/[id]/documents/route").POST;
   let readReportDocument: typeof import("../../reports/[id]/documents/route").GET;
@@ -92,8 +90,6 @@ describe("public enquiry PostgreSQL integration", () => {
     ({ PATCH: updateOrder } = await import("../../orders/[id]/route"));
     ({ PATCH: updateCollectionJob } = await import("../../collections/[id]/route"));
     ({ POST: sampleAction } = await import("../../samples/route"));
-    ({ POST: createDispatchBatch } = await import("../../samples/dispatch/route"));
-    ({ POST: dispatchAction } = await import("../../samples/dispatch/[id]/route"));
     ({ POST: registerReport } = await import("../../reports/route"));
     ({ POST: uploadReportDocument, GET: readReportDocument } = await import("../../reports/[id]/documents/route"));
     ({ GET: getFinance, POST: postFinance } = await import("../../finance/route"));
@@ -661,33 +657,14 @@ describe("public enquiry PostgreSQL integration", () => {
     expect((await collectorStep("arrive", 3)).status).toBe(409);
     expect((await collectorStep("arrive", 4)).status).toBe(200);
     const collectKey = randomUUID();
-    const collectRequest = () => new Request("http://localhost/api/samples", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": collectKey }, body: JSON.stringify({ action: "collect", jobId: job.id, specimenType: "Synthetic EDTA tube", requirementReference: "TEST ONLY synthetic CBC fixture", identityCheckConfirmed: true, procedureApprovalId: procedures.COLLECTION, reason: "TEST ONLY simulated sample collection" }) });
+    const collectRequest = () => new Request("http://localhost/api/samples", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": collectKey }, body: JSON.stringify({ action: "collect", jobId: job.id, specimenType: "Synthetic EDTA tube", requirementReference: "TEST ONLY synthetic CBC fixture", identityCheckConfirmed: true, procedureApprovalId: procedures.COLLECTION, reason: "TEST ONLY attempted collection remains blocked without consent" }) });
     const collectResponse = await sampleAction(collectRequest());
-    expect(collectResponse.status).toBe(201);
-    const { result: collected } = await collectResponse.json() as { result: { id: string; status: string; versionNumber: number } };
-    expect(collected.status).toBe("COLLECTED");
-    expect((await sampleAction(collectRequest()).then((response) => response.json()) as { result: { id: string; replayed: boolean } }).result).toMatchObject({ id: collected.id, replayed: true });
-    const submitHandover = await sampleAction(new Request("http://localhost/api/samples", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() }, body: JSON.stringify({ action: "submit_for_receiving", specimenId: collected.id, expectedVersion: 1, reason: "TEST ONLY simulated field custody handover" }) }));
-    expect(submitHandover.status).toBe(200);
-    const branchPermissions = ["samples.receive", "samples.dispatch", "samples.read"];
-    mocks.getApiAccess.mockImplementation(async (permission: string, requestedCentreId?: string) => requestedCentreId && requestedCentreId !== centreId ? { response: Response.json({ error: "forbidden" }, { status: 403 }), staff: null } : branchPermissions.includes(permission) ? { response: null, staff: { organizationId, staffUserId, grants: branchPermissions.map((key) => ({ key, centreId })) } } : { response: Response.json({ error: "forbidden" }, { status: 403 }), staff: null });
-    const receive = await sampleAction(new Request("http://localhost/api/samples", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() }, body: JSON.stringify({ action: "receive", specimenId: collected.id, expectedVersion: 2, procedureApprovalId: procedures.RECEIVING, reason: "TEST ONLY synthetic branch receipt" }) }));
-    expect(receive.status).toBe(200);
-    expect(await receive.json()).toMatchObject({ result: { status: "RECEIVED_AT_RUDRA", versionNumber: 3 } });
-    const dispatchResponse = await createDispatchBatch(new Request("http://localhost/api/samples/dispatch", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json" }, body: JSON.stringify({ centreId, specimenIds: [collected.id], packingProcedureApprovalId: procedures.PACKING, reason: "TEST ONLY synthetic branch packing" }) }));
-    expect(dispatchResponse.status).toBe(201);
-    const { batch } = await dispatchResponse.json() as { batch: { id: string; status: string } };
-    expect(batch.status).toBe("PREPARING");
-    const dispatchHandover = await dispatchAction(new Request(`http://localhost/api/samples/dispatch/${batch.id}`, { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json" }, body: JSON.stringify({ action: "handover", batchId: batch.id, expectedVersion: 1, carrierReference: `TEST ONLY internal carrier ${batch.id.slice(0, 8)}`, procedureApprovalId: procedures.TRANSPORT, reason: "TEST ONLY simulated internal carrier handover" }) }), { params: Promise.resolve({ id: batch.id }) });
-    expect(dispatchHandover.status).toBe(200);
-    expect(await dispatchHandover.json()).toMatchObject({ result: { status: "DISPATCHED", versionNumber: 2 } });
-    expect((await pool.query("SELECT status FROM specimens WHERE id=$1", [collected.id])).rows[0].status).toBe("DISPATCHED");
-    expect((await pool.query("SELECT count(*)::int AS count FROM sample_external_receipts WHERE batch_id=$1", [batch.id])).rows[0].count).toBe(0);
-    const custody = await pool.query("SELECT event_type FROM sample_custody_events WHERE specimen_id=$1 ORDER BY recorded_at,id", [collected.id]);
-    expect(custody.rows.map((row) => row.event_type)).toEqual(["COLLECTED", "SUBMITTED_FOR_RECEIVING", "RECEIVED_AT_RUDRA", "PACKED", "DISPATCHED"]);
-    const joinedAudit = await pool.query("SELECT action FROM audit_events WHERE organization_id=$1 AND centre_id=$2 AND entity_id IN ($3,$4,$5,$6,$7) ORDER BY recorded_at", [organizationId, centreId, appointment.id, order.id, job.id, collected.id, batch.id]);
-    expect(joinedAudit.rows.map((row) => row.action)).toEqual(expect.arrayContaining(["appointment.created", "diagnostic_order.confirmed", "collection_job.created", "specimen.collected", "specimen.received", "dispatch_batch.created", "dispatch_batch.handed_over"]));
-
+    expect(collectResponse.status).toBe(409);
+    expect(await collectResponse.json()).toEqual({ error: "patient_consent_required" });
+    expect((await sampleAction(collectRequest()).then((response) => response.json())).error).toBe("patient_consent_required");
+    expect((await pool.query("SELECT count(*)::int AS count FROM specimens WHERE job_id=$1", [job.id])).rows[0].count).toBe(0);
+    expect((await pool.query("SELECT count(*)::int AS count FROM sample_custody_events WHERE organization_id=$1 AND event_type='COLLECTED'", [organizationId])).rows[0].count).toBe(0);
+    expect((await pool.query("SELECT count(*)::int AS count FROM collection_job_events WHERE job_id=$1 AND event_type='COLLECTION_RECORDED'", [job.id])).rows[0].count).toBe(0);
     // Join internal finance to this same order and appointment. These are recorded/reviewed
     // internal evidence states only; the flow does not represent a bank or provider settlement.
     const financePermissions = ["finance.read", "finance.charge.create", "finance.payment.record", "finance.payment.verify", "finance.reconcile"];

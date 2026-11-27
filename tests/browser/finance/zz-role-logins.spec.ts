@@ -7,6 +7,7 @@ import { expect, test } from "@playwright/test";
 // no password, TOTP seed, or session state is written to disk or CI artifacts.
 let managerStorageState: Awaited<ReturnType<import("@playwright/test").BrowserContext["storageState"]>> | undefined;
 let syntheticAssignedJob: { id: string; number: string } | undefined;
+let syntheticConfirmedOrder: { id: string; centreId: string } | undefined;
 
 function currentTotp(secret: string) {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -30,6 +31,7 @@ const identities = [
   { key: "OWNER", finance: 200, leads: 200, collections: 200, deniedCentre: 200 },
   { key: "MANAGER", finance: 200, leads: 200, collections: 200, deniedCentre: 403 },
   { key: "RECEPTION", finance: 200, leads: 200, collections: 200, deniedCentre: 403 },
+  { key: "FINANCE", finance: 200, leads: 403, collections: 403, deniedCentre: 403 },
   { key: "COLLECTOR", finance: 403, leads: 403, collections: 200, deniedCentre: 403 },
   { key: "BRANCH", finance: 403, leads: 403, collections: 200, deniedCentre: 403 },
   { key: "RESTRICTED", finance: 403, leads: 403, collections: 403, deniedCentre: 403 },
@@ -107,6 +109,34 @@ for (const identity of identities) {
     expect(leads.status(), identity.key + " CRM access").toBe(identity.leads);
     expect(collections.status(), identity.key + " collection access").toBe(identity.collections);
     expect(otherCentreFinance.status(), identity.key + " other-centre finance access").toBe(identity.deniedCentre);
+    if (identity.key === "FINANCE" && syntheticConfirmedOrder) {
+      const orderId = syntheticConfirmedOrder.id;
+      await page.goto(`/finance/orders/${orderId}`);
+      await expect(page.getByRole("heading", { name: "Order billing snapshot" })).toBeVisible();
+      await expect(page.getByText("₹125.00 INR")).toBeVisible();
+      await expect(page.getByText("Disabled pending policy approval")).toBeVisible();
+      const chargeSave = page.waitForResponse(response =>
+        response.request().method() === "POST" && new URL(response.url()).pathname === "/api/finance",
+      );
+      await page.getByRole("button", { name: "Create internal charge snapshot" }).click();
+      expect((await chargeSave).status(), "finance staff creates only an internal charge snapshot").toBe(201);
+      await expect(page.getByRole("status")).toContainText("No legal invoice was issued.");
+      const financePool = new pg.Pool({ connectionString: process.env.DATABASE_TEST_URL, max: 1 });
+      try {
+        const records = await financePool.query(
+          "SELECT c.amount_minor::text AS amount,c.state,c.snapshot->>'legalInvoice' AS legal_invoice,(SELECT count(*)::int FROM finance_payments p WHERE p.organization_id=c.organization_id AND p.centre_id=c.centre_id AND EXISTS (SELECT 1 FROM finance_allocations a WHERE a.payment_id=p.id AND a.charge_id=c.id)) AS payments,(SELECT count(*)::int FROM audit_events a WHERE a.entity_id=c.order_id::text AND a.action='finance.order_charges_created') AS audit_count FROM finance_charges c WHERE c.order_id=$1 AND c.centre_id=$2 AND c.charge_type='DIAGNOSTIC'",
+          [orderId, syntheticConfirmedOrder.centreId],
+        );
+        expect(records.rowCount).toBe(1);
+        expect(records.rows[0]).toMatchObject({ amount: "12500", state: "ACTIVE", legal_invoice: "false", payments: 0, audit_count: 1 });
+        const ledger = await page.request.get(`/api/finance?orderId=${orderId}`);
+        expect(ledger.status()).toBe(200);
+        const ledgerBody = await ledger.json() as { charges: Array<{ amountMinor: string; paidMinor: string; orderId: string }> };
+        expect(ledgerBody.charges).toContainEqual(expect.objectContaining({ orderId, amountMinor: "12500", paidMinor: "0" }));
+      } finally {
+        await financePool.end();
+      }
+    }
     if (identity.key === "COLLECTOR" && syntheticAssignedJob) {
       const assignedQueue = await page.request.get(`/api/collections?centreId=${centreId}&assignedToMe=1`);
       expect(assignedQueue.status(), "collector reads only the permitted assigned queue").toBe(200);
@@ -308,6 +338,7 @@ for (const identity of identities) {
         const confirmedOrderBody = await confirmedOrderHttp.json() as { order: { status: string; totalAmount: string } };
         expect(confirmedOrderBody.order.status).toBe("CONFIRMED");
         expect(confirmedOrderBody.order.totalAmount).toBe("125.00");
+        syntheticConfirmedOrder = { id: orderBody.order.id, centreId: centreId! };
         await expect(managerPage.getByText("CONFIRMED", { exact: true })).toBeVisible();
 
         await managerPage.goto(`/appointments/${appointmentBody.appointment.id}`);

@@ -22,6 +22,7 @@ const roleSpecs = [
   { key: "RECEPTION", name: "Synthetic Receptionist", catalogRole: "receptionist" },
   { key: "COLLECTOR", name: "Synthetic Field Collector", catalogRole: "phlebotomist" },
   { key: "BRANCH", name: "Synthetic Branch Receiver", catalogRole: "laboratory_branch_operations" },
+  { key: "FINANCE", name: "Synthetic Finance Operator", permissions: ["finance.read", "finance.charge.create"] },
   { key: "RESTRICTED", name: "Synthetic Restricted Staff", permissions: ["workspace.read"] },
 ];
 const { Pool } = pg;
@@ -102,7 +103,7 @@ try {
     if (key.endsWith("_PASSWORD")) process.stdout.write("::add-mask::" + value + "\n");
     appendFileSync(process.env.GITHUB_ENV, key + "=" + value + "\n");
   }
-  process.stdout.write("Created six additional isolated synthetic staff identities with scoped roles.\n");
+  process.stdout.write("Created seven additional isolated synthetic staff identities with scoped roles.\n");
 } catch (error) {
   await client.query("ROLLBACK").catch(() => undefined);
   throw error;

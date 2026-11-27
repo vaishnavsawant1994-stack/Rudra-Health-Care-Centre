@@ -113,6 +113,13 @@ export async function POST(request: Request) {
       if (parsed.data.action === "collect") {
         const [job] = await tx.select().from(collectionJobs).where(and(eq(collectionJobs.id, parsed.data.jobId), eq(collectionJobs.organizationId, access.staff.organizationId), eq(collectionJobs.centreId, context!.centreId))).for("update").limit(1);
         if (!job || job.status !== "IN_PROGRESS") throw new Error("collection_visit_not_started");
+        // Consent is authoritative patient state. Check it while the collection
+        // job is locked and before idempotent replay or specimen creation, so a
+        // stale request cannot record collection after consent is withdrawn.
+        const [patient] = await tx.select({ consentStatus: patients.consentStatus }).from(patients)
+          .where(and(eq(patients.id, job.patientId), eq(patients.organizationId, job.organizationId), eq(patients.centreId, job.centreId)))
+          .for("update").limit(1);
+        if (!patient || patient.consentStatus !== "GRANTED") throw new Error("patient_consent_required");
         const [duplicate] = await tx.select({ id: specimens.id, organizationId: specimens.organizationId, centreId: specimens.centreId, specimenNumber: specimens.specimenNumber, status: specimens.status, privateDataCiphertext: specimens.privateDataCiphertext, collectedByStaffId: specimens.collectedByStaffId, jobId: specimens.jobId, identityCheckConfirmed: specimens.identityCheckConfirmed, procedureApprovalId: specimens.collectionProcedureApprovalId, versionNumber: specimens.versionNumber }).from(specimens).where(and(eq(specimens.organizationId, job.organizationId), eq(specimens.idempotencyKey, idempotencyKey!))).limit(1);
         if (duplicate) {
           const existingPrivate = decryptOperationalData<{ specimenType: string; requirementReference: string }>(duplicate.privateDataCiphertext, operationalContext({ organizationId: duplicate.organizationId, centreId: duplicate.centreId, recordId: duplicate.id }, "specimen"));
@@ -189,8 +196,8 @@ export async function POST(request: Request) {
     });
     return Response.json({ result }, { status: parsed.data.action === "collect" && !("replayed" in result && result.replayed) ? 201 : 200 });
   } catch (error) {
-    const code = error instanceof Error ? error.message : ""; const expected = ["collection_visit_not_started", "collection_arrival_required", "approved_collection_procedure_required", "idempotency_conflict", "version_conflict", "invalid_sample_transition", "approved_receiving_procedure_required", "sample_transition_locked", "receiving_submission_required", "not_found"];
-    if (expected.includes(code)) return Response.json({ error: code }, { status: code === "version_conflict" || code === "idempotency_conflict" || code === "receiving_submission_required" || code === "collection_arrival_required" ? 409 : code === "not_found" ? 404 : 400 });
+    const code = error instanceof Error ? error.message : ""; const expected = ["collection_visit_not_started", "collection_arrival_required", "patient_consent_required", "approved_collection_procedure_required", "idempotency_conflict", "version_conflict", "invalid_sample_transition", "approved_receiving_procedure_required", "sample_transition_locked", "receiving_submission_required", "not_found"];
+    if (expected.includes(code)) return Response.json({ error: code }, { status: code === "version_conflict" || code === "idempotency_conflict" || code === "receiving_submission_required" || code === "collection_arrival_required" || code === "patient_consent_required" ? 409 : code === "not_found" ? 404 : 400 });
     return Response.json({ error: "sample_operation_unavailable" }, { status: 409 });
   }
 }
