@@ -330,11 +330,16 @@ for (const identity of identities) {
         await createJobForm.getByRole("button", { name: "Create collection job" }).click();
         const createdJobHttp = await createJobResponse;
         expect(createdJobHttp.status(), "manager creates a job only after both records are confirmed").toBe(201);
-        const createdJobBody = await createdJobHttp.json() as { job: { id: string; jobNumber: string; status: string } };
-        expect(createdJobBody.job.status).toBe("PENDING_ASSIGNMENT");
+        const createdJobBody = await createdJobHttp.json() as { job: { id: string; jobNumber: string } };
+        expect(createdJobBody.job.id).toBeTruthy();
+        expect(createdJobBody.job.jobNumber).toMatch(/^RHC-C-/);
         syntheticAssignedJob = { id: createdJobBody.job.id, number: createdJobBody.job.jobNumber };
 
         await managerPage.goto(`/field/jobs/${createdJobBody.job.id}`);
+        const createdJobRead = await managerPage.request.get(`/api/collections/${createdJobBody.job.id}`);
+        expect(createdJobRead.status(), "manager reads the newly created collection job").toBe(200);
+        const createdJobDetail = await createdJobRead.json() as { job: { status: string } };
+        expect(createdJobDetail.job.status).toBe("PENDING_ASSIGNMENT");
         const assignmentForm = managerPage.locator("form.admin-form").filter({ has: managerPage.getByRole("heading", { name: "Staff assignment" }) });
         const collectorSelect = assignmentForm.getByLabel("Authorized collector");
         const collectorOption = collectorSelect.locator("option").filter({ hasText: "Synthetic Field Collector" });
