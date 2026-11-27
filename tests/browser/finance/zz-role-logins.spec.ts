@@ -145,8 +145,9 @@ for (const identity of identities) {
       // and a CRM-linked appointment request. Consent remains NOT_RECORDED and
       // the appointment remains REQUESTED: this is not identity proofing or a
       // confirmed slot.
-      await page.getByLabel("Status").selectOption("QUALIFIED");
-      await page.getByLabel("Reason", { exact: true }).fill("Synthetic browser workflow qualification");
+      const stageForm = page.locator("form.admin-form").filter({ has: page.getByRole("heading", { name: "Update stage" }) });
+      await stageForm.getByRole("combobox").selectOption("QUALIFIED");
+      await stageForm.getByLabel("Reason", { exact: true }).fill("Synthetic browser workflow qualification");
       const qualify = page.waitForResponse(response =>
         response.request().method() === "PATCH" && new URL(response.url()).pathname === "/api/leads/" + body.lead.id,
       );
