@@ -13,20 +13,21 @@ for (const viewport of viewports) {
 
     await expect(page.getByRole("main")).toBeVisible();
     await expect(page.getByRole("heading", { level: 1, name: "Diagnostic Care, With Clear Next Steps" })).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
     if (viewport.width <= 760) {
+      await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeHidden();
       const menu = page.getByRole("button", { name: "Open navigation menu" });
       await menu.focus();
       await page.keyboard.press("Enter");
       await expect(page.getByRole("button", { name: "Close navigation menu" })).toHaveAttribute("aria-expanded", "true");
-      await expect(page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Tests" })).toBeVisible();
+      await expect(page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Tests", exact: true })).toBeVisible();
       await page.keyboard.press("Tab");
       await page.keyboard.press("Escape");
       await expect(page.getByRole("button", { name: "Open navigation menu" })).toHaveAttribute("aria-expanded", "false");
     } else {
-      await expect(page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Tests" })).toBeVisible();
+      await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
+      await expect(page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Tests", exact: true })).toBeVisible();
       await page.keyboard.press("Tab");
       await expect(page.locator(":focus")).toHaveAttribute("aria-label", "Rudra Health Care Centre home");
     }

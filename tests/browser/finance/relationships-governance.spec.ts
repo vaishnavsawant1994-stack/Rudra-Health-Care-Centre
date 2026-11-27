@@ -639,7 +639,7 @@ test("doctor visit operations, filtered relationship pipeline and internal templ
     expect(shiftBody.shift.replayed).toBe(false);
     const storedShift = await workflowPool.query("SELECT centre_id,shift_type,status,version_number FROM staff_shifts WHERE id=$1", [shiftBody.shift.id]);
     expect(storedShift.rows[0]).toMatchObject({ centre_id: centreId, shift_type: "SCHEDULED", status: "ACTIVE", version_number: 1 });
-    await expect(page.getByText("Synthetic planned roster record; not proof of attendance.")).toBeVisible();
+    await expect(page.getByText("Synthetic planned roster record; not proof of attendance.", { exact: true }).first()).toBeVisible();
 
   } finally {
     await workflowPool.end();
