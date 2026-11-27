@@ -2,6 +2,12 @@ import { createHmac, randomUUID } from "node:crypto";
 import pg from "pg";
 import { expect, test } from "@playwright/test";
 
+// The manager session is captured only in memory after a real password + MFA
+// login. The later same-journey staff actions reuse that authenticated session;
+// no password, TOTP seed, or session state is written to disk or CI artifacts.
+let managerStorageState: Awaited<ReturnType<import("@playwright/test").BrowserContext["storageState"]>> | undefined;
+let syntheticAssignedJob: { id: string; number: string } | undefined;
+
 function currentTotp(secret: string) {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
   const cleaned = secret.toUpperCase().replace(/=+$/, "");
@@ -33,7 +39,7 @@ const identities = [
 // A 429 is verified and retried after the real limit window, never bypassed.
 
 for (const identity of identities) {
-  test("real MFA " + identity.key + " sign-in enforces role and centre permissions", async ({ page }) => {
+  test("real MFA " + identity.key + " sign-in enforces role and centre permissions", async ({ page, browser }) => {
     const email = process.env["ROLE_BROWSER_" + identity.key + "_EMAIL"];
     const password = process.env["ROLE_BROWSER_" + identity.key + "_PASSWORD"];
     const centreId = process.env.FINANCE_BROWSER_CENTRE_ID;
@@ -89,6 +95,7 @@ for (const identity of identities) {
     await page.getByLabel("Current six-digit authenticator code").fill(currentTotp(secret!));
     await page.getByRole("button", { name: "Verify and finish setup" }).click();
     await expect(page).toHaveURL(/\/staff\/workspace$/);
+    if (identity.key === "MANAGER") managerStorageState = await page.context().storageState();
 
     const [finance, leads, collections, otherCentreFinance] = await Promise.all([
       page.request.get("/api/finance?centreId=" + centreId),
@@ -100,6 +107,18 @@ for (const identity of identities) {
     expect(leads.status(), identity.key + " CRM access").toBe(identity.leads);
     expect(collections.status(), identity.key + " collection access").toBe(identity.collections);
     expect(otherCentreFinance.status(), identity.key + " other-centre finance access").toBe(identity.deniedCentre);
+    if (identity.key === "COLLECTOR" && syntheticAssignedJob) {
+      const assignedQueue = await page.request.get(`/api/collections?centreId=${centreId}&assignedToMe=1`);
+      expect(assignedQueue.status(), "collector reads only the permitted assigned queue").toBe(200);
+      const queueBody = await assignedQueue.json() as { jobs: Array<{ id: string; jobNumber: string }> };
+      expect(queueBody.jobs).toContainEqual(expect.objectContaining(syntheticAssignedJob));
+      await page.goto(`/field/jobs/${syntheticAssignedJob.id}`);
+      await expect(page.getByRole("heading", { name: syntheticAssignedJob.number })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Accept assignment" })).toBeVisible();
+      // Stop at the assigned job. No arrival, identity claim, collection,
+      // custody or branch receipt is recorded while consent is absent and no
+      // active collection procedure exists in this synthetic centre.
+    }
     if (identity.key === "RECEPTION") {
       // A connected real UI -> API -> PostgreSQL CRM creation journey, using
       // the MFA-authenticated receptionist rather than a test-only direct insert.
@@ -262,6 +281,87 @@ for (const identity of identities) {
         expect(rows.rows[0].collection_jobs).toBe(0);
       } finally {
         await sameJourney.end();
+      }
+
+      // Use the separately authenticated centre-manager session to perform
+      // the real confirmation and collector-assignment actions. The manager
+      // account completed password + MFA earlier in this same CI run.
+      expect(managerStorageState, "manager password/MFA session was established").toBeTruthy();
+      const managerContext = await browser.newContext({
+        baseURL: "http://127.0.0.1:3000",
+        storageState: managerStorageState!,
+      });
+      try {
+        const managerPage = await managerContext.newPage();
+        await managerPage.goto(`/orders/${orderBody.order.id}`);
+        await expect(managerPage.getByRole("heading", { name: "Review and confirm" })).toBeVisible();
+        await expect(managerPage.getByText("VERIFIED", { exact: true })).toBeVisible();
+        managerPage.once("dialog", dialog => dialog.accept());
+        const confirmOrderResponse = managerPage.waitForResponse(response =>
+          response.request().method() === "PATCH" && new URL(response.url()).pathname === `/api/orders/${orderBody.order.id}`,
+        );
+        await managerPage.getByRole("button", { name: "Confirm order" }).click();
+        const confirmedOrderHttp = await confirmOrderResponse;
+        expect(confirmedOrderHttp.status(), "manager confirms using the verified synthetic catalogue price").toBe(200);
+        const confirmedOrderBody = await confirmedOrderHttp.json() as { order: { status: string; totalAmount: string } };
+        expect(confirmedOrderBody.order.status).toBe("CONFIRMED");
+        expect(confirmedOrderBody.order.totalAmount).toBe("125.00");
+        await expect(managerPage.getByText("CONFIRMED", { exact: true })).toBeVisible();
+
+        await managerPage.goto(`/appointments/${appointmentBody.appointment.id}`);
+        const statusForm = managerPage.locator("form.admin-form").filter({ has: managerPage.getByRole("heading", { name: "Status", exact: true }) });
+        await statusForm.getByRole("combobox").selectOption("CONFIRMED");
+        await statusForm.getByLabel("Reason", { exact: true }).fill("Synthetic centre manager confirmed the requested appointment");
+        const confirmAppointmentResponse = managerPage.waitForResponse(response =>
+          response.request().method() === "PATCH" && new URL(response.url()).pathname === `/api/appointments/${appointmentBody.appointment.id}`,
+        );
+        await statusForm.getByRole("button", { name: "Update status" }).click();
+        expect((await confirmAppointmentResponse).status(), "manager confirms appointment through scheduling controls").toBe(200);
+        await expect(managerPage.getByText("CONFIRMED", { exact: true })).toBeVisible();
+
+        await managerPage.goto("/collections");
+        const createJobForm = managerPage.locator("form.admin-form").filter({ has: managerPage.getByRole("heading", { name: "Start from a confirmed appointment and order" }) });
+        await expect(createJobForm.getByLabel("Eligible booking")).toBeVisible();
+        await createJobForm.getByLabel("Eligible booking").selectOption(orderBody.order.id);
+        const createJobResponse = managerPage.waitForResponse(response =>
+          response.request().method() === "POST" && new URL(response.url()).pathname === "/api/collections",
+        );
+        await createJobForm.getByRole("button", { name: "Create collection job" }).click();
+        const createdJobHttp = await createJobResponse;
+        expect(createdJobHttp.status(), "manager creates a job only after both records are confirmed").toBe(201);
+        const createdJobBody = await createdJobHttp.json() as { job: { id: string; jobNumber: string; status: string } };
+        expect(createdJobBody.job.status).toBe("PENDING_ASSIGNMENT");
+        syntheticAssignedJob = { id: createdJobBody.job.id, number: createdJobBody.job.jobNumber };
+
+        await managerPage.goto(`/field/jobs/${createdJobBody.job.id}`);
+        const assignmentForm = managerPage.locator("form.admin-form").filter({ has: managerPage.getByRole("heading", { name: "Staff assignment" }) });
+        const collectorSelect = assignmentForm.getByLabel("Authorized collector");
+        const collectorOption = collectorSelect.locator("option").filter({ hasText: "Synthetic Field Collector" });
+        await expect(collectorOption).toHaveCount(1);
+        const collectorId = await collectorOption.getAttribute("value");
+        expect(collectorId).toBeTruthy();
+        await collectorSelect.selectOption(collectorId!);
+        await assignmentForm.getByLabel("Assignment reason").fill("Synthetic manager assignment for isolated workflow verification");
+        const assignCollectorResponse = managerPage.waitForResponse(response =>
+          response.request().method() === "PATCH" && new URL(response.url()).pathname === `/api/collections/${createdJobBody.job.id}`,
+        );
+        await assignmentForm.getByRole("button", { name: "Assign collector" }).click();
+        expect((await assignCollectorResponse).status(), "manager assigns an active collector through collection controls").toBe(200);
+        await expect(managerPage.getByText("Collection workflow updated.")).toBeVisible();
+
+        const completionPool = new pg.Pool({ connectionString: process.env.DATABASE_TEST_URL, max: 1 });
+        try {
+          const verified = await completionPool.query(
+            "SELECT o.status AS order_status,o.total_amount,a.status AS appointment_status,j.status AS job_status,j.assigned_staff_id,cs.display_name AS collector_name,(SELECT count(*)::int FROM diagnostic_order_status_history h WHERE h.order_id=o.id AND h.to_status='CONFIRMED') AS order_history,(SELECT count(*)::int FROM appointment_status_history h WHERE h.appointment_id=a.id AND h.to_status='CONFIRMED') AS appointment_history,(SELECT count(*)::int FROM collection_job_events e WHERE e.job_id=j.id AND e.event_type='ASSIGNED' AND e.staff_id=j.assigned_staff_id) AS assignment_events,(SELECT count(*)::int FROM audit_events e WHERE e.entity_id=o.id::text AND e.action='diagnostic_order.confirmed') AS order_audits,(SELECT count(*)::int FROM audit_events e WHERE e.entity_id=a.id::text AND e.action='appointment.updated') AS appointment_audits,(SELECT count(*)::int FROM audit_events e WHERE e.entity_id=j.id::text AND e.action='collection_job.assigned') AS assignment_audits,p.consent_status,(SELECT count(*)::int FROM sample_procedure_approvals sp WHERE sp.centre_id=a.centre_id AND sp.operation='COLLECTION' AND sp.status='ACTIVE') AS active_collection_procedures,(SELECT count(*)::int FROM specimens s WHERE s.job_id=j.id) AS specimen_count FROM diagnostic_orders o JOIN appointments a ON a.id=o.appointment_id AND a.centre_id=o.centre_id JOIN collection_jobs j ON j.order_id=o.id AND j.appointment_id=a.id JOIN patients p ON p.id=o.patient_id AND p.centre_id=o.centre_id JOIN staff_users cs ON cs.id=j.assigned_staff_id WHERE o.id=$1 AND j.id=$2 AND o.centre_id=$3 GROUP BY o.id,a.id,j.id,p.id,cs.id",
+            [orderBody.order.id, createdJobBody.job.id, centreId],
+          );
+          expect(verified.rowCount).toBe(1);
+          expect(verified.rows[0]).toMatchObject({ order_status: "CONFIRMED", total_amount: "125.00", appointment_status: "CONFIRMED", job_status: "ASSIGNED", collector_name: "Synthetic Field Collector", order_history: 1, appointment_history: 1, assignment_events: 1, order_audits: 1, appointment_audits: 1, assignment_audits: 1, consent_status: "NOT_RECORDED", active_collection_procedures: 0, specimen_count: 0 });
+        } finally {
+          await completionPool.end();
+        }
+      } finally {
+        await managerContext.close();
       }
     }
   });
