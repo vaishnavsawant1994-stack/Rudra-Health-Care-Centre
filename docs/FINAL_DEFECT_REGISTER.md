@@ -1,6 +1,6 @@
 # Rudra Health OS — consolidated defect and release register
 
-Updated: 26 November 2026. This register deduplicates known engineering, evidence and approval blockers. It is not a claim that every screen has been inspected or accepted.
+Updated: 28 November 2026. This register deduplicates known engineering, evidence and approval blockers. It is not a claim that every screen has been inspected or accepted.
 
 ## Evidence baseline
 
@@ -27,6 +27,7 @@ Updated: 26 November 2026. This register deduplicates known engineering, evidenc
 
 ## Closed in this checkpoint
 
+- **PUB-01:** Public corporate, doctor, partner and contact forms relied on server rejection when both optional contact fields were empty, yielding a generic form error. Added accessible client-side validation before submission while preserving the API as authority. Playwright verified phone-only/email-only success and missing-contact denial through Chromium at desktop/tablet/mobile widths; disposable PostgreSQL verified centre-scoped encrypted pending records and audit events. Commits `f6b037cb` and `ff1cf58`; CI runs [46113593027](https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46113593027) and [46113588633](https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46113588633) passed. **Scope:** closes this defect only; W018–W021 remain partial pending other controls, full accessibility, approved visual references and Owner/QA review.
 - **MIG-CI-01:** the isolated CI migration rehearsal used a schema name rejected by the existing P2-09A backfill allowlist. It now creates a unique `p2_09a_ci_upgrade_*` schema. GitHub Actions run 197 passed the 0093→0102 rehearsal, checksums, idempotent replay and cleanup; no backfill guard was broadened.
 - **EVID-01:** S012 formerly summarized only nine recent browser paths. The ledger now consolidates the historical phase records and separates functional paths, route rendering, tested restrictions and missing evidence. Counts reconcile to 178 without changing technical-completion or Owner/QA fields.
 

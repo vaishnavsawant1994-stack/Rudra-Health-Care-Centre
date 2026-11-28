@@ -495,34 +495,34 @@
     {
       "id": "W018",
       "status": "FUNCTIONAL_PATH_VERIFIED",
-      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
-      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
-      "evidence": "Chromium submitted a synthetic corporate enquiry and displayed staff-review acknowledgement; no message was sent.",
-      "limitations": "Scoped public browser path only. Full control coverage, accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46113593027",
+      "evidenceRecordCommit": "ff1cf58cbfe3eb9a1b2bea61d9cce3d842ba1242",
+      "evidence": "Earlier synthetic corporate enquiry reached staff review. On this commit, Chromium exercised the /corporate enquiry form at desktop/tablet/mobile widths: both contact methods missing was rejected before POST with an announced error and focus; phone-only and email-only submissions each persisted through the real API as PENDING_REVIEW, centre-scoped, without a lead link or outbound message, and showed the safe acknowledgement. PostgreSQL confirmed encrypted contact data and a SUBMITTED event.",
+      "limitations": "Scoped enquiry-form path only. Remaining page controls, full accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
     },
     {
       "id": "W019",
       "status": "FUNCTIONAL_PATH_VERIFIED",
-      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
-      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
-      "evidence": "Chromium submitted a synthetic doctor enquiry and displayed staff-review acknowledgement; no referral outcome was claimed.",
-      "limitations": "Scoped public browser path only. Full control coverage, accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46113593027",
+      "evidenceRecordCommit": "ff1cf58cbfe3eb9a1b2bea61d9cce3d842ba1242",
+      "evidence": "Earlier synthetic doctor enquiry reached staff review. On this commit, Chromium exercised the /doctors enquiry form at desktop/tablet/mobile widths: both contact methods missing was rejected before POST with an announced error and focus; phone-only and email-only submissions each persisted through the real API as PENDING_REVIEW, centre-scoped, without a lead link or outbound message, and showed the safe acknowledgement. PostgreSQL confirmed encrypted contact data and a SUBMITTED event.",
+      "limitations": "Scoped enquiry-form path only. Remaining page controls, full accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
     },
     {
       "id": "W020",
       "status": "FUNCTIONAL_PATH_VERIFIED",
-      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
-      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
-      "evidence": "Chromium submitted a synthetic partner enquiry and displayed staff-review acknowledgement; no agreement was implied.",
-      "limitations": "Scoped public browser path only. Full control coverage, accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46113593027",
+      "evidenceRecordCommit": "ff1cf58cbfe3eb9a1b2bea61d9cce3d842ba1242",
+      "evidence": "Earlier synthetic partner enquiry reached staff review. On this commit, Chromium exercised the /partners enquiry form at desktop/tablet/mobile widths: both contact methods missing was rejected before POST with an announced error and focus; phone-only and email-only submissions each persisted through the real API as PENDING_REVIEW, centre-scoped, without a lead link or outbound message, and showed the safe acknowledgement. PostgreSQL confirmed encrypted contact data and a SUBMITTED event.",
+      "limitations": "Scoped enquiry-form path only. Remaining page controls, full accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
     },
     {
       "id": "W021",
       "status": "FUNCTIONAL_PATH_VERIFIED",
-      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
-      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
-      "evidence": "Chromium submitted a synthetic centre-routed contact enquiry and displayed staff-review acknowledgement.",
-      "limitations": "Scoped public browser path only. Full control coverage, accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46113593027",
+      "evidenceRecordCommit": "ff1cf58cbfe3eb9a1b2bea61d9cce3d842ba1242",
+      "evidence": "Earlier synthetic centre-routed contact enquiry reached staff review. On this commit, Chromium exercised the /contact enquiry form at desktop/tablet/mobile widths: both contact methods missing was rejected before POST with an announced error and focus; phone-only and email-only submissions each persisted through the real API as PENDING_REVIEW, centre-scoped, without a lead link or outbound message, and showed the safe acknowledgement. PostgreSQL confirmed encrypted contact data and a SUBMITTED event.",
+      "limitations": "Scoped enquiry-form path only. Remaining page controls, full accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
     },
     {
       "id": "W022",

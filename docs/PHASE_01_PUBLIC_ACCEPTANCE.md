@@ -49,6 +49,14 @@ Data used: synthetic fixtures only
 
 ## Evidence from this checkpoint
 
+## Public enquiry form regression evidence — 28 November 2026
+
+- GitHub Actions PR and push runs [46113593027](https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46113593027) and [46113588633](https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46113588633) passed on commit `ff1cf58cbfe3eb9a1b2bea61d9cce3d842ba1242`; the Chromium suite passed **14/14** in each run.
+- One browser scenario exercised the enquiry forms on `/corporate` (W018), `/doctors` (W019), `/partners` (W020) and `/contact` (W021), each at 1280px, 768px and 390px. It rejected submission before any POST when both phone and email were absent, announced the validation error and focused the phone field, then submitted phone-only and email-only requests by keyboard.
+- Each valid synthetic request returned HTTP 202 and the safe staff-review acknowledgement. Disposable PostgreSQL assertions verified `PENDING_REVIEW`, correct centre, no lead link, encrypted contact data and a single `SUBMITTED` event. No outbound communication or business approval was claimed.
+- This is scoped enquiry-form evidence, not acceptance of all controls on those screens. The check found and fixed missing client-side contact-method validation. Existing W007/W008/W010 booking-to-CRM browser evidence was unchanged and not rerun.
+- No canonical approved public screen reference images were found in the repository; the available public images are content assets, not approved paired designs. Visual parity stays unverified. Full accessibility assessment, remaining interactions and Owner/QA approval remain pending for the affected screens; no screen was promoted to technically complete.
+
 - Full Vitest suite: **867 tests passed across 219 files**.
 - ESLint: passed.
 - TypeScript: passed.
