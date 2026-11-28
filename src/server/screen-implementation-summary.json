@@ -10,8 +10,8 @@
     "missing": 0
   },
   "functionalVerification": {
-    "pathVerified": 53,
-    "routeRendered": 14,
+    "pathVerified": 55,
+    "routeRendered": 12,
     "restrictionVerified": 3,
     "notAssessed": 108,
     "evidenceFile": "docs/SCREEN_FUNCTIONAL_EVIDENCE.json",
@@ -388,34 +388,34 @@
       {
         "id": "W003",
         "status": "FUNCTIONAL_PATH_VERIFIED",
-        "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
-        "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
-        "evidence": "Chromium loaded synthetic catalogue entries, retained prior results after injected page-two 503, then loaded 31 unique entries after retry.",
-        "limitations": "Scoped public browser path only. Full control coverage, accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
+        "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46126225461",
+        "evidenceRecordCommit": "1c2e621a2b164959c0765df321985b26f21f6323",
+        "evidence": "On commit 1c2e621, Chromium searched published tests by keyboard, checked synthetic published catalogue/version data in PostgreSQL, exercised no-results and injected-503/retry states, followed the test detail booking link with exact centre/item/version preselected, and verified no horizontal overflow at 1280/768/390px.",
+        "limitations": "Scoped functional path only; no live booking was submitted. Full control coverage, comprehensive accessibility, approved-reference visual parity and Owner/QA approval remain pending."
       },
       {
         "id": "W004",
         "status": "FUNCTIONAL_PATH_VERIFIED",
-        "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
-        "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
-        "evidence": "Chromium opened synthetic test detail and followed booking link preserving centre, item and exact catalogue version.",
-        "limitations": "Scoped public browser path only. Full control coverage, accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
+        "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46126225461",
+        "evidenceRecordCommit": "1c2e621a2b164959c0765df321985b26f21f6323",
+        "evidence": "On commit 1c2e621, Chromium displayed the published synthetic test detail, price, specimen and preparation text, then carried its centre, item and version into the booking request at desktop/tablet/mobile sizes.",
+        "limitations": "No booking submission occurred. Full content approval, all control coverage, comprehensive accessibility, approved-reference visual parity and Owner/QA approval remain pending."
       },
       {
         "id": "W005",
         "status": "FUNCTIONAL_PATH_VERIFIED",
-        "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
-        "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
-        "evidence": "Chromium compared synthetic packages and enforced the three-package comparison limit.",
-        "limitations": "Scoped public browser path only. Full control coverage, accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
+        "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46126225461",
+        "evidenceRecordCommit": "1c2e621a2b164959c0765df321985b26f21f6323",
+        "evidence": "On commit 1c2e621, Chromium searched the actual /packages catalogue for a published synthetic package, verified its centre-specific price, added it to the comparison panel, and exercised the linked centre package filter. Earlier evidence for the three-package comparison limit is retained.",
+        "limitations": "No purchase or booking was made. Package catalogue approval, full control coverage, comprehensive accessibility, approved-reference visual parity and Owner/QA approval remain pending."
       },
       {
         "id": "W006",
         "status": "FUNCTIONAL_PATH_VERIFIED",
-        "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
-        "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
-        "evidence": "Chromium displayed a synthetic package detail and its included test.",
-        "limitations": "Scoped public browser path only. Full control coverage, accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
+        "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46126225461",
+        "evidenceRecordCommit": "1c2e621a2b164959c0765df321985b26f21f6323",
+        "evidence": "On commit 1c2e621, Chromium opened the published synthetic package detail, verified its included test and centre-specific price, and followed the request link with exact centre/package selection at desktop/tablet/mobile sizes.",
+        "limitations": "No booking submission occurred. Package approval, full controls, comprehensive accessibility, approved-reference visual parity and Owner/QA approval remain pending."
       },
       {
         "id": "W007",
@@ -459,19 +459,19 @@
       },
       {
         "id": "W012",
-        "status": "BROWSER_ROUTE_RENDERED",
-        "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
-        "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
-        "evidence": "Canonical public route rendered in Chromium at desktop, tablet and mobile widths as part of the 26-route/78-viewport check.",
-        "limitations": "Route rendering is not proof of working screen controls. Screen-specific functional, accessibility, design-reference and Owner/QA reviews remain pending."
+        "status": "FUNCTIONAL_PATH_VERIFIED",
+        "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46126225461",
+        "evidenceRecordCommit": "1c2e621a2b164959c0765df321985b26f21f6323",
+        "evidence": "On commit 1c2e621, Chromium handled a synthetic directory 503 and retry, searched to a no-results state and back to the published synthetic centre, checked its published-address directions link, and verified responsive layout at 1280/768/390px.",
+        "limitations": "Synthetic public centre only. Comprehensive keyboard/screen-reader assessment, approved-reference visual comparison and Owner/QA approval remain pending."
       },
       {
         "id": "W013",
-        "status": "BROWSER_ROUTE_RENDERED",
-        "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
-        "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
-        "evidence": "Canonical public route rendered in Chromium at desktop, tablet and mobile widths as part of the 26-route/78-viewport check.",
-        "limitations": "Route rendering is not proof of working screen controls. Screen-specific functional, accessibility, design-reference and Owner/QA reviews remain pending."
+        "status": "FUNCTIONAL_PATH_VERIFIED",
+        "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46126225461",
+        "evidenceRecordCommit": "1c2e621a2b164959c0765df321985b26f21f6323",
+        "evidence": "On commit 1c2e621, Chromium loaded the synthetic centre profile and service area, injected a service-query failure and retried, filtered published packages and verified price, pagination state, included-test detail and exact centre/package booking prefill at 1280/768/390px.",
+        "limitations": "Service-area text is informational and does not establish capacity or availability. No booking was submitted. Comprehensive accessibility, approved-reference visual comparison and Owner/QA approval remain pending."
       },
       {
         "id": "W014",
@@ -602,7 +602,7 @@
   },
   "evidenceSource": {
     "generator": "scripts/reconcile-screen-inventory.mjs",
-    "sourceRevision": "ff1cf58cbfe3eb9a1b2bea61d9cce3d842ba1242",
+    "sourceRevision": "1c2e621a2b164959c0765df321985b26f21f6323",
     "matrixSha256": "a0c3804a95c9c93459f7122351502cb654c01df23476dba7643adf08a7bc279d"
   }
 }

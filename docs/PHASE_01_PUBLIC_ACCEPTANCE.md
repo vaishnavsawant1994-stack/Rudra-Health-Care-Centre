@@ -31,8 +31,8 @@ Data used: synthetic fixtures only
 | W009 | Online payment checkout | `/checkout/[order]` | Restricted; static unavailable state, no provider or payment initiation. | Authorized billing policy and payment provider plus security review. | Pending |
 | W010 | Booking success & next steps | `/booking/success/[id]` | Partial; canonical noindex receipt route shows only the opaque UUID returned after public enquiry acceptance. It does not query or reveal enquiry details. | Enquiry acknowledgement only; no appointment, slot or payment confirmation. Staff/browser acceptance pending. | Pending |
 | W011 | Home sample collection service | `/home-collection` | Partial; published area guidance and centre links; staff confirmation required. | No approved geographic/zone serviceability engine; no reservation. | Pending |
-| W012 | Find centres | `/centres` | Partial; published centre directory, loading/error/retry and directions from published addresses. | Verify published centre records and interaction/accessibility. | Pending |
-| W013 | Centre profile & serviceability | `/centres/[id]` | Partial; API-driven published detail/services, retry states and address directions. | Free-text area is informational only; no serviceability decision or capacity. | Pending |
+| W012 | Find centres | `/centres` | Partial; synthetic published directory browser path verified for error/retry, search/no-results and directions; responsive check at 1280/768/390px. | Validate approved centre records; full keyboard/accessibility and visual-reference comparison. | Pending |
+| W013 | Centre profile & serviceability | `/centres/[id]` | Partial; synthetic profile and published-service path verified for retry, package filter, price, detail navigation and booking prefill; responsive check at 1280/768/390px. | Free-text area is informational only; no serviceability decision or capacity. Full accessibility/visual and Owner/QA review pending. | Pending |
 | W014 | Order tracking entry | `/track` | Restricted; privacy-safe explanation/redirect; no order or report lookup. | Identity, order authorization and report-release policy. | Pending |
 | W015 | Report access entry | `/reports` | Restricted; explicitly mapped to the noindex `/report-access` explanation; staff `/reports` remains protected. | Identity proofing, patient/representative authority, consent and report-release workflow. No patient report data is exposed. | Pending |
 | W016 | Sign up / patient registration | `/register` | Restricted; self-registration disabled. | Approve identity-proofing method/provider and enrollment controls. | Pending |
@@ -48,6 +48,16 @@ Data used: synthetic fixtures only
 | W026 | Privacy, terms, disclosures & accessibility | `/legal/[page]` | Restricted; draft summaries; local cookie preference control does not activate tracking providers. | Legal issuer approval, final notices and consent policy/provider decision. | Pending |
 
 ## Evidence from this checkpoint
+
+## Catalogue and centre discovery browser evidence — 28 November 2026
+
+- The push run [46126225461](https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46126225461) and PR run [46126229472](https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46126229472) passed on commit `1c2e621a2b164959c0765df321985b26f21f6323`; both Chromium runs passed **16/16**. Lint, TypeScript, full automated tests, production build, inventory, migration rehearsal, dependency audit and full-history secret scan also passed in the push run.
+- W003/W004: Chromium searched published synthetic test data using the keyboard, checked the published record/version in the disposable PostgreSQL database, exercised no-results and injected-503/retry behavior, opened test details and carried the selected centre, item and version to the booking form. No booking was submitted.
+- W005/W006: Chromium searched the actual `/packages` catalogue, checked a published synthetic package and its centre-specific price, exercised the comparison panel, opened the package detail and included-test list, and followed its request link with the exact package/centre preselected.
+- W012/W013: Chromium exercised directory error/retry, centre search and no-results, the published-address directions link, centre profile, service-query error/retry, package filtering, price, pagination state and package-detail navigation.
+- The catalogue/detail and centre-detail interactions were checked at 1280px, 768px and 390px with no horizontal overflow. The package directory's direct search/comparison path was checked at desktop width. The test catalogue search was keyboard-submitted with Enter. This is scoped browser evidence, not a complete keyboard or screen-reader audit.
+- No application defect was confirmed in these runs; the initial failures were ambiguous test locators/assertions, which were corrected. The pages use synthetic CI catalogue/centre data only. No patient data, booking, payment, capacity promise or external provider action was involved.
+- W003–W006 remain partially implemented despite retained earlier functional evidence. W012/W013 now have screen-specific functional paths recorded in `SCREEN_FUNCTIONAL_EVIDENCE.json`. Approved visual references are still unavailable; comprehensive accessibility, full control coverage and Owner/QA approval remain pending. No screen was marked technically complete or accepted.
 
 ## Public enquiry form regression evidence — 28 November 2026
 
