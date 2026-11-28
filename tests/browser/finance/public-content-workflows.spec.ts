@@ -18,8 +18,9 @@ test("homepage search and About navigation reach published information at deskto
     expect(homeResponse?.status(), `homepage response at ${viewport.name}`).toBe(200);
     await expect(page.getByRole("main")).toBeVisible();
     await expect(page.getByRole("heading", { level: 1, name: "Diagnostic Care, With Clear Next Steps" })).toBeVisible();
-    await page.getByLabel("Search tests").fill(itemName);
-    await page.getByLabel("Search tests").press("Enter");
+    const homepageSearch = page.getByRole("textbox", { name: "Search tests", exact: true });
+    await homepageSearch.fill(itemName);
+    await homepageSearch.press("Enter");
     await expect(page).toHaveURL(/\/tests\?q=/);
     await expect(page.getByRole("heading", { level: 1, name: "Diagnostic Tests" })).toBeVisible();
     await expect(page.locator(".ref-directory-card").filter({ hasText: itemName })).toBeVisible();
@@ -50,9 +51,10 @@ test("home collection area information and FAQ controls preserve safe request wo
     await expect(page.getByText("This page does not confirm availability.", { exact: true })).toBeVisible();
     await page.getByRole("link", { name: "Search service areas" }).click();
     await expect(page).toHaveURL(/\/service-areas$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Diagnostic care, arranged around your day" })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Published service areas" })).toBeVisible();
     await expect(page.getByText(/A listed area does not confirm availability, an appointment, a test or a price/)).toBeVisible();
-    const areaSearch = page.getByLabel("Search service areas or centres");
+    const areaSearch = page.getByRole("textbox", { name: "Search service areas or centres", exact: true });
     await areaSearch.fill("Synthetic Test District");
     const centre = page.locator(".public-centres-list li").filter({ hasText: "Synthetic Finance Centre A" });
     await expect(centre).toBeVisible();
