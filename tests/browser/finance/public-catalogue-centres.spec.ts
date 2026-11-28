@@ -40,6 +40,7 @@ test("published test catalogue searches, filters, retries and carries the exact 
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(`/tests?centreId=${centreId}`);
     await expect(page.getByRole("heading", { level: 1, name: "Diagnostic Tests" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Search", exact: true })).toBeEnabled();
     const search = page.getByLabel("Search services");
     await search.fill("SYNTHETIC_CATALOGUE_RETRY");
     await search.press("Enter");
@@ -123,7 +124,7 @@ test("published package details, centre discovery and service filters work with 
     const centreCard = page.locator(".public-centres-list li").filter({ hasText: "Synthetic Finance Centre A" });
     await expect(centreCard).toBeVisible();
     await expect(centreCard).toContainText("100 Synthetic Test Road, Test City");
-    await expect(centreCard.getByRole("link", { name: "Directions using the published address" })).toHaveAttribute("href", /google\.com\/maps\/dir/);
+    await expect(centreCard.getByRole("link", { name: "Directions to Synthetic Finance Centre A using the published address" })).toHaveAttribute("href", /google\.com\/maps\/dir/);
     const centreSearch = page.getByLabel("Search centres");
     await centreSearch.fill("NO_MATCH_SYNTHETIC_CENTRE");
     await expect(page.getByRole("status")).toContainText("No published centres match this search");
