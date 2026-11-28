@@ -51,7 +51,7 @@ test("published test catalogue searches, filters, retries and carries the exact 
     for (const viewport of viewports) {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto(`/tests?centreId=${centreId}`);
-      await expect(page.getByLabel("Centre")).toHaveValue(centreId!);
+      await expect(page.getByRole("combobox", { name: "Centre", exact: true })).toHaveValue(centreId!);
       const query = page.getByLabel("Search services");
       await query.fill("Synthetic public booking browser item");
       await query.press("Enter");
@@ -67,7 +67,7 @@ test("published test catalogue searches, filters, retries and carries the exact 
       await expect(page.getByText("Synthetic preparation guidance")).toBeVisible();
       await page.getByRole("link", { name: "Request this service" }).click();
       await expect(page).toHaveURL(/\/book\?/);
-      await expect(page.getByLabel("Centre")).toHaveValue(centreId!);
+      await expect(page.getByRole("combobox", { name: "Centre", exact: true })).toHaveValue(centreId!);
       await expect(page.getByLabel(/Synthetic public booking browser item/)).toBeChecked();
       await expect(page.getByText(/published version 1/)).toBeVisible();
       await noOverflow(page);
@@ -139,7 +139,7 @@ test("published package details, centre discovery and service filters work with 
       await listing.getByRole("link", { name: "View centre" }).click();
       await expect(page).toHaveURL(new RegExp(`/centres/${centreId}`));
       await expect(page.getByRole("heading", { level: 1, name: "Synthetic Finance Centre A" })).toBeVisible();
-      await expect(page.getByText("Synthetic Test District")).toBeVisible();
+      await expect(page.getByText("Service area: Synthetic Test District", { exact: true })).toBeVisible();
       await expect(page.getByText(/staff must confirm home-collection coverage/)).toBeVisible();
       await expect(page.getByRole("status")).toContainText("could not be loaded");
       await page.getByRole("button", { name: "Retry published services" }).click();
@@ -154,7 +154,7 @@ test("published package details, centre discovery and service filters work with 
       await expect(page.getByRole("heading", { name: "Included tests" })).toBeVisible();
       await expect(page.getByText("Synthetic public booking browser item")).toBeVisible();
       await page.getByRole("link", { name: "Request this service" }).click();
-      await expect(page.getByLabel("Centre")).toHaveValue(centreId!);
+      await expect(page.getByRole("combobox", { name: "Centre", exact: true })).toHaveValue(centreId!);
       await expect(page.getByLabel(/Synthetic public package browser item/)).toBeChecked();
       await noOverflow(page);
     }
