@@ -69,7 +69,7 @@ test("published test catalogue searches, filters, retries and carries the exact 
       await expect(page).toHaveURL(/\/book\?/);
       await expect(page.getByRole("combobox", { name: "Centre", exact: true })).toHaveValue(centreId!);
       await expect(page.getByLabel(/Synthetic public booking browser item/)).toBeChecked();
-      await expect(page.getByText(/published version 1/)).toBeVisible();
+      await expect(page.locator(".r-book-service-option").filter({ hasText: "Synthetic public booking browser item" })).toContainText("published version 1");
       await noOverflow(page);
     }
   } finally {
