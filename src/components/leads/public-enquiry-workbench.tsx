@@ -90,6 +90,7 @@ export function PublicEnquiryForm({ mode = "inquiry", topic = "GENERAL" }: { mod
   }, [cataloguePrefill, mode, selectedCentreId]);
   function reviewBookingRequest(form: HTMLFormElement | null) {
     if (mode !== "booking" || !form || !form.reportValidity()) return;
+    if (!validateContactMethod(form)) return;
     const values = new FormData(form);
     const selected = selectedCatalogueItems;
     const centre = centres.find((item) => item.id === String(values.get("centreId")));
@@ -109,8 +110,18 @@ export function PublicEnquiryForm({ mode = "inquiry", topic = "GENERAL" }: { mod
     setReviewingBooking(true);
     setState("");
   }
+  function validateContactMethod(form: HTMLFormElement) {
+    const phone = form.elements.namedItem("phone") as HTMLInputElement | null;
+    const email = form.elements.namedItem("email") as HTMLInputElement | null;
+    if (phone?.value.trim() || email?.value.trim()) return true;
+    setState("Enter either a phone number or email address so Rudra staff can identify your request.");
+    (phone ?? email)?.focus();
+    return false;
+  }
   async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const form = event.currentTarget; const values = Object.fromEntries(new FormData(form).entries());
+    event.preventDefault(); const form = event.currentTarget;
+    if (!validateContactMethod(form)) return;
+    const values = Object.fromEntries(new FormData(form).entries());
     const body = { ...values, ...(selectedCatalogueItems.length ? { requestedCatalogueItems: selectedCatalogueItems.map((item) => ({ id: item.id, version: item.version })) } : {}), ...(selectedCatalogueItems.length ? { requestedService: selectedCatalogueItems.map((item) => `${item.displayName} (${item.serviceCode})`).join(", ").slice(0, 160) } : {}), campaignAttribution: getPublicCampaignAttribution(window.location.search), requestTopic: topic, requestKind: mode === "booking" ? "BOOKING_REQUEST" : "INQUIRY", responsePermission: values.responsePermission === "on" };
     setBusy(true); setState("Sending your enquiry securely…");
     try {
