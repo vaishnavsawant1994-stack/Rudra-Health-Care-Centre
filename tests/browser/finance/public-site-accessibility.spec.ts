@@ -93,7 +93,7 @@ test("public enquiry forms validate contact and persist synthetic topic requests
         expect(savedResponse.status(), `${topic.route} submits via the public enquiry API`).toBe(202);
         const receipt = await savedResponse.json() as { accepted: boolean; receiptId: string };
         expect(receipt.accepted).toBe(true);
-        await expect(page.getByRole("heading", { name: "Enquiry received for staff review" })).toBeVisible();
+        await expect(page.getByRole("heading", { name: "Your enquiry was received" })).toBeVisible();
         await expect(page.getByText(email)).toHaveCount(0);
         await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
