@@ -12,7 +12,7 @@ if (!["127.0.0.1", "localhost"].includes(parsedDatabaseUrl.hostname) || decodeUR
 }
 
 const pool = new Pool({ connectionString: databaseUrl, max: 1, application_name: "rudra-finance-browser-fixtures" });
-const ids = { organizationId: randomUUID(), authorizedCentreId: randomUUID(), readOnlyCentreId: randomUUID(), deniedCentreId: randomUUID(), staffId: randomUUID(), authUserId: randomUUID(), relationshipStaffId: randomUUID(), relationshipAuthUserId: randomUUID(), marketingReviewerStaffId: randomUUID(), marketingReviewerAuthUserId: randomUUID(), marketingReviewerRoleId: randomUUID(), auditReviewerStaffId: randomUUID(), auditReviewerAuthUserId: randomUUID(), auditRoleId: randomUUID(), readRoleId: randomUUID(), createRoleId: randomUUID(), relationshipReadRoleId: randomUUID(), governanceRoleId: randomUUID(), supportRoleId: randomUUID(), marketingRoleId: randomUUID(), paymentRoleId: randomUUID(), reconcileRoleId: randomUUID(), closerStaffId: randomUUID(), closerAuthUserId: randomUUID(), closerReadRoleId: randomUUID(), closerReconcileRoleId: randomUUID(), quoteLeadId: randomUUID(), crossCentreLeadId: randomUUID(), quoteCatalogueItemId: randomUUID(), quoteCatalogueVersionId: randomUUID(), publicBookingCatalogueItemId: randomUUID(), publicBookingCatalogueVersionId: randomUUID() };
+const ids = { organizationId: randomUUID(), authorizedCentreId: randomUUID(), readOnlyCentreId: randomUUID(), deniedCentreId: randomUUID(), staffId: randomUUID(), authUserId: randomUUID(), relationshipStaffId: randomUUID(), relationshipAuthUserId: randomUUID(), marketingReviewerStaffId: randomUUID(), marketingReviewerAuthUserId: randomUUID(), marketingReviewerRoleId: randomUUID(), auditReviewerStaffId: randomUUID(), auditReviewerAuthUserId: randomUUID(), auditRoleId: randomUUID(), readRoleId: randomUUID(), createRoleId: randomUUID(), relationshipReadRoleId: randomUUID(), governanceRoleId: randomUUID(), supportRoleId: randomUUID(), marketingRoleId: randomUUID(), paymentRoleId: randomUUID(), reconcileRoleId: randomUUID(), closerStaffId: randomUUID(), closerAuthUserId: randomUUID(), closerReadRoleId: randomUUID(), closerReconcileRoleId: randomUUID(), quoteLeadId: randomUUID(), crossCentreLeadId: randomUUID(), quoteCatalogueItemId: randomUUID(), quoteCatalogueVersionId: randomUUID(), publicBookingCatalogueItemId: randomUUID(), publicBookingCatalogueVersionId: randomUUID(), publicPackageItemId: randomUUID(), publicPackageVersionId: randomUUID() };
 const patientKeyId = process.env.RUDRA_FIELD_ACTIVE_KEY_ID;
 const patientKey = Buffer.from(JSON.parse(process.env.RUDRA_FIELD_ENCRYPTION_KEYS ?? "{}")[patientKeyId] ?? "", "base64");
 const blindIndexKey = Buffer.from(process.env.RUDRA_BLIND_INDEX_KEY ?? "", "base64");
@@ -157,6 +157,11 @@ try {
     await client.query('INSERT INTO "user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)', [ids.authUserId, "Synthetic Finance Operator", email]);
     await client.query('INSERT INTO "account"(id,"accountId","providerId","userId",password) VALUES($1,$2,\'credential\',$3,$4)', [randomUUID(), ids.authUserId, ids.authUserId, passwordHash]);
     await client.query("INSERT INTO staff_users(id,auth_user_id,organization_id,staff_code,display_name,status) VALUES($1,$2,$3,$4,$5,'ACTIVE')", [ids.staffId, ids.authUserId, ids.organizationId, `CI-${ids.staffId.slice(0, 8)}`, "Synthetic Finance Operator"]);
+    const publicProfile = { displayName: "Synthetic Finance Centre A", address: "100 Synthetic Test Road, Test City", phone: "+1 555 010 0100", email: "centre-a@invalid.test", serviceArea: "Synthetic Test District", openingHours: "Synthetic test hours: Monday to Friday, 09:00–17:00", published: true };
+    await client.query(
+      "INSERT INTO centre_public_profiles(organization_id,centre_id,profile_ciphertext,published,created_by_staff_id,updated_by_staff_id) VALUES($1,$2,$3,true,$4,$4)",
+      [ids.organizationId, ids.authorizedCentreId, encryptOperational(publicProfile, "centre-public-profile", ids.authorizedCentreId, ids.authorizedCentreId), ids.staffId],
+    );
     await client.query('INSERT INTO "user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)', [ids.relationshipAuthUserId, "Synthetic Relationship Operator", relationshipEmail]);
     await client.query('INSERT INTO "account"(id,"accountId","providerId","userId",password) VALUES($1,$2,\'credential\',$3,$4)', [randomUUID(), ids.relationshipAuthUserId, ids.relationshipAuthUserId, relationshipPasswordHash]);
     await client.query("INSERT INTO staff_users(id,auth_user_id,organization_id,staff_code,display_name,status) VALUES($1,$2,$3,$4,$5,'ACTIVE')", [ids.relationshipStaffId, ids.relationshipAuthUserId, ids.organizationId, `REL-${ids.relationshipStaffId.slice(0, 8)}`, "Synthetic Relationship Operator"]);
@@ -229,8 +234,20 @@ try {
       [ids.publicBookingCatalogueItemId, ids.organizationId, ids.authorizedCentreId, `SYN-PUB-${ids.publicBookingCatalogueItemId.slice(0, 8)}`, ids.staffId],
     );
     await client.query(
-      "INSERT INTO diagnostic_catalogue_versions(id,organization_id,centre_id,catalogue_item_id,version_number,display_name,verification_status,price_amount,currency,price_source_reference,effective_from,effective_until,reviewed_by_staff_id,reviewed_at,source_type,created_by_staff_id) VALUES($1,$2,$3,$4,1,'Synthetic public booking browser item','VERIFIED',125.00,'INR',$5,'2026-01-01','2099-12-31',$6,now(),'MANUAL',$6)",
+      "INSERT INTO diagnostic_catalogue_versions(id,organization_id,centre_id,catalogue_item_id,version_number,display_name,specimen_requirements,preparation_instructions,verification_status,price_amount,currency,price_source_reference,effective_from,effective_until,reviewed_by_staff_id,reviewed_at,source_type,created_by_staff_id) VALUES($1,$2,$3,$4,1,'Synthetic public booking browser item','Synthetic specimen requirement','Synthetic preparation guidance','VERIFIED',125.00,'INR',$5,'2026-01-01','2099-12-31',$6,now(),'MANUAL',$6)",
       [ids.publicBookingCatalogueVersionId, ids.organizationId, ids.authorizedCentreId, ids.publicBookingCatalogueItemId, `TEST ONLY isolated public booking fixture ${ids.publicBookingCatalogueVersionId.slice(0, 8)}`, ids.staffId],
+    );
+    await client.query(
+      "INSERT INTO diagnostic_catalogue_items(id,organization_id,centre_id,service_type,service_code,current_version,public_visible,public_visibility_updated_at,public_visibility_updated_by_staff_id,created_by_staff_id) VALUES($1,$2,$3,'PACKAGE',$4,1,true,now(),$5,$5)",
+      [ids.publicPackageItemId, ids.organizationId, ids.authorizedCentreId, `SYN-PKG-${ids.publicPackageItemId.slice(0, 8)}`, ids.staffId],
+    );
+    await client.query(
+      "INSERT INTO diagnostic_catalogue_versions(id,organization_id,centre_id,catalogue_item_id,version_number,display_name,specimen_requirements,preparation_instructions,verification_status,price_amount,currency,price_source_reference,effective_from,effective_until,reviewed_by_staff_id,reviewed_at,source_type,created_by_staff_id) VALUES($1,$2,$3,$4,1,'Synthetic public package browser item','Synthetic package specimen information','Synthetic package preparation guidance','VERIFIED',325.00,'INR',$5,'2026-01-01','2099-12-31',$6,now(),'MANUAL',$6)",
+      [ids.publicPackageVersionId, ids.organizationId, ids.authorizedCentreId, ids.publicPackageItemId, `TEST ONLY isolated public package fixture ${ids.publicPackageVersionId.slice(0, 8)}`, ids.staffId],
+    );
+    await client.query(
+      "INSERT INTO diagnostic_package_components(organization_id,centre_id,package_version_id,test_version_id) VALUES($1,$2,$3,$4)",
+      [ids.organizationId, ids.authorizedCentreId, ids.publicPackageVersionId, ids.publicBookingCatalogueVersionId],
     );
     await client.query("COMMIT");
 
@@ -260,6 +277,8 @@ try {
       FINANCE_BROWSER_CROSS_CENTRE_LEAD_ID: ids.crossCentreLeadId,
       FINANCE_BROWSER_QUOTE_VERSION_ID: ids.quoteCatalogueVersionId,
       FINANCE_BROWSER_PUBLIC_BOOKING_CATALOGUE_ITEM_ID: ids.publicBookingCatalogueItemId,
+      FINANCE_BROWSER_PUBLIC_PACKAGE_ITEM_ID: ids.publicPackageItemId,
+      FINANCE_BROWSER_PUBLIC_CENTRE_ID: ids.authorizedCentreId,
     };
     for (const [key, value] of Object.entries(lines)) {
       if (/[\r\n]/.test(value)) throw new Error(`invalid_fixture_output:${key}`);
