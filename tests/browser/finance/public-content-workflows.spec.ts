@@ -31,7 +31,7 @@ test("homepage search and About navigation reach published information at deskto
     await aboutNavigation;
     await expect(page.getByRole("heading", { level: 1, name: "About Rudra Health Care Centre" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Rudra and Metropolis Healthcare" })).toBeVisible();
-    await expect(page.getByText("Partner and accreditation claims require authorization", { exact: true })).toBeVisible();
+    await expect(page.getByText("Partner and accreditation claims require authorization", { exact: true }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: "Contact Rudra", exact: true })).toHaveAttribute("href", "/contact");
     await noHorizontalOverflow(page);
   }
@@ -55,7 +55,7 @@ test("home collection area information and FAQ controls preserve safe request wo
     await expect(page.getByText(/A listed area does not confirm availability, an appointment, a test or a price/)).toBeVisible();
     const areaSearch = page.getByRole("textbox", { name: "Search service areas or centres", exact: true });
     await areaSearch.fill("Synthetic Test District");
-    const centre = page.locator(".public-centres-list li").filter({ hasText: "Synthetic Finance Centre A" });
+    const centre = page.locator(".public-centres-list li").filter({ hasText: "Synthetic Finance Centre A" }).first();
     await expect(centre).toBeVisible();
     await expect(centre).toContainText("Published service area: Synthetic Test District");
     await centre.getByRole("link", { name: "Request home collection" }).click();
