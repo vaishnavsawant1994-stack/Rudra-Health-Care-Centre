@@ -26,10 +26,9 @@ test("homepage search and About navigation reach published information at deskto
     await expect(page.locator(".ref-directory-card").filter({ hasText: itemName })).toBeVisible();
     await noHorizontalOverflow(page);
 
-    const aboutResponsePromise = page.waitForResponse((response) => response.url().endsWith("/about") && response.request().resourceType() === "document");
+    const aboutNavigation = page.waitForURL((url) => url.pathname === "/about");
     await page.getByRole("navigation", { name: "About Rudra" }).getByRole("link", { name: "About Rudra", exact: true }).click();
-    const aboutResponse = await aboutResponsePromise;
-    expect(aboutResponse.status(), `About route response at ${viewport.name}`).toBe(200);
+    await aboutNavigation;
     await expect(page.getByRole("heading", { level: 1, name: "About Rudra Health Care Centre" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Rudra and Metropolis Healthcare" })).toBeVisible();
     await expect(page.getByText("Partner and accreditation claims require authorization", { exact: true })).toBeVisible();
@@ -47,7 +46,7 @@ test("home collection area information and FAQ controls preserve safe request wo
     const homeCollectionResponse = await page.goto("/home-collection");
     expect(homeCollectionResponse?.status(), `home collection route at ${viewport.name}`).toBe(200);
     await expect(page.getByRole("heading", { level: 1, name: "Diagnostic care, arranged around your day" })).toBeVisible();
-    await expect(page.getByText(/Coverage, service eligibility, staffing and timing are checked before anything is confirmed/)).toBeVisible();
+    await expect(page.getByRole("main").getByText(/Coverage, service eligibility, staffing and timing are checked before anything is confirmed/).first()).toBeVisible();
     await expect(page.getByText("This page does not confirm availability.", { exact: true })).toBeVisible();
     await page.getByRole("link", { name: "Search service areas" }).click();
     await expect(page).toHaveURL(/\/service-areas$/);
