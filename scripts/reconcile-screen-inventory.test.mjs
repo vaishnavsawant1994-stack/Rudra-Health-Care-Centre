@@ -91,12 +91,14 @@ describe("178-screen inventory reconciliation", () => {
     expect(Object.values(readiness.implementation).reduce((total, count) => total + count, 0)).toBe(178);
     expect(readiness.implementation.fullyImplemented).toBe(0);
     expect(readiness.acceptance).toEqual({ manuallyAccepted: 0, pendingManual: 178 });
-    expect(readiness.functionalVerification.pathVerified).toBe(53);
-    expect(readiness.functionalVerification.routeRendered).toBe(14);
+    expect(readiness.functionalVerification.pathVerified).toBe(55);
+    expect(readiness.functionalVerification.routeRendered).toBe(12);
     expect(readiness.functionalVerification.restrictionVerified).toBe(3);
     expect(readiness.functionalVerification.notAssessed).toBe(108);
     expect(readiness.functionalVerification.pathVerified + readiness.functionalVerification.routeRendered + readiness.functionalVerification.restrictionVerified + readiness.functionalVerification.notAssessed).toBe(178);
     expect(readiness.functionalVerification.screens.some((screen) => screen.id === "W003" && screen.status === "FUNCTIONAL_PATH_VERIFIED")).toBe(true);
+    expect(readiness.functionalVerification.screens.some((screen) => screen.id === "W012" && screen.status === "FUNCTIONAL_PATH_VERIFIED")).toBe(true);
+    expect(readiness.functionalVerification.screens.some((screen) => screen.id === "W013" && screen.status === "FUNCTIONAL_PATH_VERIFIED")).toBe(true);
     expect(readiness.functionalVerification.screens.some((screen) => screen.id === "L006" && screen.status === "FUNCTIONAL_PATH_VERIFIED")).toBe(true);
     expect(readiness.functionalVerification.screens.some((screen) => screen.id === "M001" && screen.status === "FUNCTIONAL_PATH_VERIFIED")).toBe(true);
     expect(readiness.technicalCompletion).toEqual({ complete: 0, pending: 178 });
