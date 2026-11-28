@@ -63,8 +63,8 @@ test("published test catalogue searches, filters, retries and carries the exact 
 
       await card.getByRole("link", { name: "View details" }).click();
       await expect(page.getByRole("heading", { level: 1, name: "Synthetic public booking browser item" })).toBeVisible();
-      await expect(page.getByText("Synthetic specimen requirement")).toBeVisible();
-      await expect(page.getByText("Synthetic preparation guidance")).toBeVisible();
+      await expect(page.getByText("Synthetic specimen requirement", { exact: true })).toBeVisible();
+      await expect(page.getByText("Synthetic preparation guidance", { exact: true })).toBeVisible();
       await page.getByRole("link", { name: "Request this service" }).click();
       await expect(page).toHaveURL(/\/book\?/);
       await expect(page.getByRole("combobox", { name: "Centre", exact: true })).toHaveValue(centreId!);
@@ -97,7 +97,7 @@ test("published package details, centre discovery and service filters work with 
   });
   await page.route("**/api/public/catalogue?**", async (route) => {
     const requestUrl = new URL(route.request().url());
-    if (!servicesFailed && requestUrl.searchParams.get("centreId") === centreId) {
+    if (!servicesFailed && requestUrl.searchParams.get("q") === "SYNTHETIC_CENTRE_RETRY") {
       servicesFailed = true;
       await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "public_catalogue_unavailable" }) });
       return;
@@ -118,6 +118,19 @@ test("published package details, centre discovery and service filters work with 
     expect(component.rowCount).toBe(1);
 
     await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`/packages?centreId=${centreId}`);
+    await expect(page.getByRole("heading", { level: 1, name: "Health Checkup Packages" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Search", exact: true })).toBeEnabled();
+    await page.getByLabel("Search services").fill("Synthetic public package browser item");
+    await page.getByRole("button", { name: "Search", exact: true }).click();
+    const publicPackage = page.locator(".ref-directory-card").filter({ hasText: "Synthetic public package browser item" });
+    await expect(publicPackage).toBeVisible();
+    await expect(publicPackage).toContainText("325.00");
+    await publicPackage.getByRole("button", { name: "Compare package" }).click();
+    await expect(page.getByRole("region", { name: "Package comparison" })).toContainText("Synthetic public package browser item");
+    await expect(page.getByRole("region", { name: "Package comparison" })).toContainText("325.00");
+    await noOverflow(page);
+
     await page.goto("/centres");
     await expect(page.getByRole("status")).toContainText("temporarily unavailable");
     await page.getByRole("button", { name: "Retry centre directory" }).click();
@@ -131,6 +144,14 @@ test("published package details, centre discovery and service filters work with 
     await centreSearch.fill("Synthetic Finance Centre A");
     await expect(centreCard).toBeVisible();
 
+    await page.goto(`/centres/${centreId}`);
+    await expect(page.getByRole("heading", { level: 1, name: "Synthetic Finance Centre A" })).toBeVisible();
+    await page.getByLabel("Search services").fill("SYNTHETIC_CENTRE_RETRY");
+    await page.getByRole("button", { name: "Search", exact: true }).click();
+    await expect(page.getByRole("status")).toContainText("could not be loaded");
+    await page.getByRole("button", { name: "Retry published services" }).click();
+    await expect(page.getByRole("status")).toContainText("No published services match these filters");
+
     for (const viewport of viewports) {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto("/centres");
@@ -141,8 +162,6 @@ test("published package details, centre discovery and service filters work with 
       await expect(page.getByRole("heading", { level: 1, name: "Synthetic Finance Centre A" })).toBeVisible();
       await expect(page.getByText("Service area: Synthetic Test District", { exact: true })).toBeVisible();
       await expect(page.getByText(/staff must confirm home-collection coverage/)).toBeVisible();
-      await expect(page.getByRole("status")).toContainText("could not be loaded");
-      await page.getByRole("button", { name: "Retry published services" }).click();
       const serviceFilter = page.getByLabel("Service type");
       await serviceFilter.selectOption("PACKAGE");
       const packageRow = page.locator(".public-service-list li").filter({ hasText: "Synthetic public package browser item" });
