@@ -6,7 +6,7 @@ import { getPublishedWebsiteMetadata } from "@/server/public-website-content";
 export async function generateMetadata() { return getPublishedWebsiteMetadata("home-collection", { title: "Home collection | Rudra Health Care Centre", description: "Review home collection information and send a request for a Rudra centre to review." }); }
 
 function HomeCollectionFallback() {
-  return <main className="ref-home-collection">
+  return <div className="ref-home-collection">
     <section className="ref-home-hero"><div className="ref-home-copy"><span className="eyebrow">HOME SAMPLE COLLECTION</span><h1>Diagnostic care, arranged around your day</h1><p>Ask a Rudra centre about a home collection visit. Coverage, service eligibility, staffing and timing are checked before anything is confirmed.</p><div className="ref-home-trust"><span><b>01</b> Select a published service</span><span><b>02</b> Send a visit request</span><span><b>03</b> Centre reviews your details</span></div><div className="ref-actions"><Link className="button button-primary" href="/book?visitType=HOME_COLLECTION">Request home collection</Link><Link className="button button-secondary" href="/tests">Browse published tests</Link></div><small>This page does not confirm availability.</small></div><div className="ref-home-photo" role="img" aria-label="Illustrative home collection visit"/><aside className="ref-home-side"><span className="service-icon" aria-hidden="true">⌂</span><h2>Start with your location</h2><p>Find a centre that has published service information for your area.</p><Link className="button button-secondary" href="/service-areas">Search service areas</Link><small>No PIN-code availability lookup is currently enabled.</small></aside></section>
 
     <section className="ref-home-process"><div className="ref-section-head"><div><span className="eyebrow">A clear request journey</span><h2>How home collection requests work</h2><p>Each stage depends on centre review and actual operational events.</p></div></div><div className="ref-home-steps">{[["01", "Choose tests or packages", "Use only services currently published in the catalogue."], ["02", "Send your request", "Share a preferred date and collection details with the centre."], ["03", "Staff review", "The centre checks service, location, timing and staffing."], ["04", "Confirmation", "A request is not scheduled until the centre confirms it."], ["05", "Track actual updates", "Statuses appear only after an authorized event is recorded."]].map(([n, title, copy]) => <article key={n}><b>{n}</b><strong>{title}</strong><p>{copy}</p></article>)}</div></section>
@@ -15,7 +15,7 @@ function HomeCollectionFallback() {
 
     <section className="ref-section ref-home-centres"><div className="ref-section-head"><div><span className="eyebrow">Find coverage information</span><h2>Published Rudra centres</h2><p>Only public details approved by Rudra staff are shown.</p></div><Link className="text-link" href="/centres">View all centres →</Link></div><PublicCentresDirectory serviceAreasOnly/></section>
     <section className="ref-cta"><div><span className="eyebrow">Ready to ask?</span><h2>Send a request for centre review</h2><p>Your request does not reserve a slot or confirm a visit.</p></div><div className="ref-actions"><Link className="button button-primary" href="/book?visitType=HOME_COLLECTION">Continue to request form</Link><Link className="button button-secondary" href="/contact">Contact Rudra</Link></div></section>
-  </main>;
+  </div>;
 }
 
 export default function HomeCollectionPage() {

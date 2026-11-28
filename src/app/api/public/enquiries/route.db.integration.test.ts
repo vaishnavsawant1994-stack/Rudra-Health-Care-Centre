@@ -1,12 +1,17 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
+import { copyFile, mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import pg from "pg";
 import { loadProjectEnvironment } from "../../../../../scripts/load-project-env.mjs";
 import { runMigrations } from "../../../../../scripts/migrate.mjs";
+import { backupSchema, protectRecoveryDirectory, resolvePostgresTools, restoreSchema } from "../../../../../scripts/isolated-postgres-recovery.mjs";
+import { decryptKeyBackup, encryptKeyBackup } from "../../../../../scripts/key-recovery.mjs";
 import { openBusinessRelationship } from "@/server/business-relationship-data";
 import { encryptCentrePublicProfile } from "@/server/centre-public-profile";
 import { blindIndexLeadContact, decryptLeadPrivateData, decryptLeadValue, encryptLeadValue } from "@/server/lead-crypto";
-import { legacyPublicEnquiryFingerprint, publicEnquiryContext, type PublicEnquiryPayload } from "@/server/public-enquiry-policy";
+import { legacyPublicEnquiryFingerprint, publicEnquiryContext, publicEnquiryCreateSchema, type PublicEnquiryPayload } from "@/server/public-enquiry-policy";
 
 const mocks = vi.hoisted(() => ({ getApiAccess: vi.fn(), listPublicCatalogueCentres: vi.fn(), getPublicCatalogueItem: vi.fn() }));
 vi.mock("@/server/access", () => ({ getApiAccess: mocks.getApiAccess }));
@@ -15,12 +20,31 @@ vi.mock("@/server/public-catalogue", () => ({ listPublicCatalogueCentres: mocks.
 describe("public enquiry PostgreSQL integration", () => {
   const { Pool } = pg;
   const schema = `p2_09a_public_enquiry_${randomUUID().replaceAll("-", "").slice(0, 10)}`;
+  let recoverySchema: string | undefined;
+  let recoveryTempDir = "";
+  let testUrl = "";
+  let priorDatabaseUrl: string | undefined;
   let pool: InstanceType<typeof Pool>;
   let dropPool: InstanceType<typeof Pool> | undefined;
   let post: typeof import("./route").POST;
   let get: typeof import("./route").GET;
   let patch: typeof import("./route").PATCH;
   let getLead: typeof import("../../leads/[id]/route").GET;
+  let updateLead: typeof import("../../leads/[id]/route").PATCH;
+  let convertLead: typeof import("../../leads/[id]/convert/route").POST;
+  let createAppointment: typeof import("../../appointments/route").POST;
+  let createOrder: typeof import("../../orders/route").POST;
+  let createCollectionJob: typeof import("../../collections/route").POST;
+  let updateAppointment: typeof import("../../appointments/[id]/route").PATCH;
+  let verifyCatalogue: typeof import("../../catalogue/[id]/verify/route").POST;
+  let updateOrder: typeof import("../../orders/[id]/route").PATCH;
+  let updateCollectionJob: typeof import("../../collections/[id]/route").PATCH;
+  let sampleAction: typeof import("../../samples/route").POST;
+  let registerReport: typeof import("../../reports/route").POST;
+  let uploadReportDocument: typeof import("../../reports/[id]/documents/route").POST;
+  let readReportDocument: typeof import("../../reports/[id]/documents/route").GET;
+  let getFinance: typeof import("../../finance/route").GET;
+  let postFinance: typeof import("../../finance/route").POST;
   let organizationId: string;
   let centreId: string;
   let staffUserId: string;
@@ -28,8 +52,9 @@ describe("public enquiry PostgreSQL integration", () => {
 
   beforeAll(async () => {
     loadProjectEnvironment();
-    const testUrl = process.env.DATABASE_TEST_URL ?? "";
+    testUrl = process.env.DATABASE_TEST_URL ?? "";
     if (!testUrl || !/test/i.test(decodeURIComponent(new URL(testUrl).pathname))) throw new Error("A dedicated test database is required.");
+    priorDatabaseUrl = process.env.DATABASE_URL;
     dropPool = new Pool({ connectionString: testUrl, max: 1 });
     await dropPool.query(`CREATE SCHEMA "${schema}"`);
     await runMigrations(testUrl, null, schema);
@@ -46,7 +71,7 @@ describe("public enquiry PostgreSQL integration", () => {
     await pool.query("INSERT INTO permissions(key,description,scope) VALUES('leads.read','Synthetic lead read','CENTRE'),('leads.create','Synthetic lead create','CENTRE'),('leads.update','Synthetic lead update','CENTRE') ON CONFLICT(key) DO NOTHING");
     await pool.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key IN ('leads.read','leads.create','leads.update') ON CONFLICT DO NOTHING", [roleId]);
     await pool.query("INSERT INTO staff_role_assignments(organization_id,staff_user_id,role_id,centre_id) VALUES($1,$2,$3,$4)", [organizationId, staffUserId, roleId, centreId]);
-    grants = ["leads.read", "leads.create", "leads.update"];
+    grants = ["leads.read", "leads.create", "leads.update", "leads.convert", "patients.create", "patients.read", "appointments.create", "appointments.read", "orders.create", "collections.assign"];
     mocks.getApiAccess.mockImplementation(async (permission: string, requestedCentreId?: string) => {
       if (requestedCentreId && requestedCentreId !== centreId) return { response: Response.json({ error: "forbidden" }, { status: 403 }), staff: null };
       if (!grants.includes(permission)) return { response: Response.json({ error: "forbidden" }, { status: 403 }), staff: null };
@@ -55,13 +80,31 @@ describe("public enquiry PostgreSQL integration", () => {
     mocks.listPublicCatalogueCentres.mockResolvedValue([{ id: centreId, code: `WEB-${seed}`, name: "Synthetic web centre" }]);
     ({ POST: post, GET: get, PATCH: patch } = await import("./route"));
     ({ GET: getLead } = await import("../../leads/[id]/route"));
+    ({ PATCH: updateLead } = await import("../../leads/[id]/route"));
+    ({ POST: convertLead } = await import("../../leads/[id]/convert/route"));
+    ({ POST: createAppointment } = await import("../../appointments/route"));
+    ({ POST: createOrder } = await import("../../orders/route"));
+    ({ POST: createCollectionJob } = await import("../../collections/route"));
+    ({ PATCH: updateAppointment } = await import("../../appointments/[id]/route"));
+    ({ POST: verifyCatalogue } = await import("../../catalogue/[id]/verify/route"));
+    ({ PATCH: updateOrder } = await import("../../orders/[id]/route"));
+    ({ PATCH: updateCollectionJob } = await import("../../collections/[id]/route"));
+    ({ POST: sampleAction } = await import("../../samples/route"));
+    ({ POST: registerReport } = await import("../../reports/route"));
+    ({ POST: uploadReportDocument, GET: readReportDocument } = await import("../../reports/[id]/documents/route"));
+    ({ GET: getFinance, POST: postFinance } = await import("../../finance/route"));
   }, 30_000);
 
   afterAll(async () => {
     try { const { closeDatabasePool } = await import("@/db/client"); await closeDatabasePool(); } catch { /* pool may not have initialized */ }
     if (pool) await pool.end();
-    if (dropPool) { await dropPool.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`); await dropPool.end(); }
-    if (process.env.DATABASE_TEST_URL) process.env.DATABASE_URL = process.env.DATABASE_TEST_URL;
+    if (dropPool) {
+      if (recoverySchema) await dropPool.query(`DROP SCHEMA IF EXISTS "${recoverySchema}" CASCADE`);
+      await dropPool.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
+      await dropPool.end();
+    }
+    if (recoveryTempDir) await rm(recoveryTempDir, { recursive: true, force: true });
+    if (priorDatabaseUrl === undefined) delete process.env.DATABASE_URL; else process.env.DATABASE_URL = priorDatabaseUrl;
   }, 60_000);
 
   const submit = (key: string, phone = "+919876543210", selectedCentreId = centreId, extra: Record<string, unknown> = {}) => new Request("http://localhost/api/public/enquiries", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": key }, body: JSON.stringify({ centreId: selectedCentreId, firstName: "Synthetic", lastName: "Enquirer", phone, category: "GENERAL", message: "Please call about diagnostic service availability.", responsePermission: true, ...extra }) });
@@ -121,10 +164,15 @@ describe("public enquiry PostgreSQL integration", () => {
     const key = randomUUID();
     const response = await post(submit(key, "+919876543299", centreId, { requestedService: "Manual service enquiry" }));
     expect(response.status).toBe(202);
-    const receipt = await response.json() as { accepted: boolean; reference: string };
-    expect(receipt.accepted).toBe(true);
-    const stored = await pool.query("SELECT centre_id,status,private_data_ciphertext FROM public_enquiries WHERE organization_id=$1 AND idempotency_key=$2", [organizationId, key]);
+    const receipt = await response.json() as { accepted: boolean; reference: string; receiptId: string };
+    expect(receipt).toMatchObject({ accepted: true });
+    expect(Object.keys(receipt).sort()).toEqual(["accepted", "receiptId", "reference"]);
+    expect(receipt.receiptId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+    const stored = await pool.query("SELECT id,centre_id,status,private_data_ciphertext FROM public_enquiries WHERE organization_id=$1 AND idempotency_key=$2", [organizationId, key]);
     expect(stored.rows).toHaveLength(1);
+    expect(receipt.receiptId).toBe(stored.rows[0].id);
     expect(stored.rows[0]).toMatchObject({ centre_id: centreId, status: "PENDING_REVIEW" });
     expect(stored.rows[0].private_data_ciphertext).not.toContain("Manual service enquiry");
 
@@ -149,7 +197,7 @@ describe("public enquiry PostgreSQL integration", () => {
   it("serves a minimized communications queue projection without exposing encrypted enquiry details", async () => {
     const key = randomUUID();
     const accepted = await post(submit(key, "+919876543299", centreId, { message: "Synthetic private queue message" }));
-    expect(accepted.status).toBe(202);
+    expect(accepted.status, JSON.stringify(await accepted.clone().json())).toBe(202);
     const reference = (await accepted.json() as { reference: string }).reference;
     const response = await get(new Request(`http://localhost/api/public/enquiries?centreId=${centreId}&summary=true`));
     const body = await response.json() as { enquiries: Array<Record<string, unknown>>; pageSize: number };
@@ -438,4 +486,340 @@ describe("public enquiry PostgreSQL integration", () => {
     expect(crossCentreReview.status).toBe(404);
     expect(await crossCentreReview.json()).toEqual({ error: "not_found" });
   });
+
+  it("integrates a synthetic public request through CRM, appointment, field custody, branch dispatch and quarantined report storage", async () => {
+    grants = ["leads.read", "leads.create", "leads.update", "leads.convert", "patients.create", "patients.read", "appointments.create", "appointments.read", "appointments.update", "workspace.read", "orders.create", "orders.confirm", "collections.assign", "catalogue.price.verify"];
+    const catalogueItemId = randomUUID();
+    const catalogueVersionId = randomUUID();
+    const phone = `+919${String(Date.now()).slice(-9)}`;
+    await pool.query("INSERT INTO diagnostic_catalogue_items(id,organization_id,centre_id,service_type,service_code,current_version,active,created_by_staff_id) VALUES($1,$2,$3,'TEST','SYN-E2E-CBC',1,true,$4)", [catalogueItemId, organizationId, centreId, staffUserId]);
+    // The fixture remains isolated to this disposable schema. The test-only source reference
+    // exercises the real verification API contract; it is not Metropolis evidence or approval.
+    await pool.query("INSERT INTO diagnostic_catalogue_versions(id,organization_id,centre_id,catalogue_item_id,version_number,display_name,verification_status,source_type,price_amount,effective_from,created_by_staff_id) VALUES($1,$2,$3,$4,1,'Synthetic CBC','UNVERIFIED','SYNTHETIC_TEST',450.00,'2026-01-01',$5)", [catalogueVersionId, organizationId, centreId, catalogueItemId, staffUserId]);
+    mocks.getPublicCatalogueItem.mockResolvedValue({ id: catalogueItemId, centreId, version: 1, serviceType: "TEST", serviceCode: "SYN-E2E-CBC", displayName: "Synthetic CBC", priceAmount: "450.00", currency: "INR" });
+
+    const intakeKey = randomUUID();
+    const publicRequest = submit(intakeKey, phone, centreId, {
+      requestKind: "BOOKING_REQUEST", category: "HOME_COLLECTION", requestedService: "Browser supplied name is replaced",
+      requestedCatalogueItems: [{ id: catalogueItemId, version: 1 }], preferredDate: "2099-02-02", preferredTimeWindow: "Morning",
+      visitType: "HOME_COLLECTION", requestedHomeCharge: "99", addressLine1: "10 Synthetic Road", city: "Synthetic City",
+      state: "Test State", postalCode: "123456",
+    });
+    const validation = publicEnquiryCreateSchema.safeParse(await publicRequest.clone().json());
+    expect(validation.success, JSON.stringify(validation.success ? null : validation.error.issues)).toBe(true);
+    const accepted = await post(publicRequest);
+    expect(accepted.status, JSON.stringify(await accepted.clone().json())).toBe(202);
+    const receipt = await accepted.json() as { receiptId: string; reference: string };
+
+    const queue = await get(new Request(`http://localhost/api/public/enquiries?centreId=${centreId}&enquiryId=${receipt.receiptId}`));
+    expect(queue.status).toBe(200);
+    const enquiry = (await queue.json() as { enquiries: Array<{ id: string; version: number; requestedCatalogueItems: Array<{ id: string; version: number; displayName: string; priceAmount: string | null }> }> }).enquiries[0]!;
+    expect(enquiry.requestedCatalogueItems).toMatchObject([{ id: catalogueItemId, version: 1, displayName: "Synthetic CBC", priceAmount: "450.00" }]);
+
+    const convertedToLead = await patch(new Request("http://localhost/api/public/enquiries", {
+      method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json" },
+      body: JSON.stringify({ id: enquiry.id, action: "CONVERT_TO_LEAD", expectedVersion: enquiry.version, assignedStaffId: staffUserId }),
+    }));
+    expect(convertedToLead.status).toBe(200);
+    const { leadId } = await convertedToLead.json() as { leadId: string };
+
+    const qualify = await updateLead(new Request(`http://localhost/api/leads/${leadId}`, {
+      method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json" },
+      body: JSON.stringify({ status: "QUALIFIED", statusReason: "Synthetic staff reviewed requested service and intake" }),
+    }), { params: Promise.resolve({ id: leadId }) });
+    expect(qualify.status).toBe(200);
+
+    const patientPayload = { firstName: "Synthetic", lastName: "Enquirer", phone, dateOfBirth: "1990-01-01", centreId, consentStatus: "NOT_RECORDED" };
+    const conversionRequest = () => new Request(`http://localhost/api/leads/${leadId}/convert`, {
+      method: "POST", headers: { origin: "http://localhost", "content-type": "application/json" },
+      body: JSON.stringify({ mode: "NEW", patient: patientPayload }),
+    });
+    const conversionResponse = await convertLead(conversionRequest(), { params: Promise.resolve({ id: leadId }) });
+    expect(conversionResponse.status).toBe(200);
+    const { conversion } = await conversionResponse.json() as { conversion: { patientId: string; id: string } };
+    const replayedConversion = await convertLead(conversionRequest(), { params: Promise.resolve({ id: leadId }) });
+    expect((await replayedConversion.json() as { conversion: { patientId: string; id: string } }).conversion).toMatchObject(conversion);
+    expect((await pool.query("SELECT count(*)::int AS count FROM patients WHERE id=$1", [conversion.patientId])).rows[0].count).toBe(1);
+    expect((await pool.query("SELECT count(*)::int AS count FROM lead_conversions WHERE lead_id=$1", [leadId])).rows[0].count).toBe(1);
+    expect((await pool.query("SELECT consent_status FROM patients WHERE id=$1", [conversion.patientId])).rows[0].consent_status).toBe("NOT_RECORDED");
+
+    grants = [...grants, "appointments.update"];
+    const leadDetail = await getLead(new Request(`http://localhost/api/leads/${leadId}`), { params: Promise.resolve({ id: leadId }) });
+    const leadBody = await leadDetail.json() as { activity: Array<{ metadata: Record<string, unknown> }> };
+    const requestSnapshot = leadBody.activity.find((event) => event.metadata.requestKind === "BOOKING_REQUEST")?.metadata;
+    expect(requestSnapshot).toMatchObject({ requestedCatalogueItems: [{ id: catalogueItemId, version: 1 }], requestedHomeChargeChoice: "99", requestedHomeChargeRupees: 99, visitType: "HOME_COLLECTION" });
+    expect(requestSnapshot?.collectionAddress).toMatchObject({ line1: "10 Synthetic Road", postalCode: "123456" });
+
+    const appointmentKey = randomUUID();
+    const appointmentPayload = {
+      centreId, patientId: conversion.patientId, leadId, source: "CRM_LEAD", visitType: "HOME_COLLECTION",
+      scheduledLocal: "2099-02-02T10:00", durationMinutes: 30,
+      services: [{ type: "TEST", name: "Synthetic CBC", reference: catalogueItemId }],
+      homeCollection: { address: { line1: "10 Synthetic Road", city: "Synthetic City", state: "Test State", postalCode: "123456" }, preferredWindow: "Morning", chargeChoice: "99" },
+    };
+    const appointmentRequest = () => new Request("http://localhost/api/appointments", {
+      method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": appointmentKey },
+      body: JSON.stringify(appointmentPayload),
+    });
+    const appointmentResponse = await createAppointment(appointmentRequest());
+    expect(appointmentResponse.status).toBe(201);
+    const { appointment } = await appointmentResponse.json() as { appointment: { id: string; status: string } };
+    expect(appointment.status).toBe("REQUESTED");
+    expect((await createAppointment(appointmentRequest()).then((response) => response.json()) as { appointment: { id: string }; replayed: boolean }).appointment.id).toBe(appointment.id);
+    expect((await pool.query("SELECT count(*)::int AS count FROM appointments WHERE patient_id=$1 AND lead_id=$2", [conversion.patientId, leadId])).rows[0].count).toBe(1);
+    const deniedCentreRequest = await createAppointment(new Request("http://localhost/api/appointments", {
+      method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() },
+      body: JSON.stringify({ ...appointmentPayload, centreId: randomUUID() }),
+    }));
+    expect(deniedCentreRequest.status).toBe(403);
+    const storedAppointment = await pool.query("SELECT status,home_charge_choice,home_charge_rupees,private_data_ciphertext FROM appointments WHERE id=$1", [appointment.id]);
+    expect(storedAppointment.rows[0]).toMatchObject({ status: "REQUESTED", home_charge_choice: "99", home_charge_rupees: 99 });
+    expect(storedAppointment.rows[0].private_data_ciphertext).not.toContain("10 Synthetic Road");
+
+    const confirmAppointmentResponse = await updateAppointment(new Request(`http://localhost/api/appointments/${appointment.id}`, {
+      method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json" },
+      body: JSON.stringify({ status: "CONFIRMED", reason: "TEST ONLY — isolated appointment state transition", expectedUpdatedAt: (await pool.query("SELECT updated_at FROM appointments WHERE id=$1", [appointment.id])).rows[0].updated_at.toISOString() }),
+    }), { params: Promise.resolve({ id: appointment.id }) });
+    expect(confirmAppointmentResponse.status).toBe(200);
+    expect((await confirmAppointmentResponse.json() as { appointment: { status: string } }).appointment.status).toBe("CONFIRMED");
+
+    const priceReview = await verifyCatalogue(new Request(`http://localhost/api/catalogue/${catalogueItemId}/verify`, {
+      method: "POST", headers: { origin: "http://localhost", "content-type": "application/json" },
+      body: JSON.stringify({ versionId: catalogueVersionId, decision: "VERIFIED", sourceReference: `TEST ONLY — synthetic fixture ${catalogueVersionId.slice(0, 8)}`, effectiveFrom: "2026-01-01", reason: "TEST ONLY — exercise current authorized price verification contract" }),
+    }), { params: Promise.resolve({ id: catalogueItemId }) });
+    expect(priceReview.status).toBe(200);
+
+    const orderKey = randomUUID();
+    const orderRequest = () => new Request("http://localhost/api/orders", {
+      method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": orderKey },
+      body: JSON.stringify({ centreId, patientId: conversion.patientId, appointmentId: appointment.id, catalogueVersionIds: [catalogueVersionId] }),
+    });
+    const orderResponse = await createOrder(orderRequest());
+    expect(orderResponse.status).toBe(201);
+    const { order } = await orderResponse.json() as { order: { id: string; status: string } };
+    expect(order.status).toBe("DRAFT");
+    expect((await createOrder(orderRequest()).then((response) => response.json()) as { order: { id: string } }).order.id).toBe(order.id);
+    expect((await pool.query("SELECT count(*)::int AS count FROM diagnostic_orders WHERE idempotency_key=$1", [orderKey])).rows[0].count).toBe(1);
+    const orderRow = await pool.query("SELECT status,total_amount FROM diagnostic_orders WHERE id=$1", [order.id]);
+    expect(orderRow.rows[0]).toEqual({ status: "DRAFT", total_amount: null });
+
+    const confirmOrder = await updateOrder(new Request(`http://localhost/api/orders/${order.id}`, {
+      method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json" },
+      body: JSON.stringify({ action: "confirm", expectedVersion: 1 }),
+    }), { params: Promise.resolve({ id: order.id }) });
+    expect(confirmOrder.status).toBe(200);
+    expect(await confirmOrder.json()).toMatchObject({ order: { status: "CONFIRMED", totalAmount: "450.00" } });
+
+    const collectionResponse = await createCollectionJob(new Request("http://localhost/api/collections", {
+      method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() },
+      body: JSON.stringify({ appointmentId: appointment.id, orderId: order.id }),
+    }));
+    expect(collectionResponse.status).toBe(201);
+    const { job } = await collectionResponse.json() as { job: { id: string } };
+    expect((await createCollectionJob(new Request("http://localhost/api/collections", {
+      method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() },
+      body: JSON.stringify({ appointmentId: appointment.id, orderId: order.id }),
+    }))).status).toBe(200);
+    expect((await pool.query("SELECT count(*)::int AS count FROM collection_jobs WHERE order_id=$1", [order.id])).rows[0].count).toBe(1);
+
+    // The following records and staff grants exist only in this disposable integration schema.
+    // These procedure references are synthetic test fixtures, not operational SOP approvals.
+    const collectorId = randomUUID(), collectorAuthId = randomUUID(), collectorRoleId = randomUUID();
+    const collectorEmail = `${randomUUID().slice(0, 8)}@invalid.test`;
+    await pool.query('INSERT INTO "user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)', [collectorAuthId, "Synthetic Collector", collectorEmail]);
+    await pool.query("INSERT INTO staff_users(id,auth_user_id,organization_id,staff_code,display_name,status) VALUES($1,$2,$3,$4,$5,'ACTIVE')", [collectorId, collectorAuthId, organizationId, `COL-${collectorId.slice(0, 8)}`, "Synthetic Collector"]);
+    await pool.query("INSERT INTO roles(id,organization_id,key,name,scope) VALUES($1,$2,$3,$4,'CENTRE')", [collectorRoleId, organizationId, `collector_${collectorId.slice(0, 8)}`, "Synthetic collector"]);
+    await pool.query("INSERT INTO permissions(key,description,scope) VALUES('collections.visit.record','TEST ONLY synthetic collection visit','CENTRE') ON CONFLICT(key) DO NOTHING");
+    await pool.query("INSERT INTO role_permissions(role_id,permission_id) SELECT $1,id FROM permissions WHERE key='collections.visit.record' ON CONFLICT DO NOTHING", [collectorRoleId]);
+    await pool.query("INSERT INTO staff_role_assignments(organization_id,staff_user_id,role_id,centre_id) VALUES($1,$2,$3,$4)", [organizationId, collectorId, collectorRoleId, centreId]);
+    const procedures = Object.fromEntries(["COLLECTION", "RECEIVING", "PACKING", "TRANSPORT"].map((operation) => [operation, randomUUID()]));
+    for (const operation of Object.keys(procedures)) await pool.query("INSERT INTO sample_procedure_approvals(id,organization_id,centre_id,operation,reference,status,approved_by_staff_id) VALUES($1,$2,$3,$4,$5,'ACTIVE',$6)", [procedures[operation as keyof typeof procedures], organizationId, centreId, operation, `TEST ONLY — synthetic ${operation} fixture`, staffUserId]);
+
+    const collectionPath = `http://localhost/api/collections/${job.id}`;
+    const collectionPatch = (action: string, expectedVersion: number, reason: string) => new Request(collectionPath, { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() }, body: JSON.stringify({ action, expectedVersion, staffUserId: action === "assign" ? collectorId : undefined, reason, evidenceReference: action === "arrive" ? "TEST ONLY synthetic arrival marker" : undefined }) });
+    const unauthorizedAssignment = await updateCollectionJob(new Request(collectionPath, { method: "PATCH", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() }, body: JSON.stringify({ action: "assign", expectedVersion: 1, staffUserId: randomUUID(), reason: "TEST ONLY unauthorized synthetic collector" }) }), { params: Promise.resolve({ id: job.id }) });
+    expect(unauthorizedAssignment.status).toBe(400);
+    expect(await unauthorizedAssignment.json()).toEqual({ error: "collector_not_authorized" });
+    const assignResponse = await updateCollectionJob(collectionPatch("assign", 1, "TEST ONLY assign synthetic collector"), { params: Promise.resolve({ id: job.id }) });
+    expect(assignResponse.status).toBe(200);
+    mocks.getApiAccess.mockImplementation(async (permission: string, requestedCentreId?: string) => {
+      if (requestedCentreId && requestedCentreId !== centreId) return { response: Response.json({ error: "forbidden" }, { status: 403 }), staff: null };
+      const collectorPermissions = ["collections.visit.record", "samples.collect"];
+      if (!collectorPermissions.includes(permission)) return { response: Response.json({ error: "forbidden" }, { status: 403 }), staff: null };
+      return { response: null, staff: { organizationId, staffUserId: collectorId, grants: collectorPermissions.map((key) => ({ key, centreId })) } };
+    });
+    const collectorStep = async (action: string, expectedVersion: number) => updateCollectionJob(collectionPatch(action, expectedVersion, `TEST ONLY synthetic ${action}`), { params: Promise.resolve({ id: job.id }) });
+    expect((await collectorStep("accept", 2)).status).toBe(200);
+    expect((await collectorStep("start", 3)).status).toBe(200);
+    const noArrivalCollect = await sampleAction(new Request("http://localhost/api/samples", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() }, body: JSON.stringify({ action: "collect", jobId: job.id, specimenType: "Synthetic EDTA tube", requirementReference: "TEST ONLY synthetic CBC fixture", identityCheckConfirmed: true, procedureApprovalId: procedures.COLLECTION, reason: "TEST ONLY collection before arrival" }) }));
+    expect(noArrivalCollect.status).toBe(409);
+    expect(await noArrivalCollect.json()).toEqual({ error: "patient_consent_required" });
+    expect((await collectorStep("arrive", 3)).status).toBe(409);
+    expect((await collectorStep("arrive", 4)).status).toBe(200);
+    const collectKey = randomUUID();
+    const collectRequest = () => new Request("http://localhost/api/samples", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": collectKey }, body: JSON.stringify({ action: "collect", jobId: job.id, specimenType: "Synthetic EDTA tube", requirementReference: "TEST ONLY synthetic CBC fixture", identityCheckConfirmed: true, procedureApprovalId: procedures.COLLECTION, reason: "TEST ONLY attempted collection remains blocked without consent" }) });
+    const collectResponse = await sampleAction(collectRequest());
+    expect(collectResponse.status).toBe(409);
+    expect(await collectResponse.json()).toEqual({ error: "patient_consent_required" });
+    expect((await sampleAction(collectRequest()).then((response) => response.json())).error).toBe("patient_consent_required");
+    expect((await pool.query("SELECT count(*)::int AS count FROM specimens WHERE job_id=$1", [job.id])).rows[0].count).toBe(0);
+    expect((await pool.query("SELECT count(*)::int AS count FROM sample_custody_events WHERE organization_id=$1 AND event_type='COLLECTED'", [organizationId])).rows[0].count).toBe(0);
+    expect((await pool.query("SELECT count(*)::int AS count FROM collection_job_events WHERE job_id=$1 AND event_type='COLLECTION_RECORDED'", [job.id])).rows[0].count).toBe(0);
+    // Join internal finance to this same order and appointment. These are recorded/reviewed
+    // internal evidence states only; the flow does not represent a bank or provider settlement.
+    const financePermissions = ["finance.read", "finance.charge.create", "finance.payment.record", "finance.payment.verify", "finance.reconcile"];
+    mocks.getApiAccess.mockImplementation(async (permission: string, requestedCentreId?: string) => requestedCentreId && requestedCentreId !== centreId ? { response: Response.json({ error: "forbidden" }, { status: 403 }), staff: null } : financePermissions.includes(permission) ? { response: null, staff: { organizationId, staffUserId, grants: financePermissions.map((key) => ({ key, centreId })) } } : { response: Response.json({ error: "forbidden" }, { status: 403 }), staff: null });
+    const financePost = (body: Record<string, unknown>, idempotencyKey = randomUUID()) => postFinance(new Request("http://localhost/api/finance", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": idempotencyKey }, body: JSON.stringify(body) }));
+    const createCharges = await financePost({ action: "create_order_charges", orderId: order.id, appointmentId: appointment.id });
+    expect(createCharges.status).toBe(201);
+    const duplicateCharges = await financePost({ action: "create_order_charges", orderId: order.id, appointmentId: appointment.id });
+    expect(duplicateCharges.status).toBe(201);
+    expect(await duplicateCharges.json()).toMatchObject({ result: { chargeIds: [] } });
+    const chargeRows = await pool.query("SELECT id,charge_type,amount_minor::text AS amount_minor,snapshot FROM finance_charges WHERE (order_id=$1 OR appointment_id=$2) AND state='ACTIVE' ORDER BY charge_type", [order.id, appointment.id]);
+    expect(chargeRows.rows.map((row) => ({ type: row.charge_type, amount: row.amount_minor }))).toEqual([{ type: "DIAGNOSTIC", amount: "45000" }, { type: "HOME_COLLECTION", amount: "9900" }]);
+    expect(chargeRows.rows[0].snapshot).toMatchObject({ source: "confirmed_order_snapshot", currency: "INR", invoiceIssuer: "PENDING", legalInvoice: false, items: [{ catalogueItemId, catalogueVersionId, verificationStatus: "VERIFIED", priceAmount: "450.00", priceSourceReference: expect.stringContaining("TEST ONLY") }] });
+    expect(chargeRows.rows[1].snapshot).toMatchObject({ source: "appointment_charge_snapshot", choice: "99", currency: "INR", invoiceIssuer: "PENDING", legalInvoice: false });
+    const diagnosticChargeId = chargeRows.rows.find((row) => row.charge_type === "DIAGNOSTIC")!.id as string;
+    const openedReconciliation = await financePost({ action: "open_reconciliation", centreId, openingCashMinor: 0 });
+    expect(openedReconciliation.status).toBe(201);
+    const { result: opened } = await openedReconciliation.json() as { result: { reconciliationId: string } };
+    const recordedKey = randomUUID();
+    const recordPartial = () => financePost({ action: "record_payment", chargeId: diagnosticChargeId, amountMinor: 20_000, method: "CASH", reference: "TEST ONLY synthetic partial evidence" }, recordedKey);
+    const partialPayment = await recordPartial();
+    expect(partialPayment.status).toBe(201);
+    const { result: partial } = await partialPayment.json() as { result: { paymentId: string; replayed: boolean } };
+    expect((await recordPartial().then((response) => response.json()) as { result: { paymentId: string; replayed: boolean } }).result).toMatchObject({ paymentId: partial.paymentId, replayed: true });
+    expect((await financePost({ action: "payment_decision", paymentId: partial.paymentId, decision: "CONFIRMED", expectedVersion: 1, reason: "TEST ONLY reviewed internal cash evidence; no settlement assertion" })).status).toBe(201);
+    const disputedPayment = await financePost({ action: "record_payment", chargeId: diagnosticChargeId, amountMinor: 1_000, method: "CASH", reference: "TEST ONLY synthetic disputed evidence" });
+    const { result: disputed } = await disputedPayment.json() as { result: { paymentId: string } };
+    expect(disputedPayment.status).toBe(201);
+    expect((await financePost({ action: "payment_decision", paymentId: disputed.paymentId, decision: "DISPUTED", expectedVersion: 1, reason: "TEST ONLY disputed internal evidence" })).status).toBe(201);
+    const financeView = await getFinance(new Request(`http://localhost/api/finance?centreId=${centreId}`));
+    const financeBody = await financeView.json() as { charges: Array<{ id: string; amountMinor: string; paidMinor: string; disputed: boolean }>; summary: { disputedPayments: number } };
+    const diagnosticBalance = financeBody.charges.find((row) => row.id === diagnosticChargeId)!;
+    expect(diagnosticBalance).toMatchObject({ amountMinor: "45000", paidMinor: "20000", disputed: true });
+    expect(BigInt(diagnosticBalance.amountMinor) - BigInt(diagnosticBalance.paidMinor)).toBe(BigInt(25_000));
+    const allOrderCharges = financeBody.charges.filter((row) => chargeRows.rows.some((charge) => charge.id === row.id));
+    expect(allOrderCharges.reduce((sum, row) => sum + BigInt(row.amountMinor), BigInt(0)) - BigInt(diagnosticBalance.paidMinor)).toBe(BigInt(34_900));
+    expect(financeBody.summary.disputedPayments).toBeGreaterThanOrEqual(1);
+    const closerAuthId = randomUUID(), closerId = randomUUID();
+    await pool.query('INSERT INTO "user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)', [closerAuthId, "Synthetic Finance Closer", `${closerAuthId}@invalid.test`]);
+    await pool.query("INSERT INTO staff_users(id,auth_user_id,organization_id,staff_code,display_name,status) VALUES($1,$2,$3,$4,$5,'ACTIVE')", [closerId, closerAuthId, organizationId, `FIN-${closerId.slice(0, 8)}`, "Synthetic Finance Closer"]);
+    mocks.getApiAccess.mockImplementation(async (permission: string, requestedCentreId?: string) => requestedCentreId && requestedCentreId !== centreId ? { response: Response.json({ error: "forbidden" }, { status: 403 }), staff: null } : permission === "finance.reconcile" ? { response: null, staff: { organizationId, staffUserId: closerId, grants: [{ key: permission, centreId }] } } : { response: Response.json({ error: "forbidden" }, { status: 403 }), staff: null });
+    const closeReconciliation = await financePost({ action: "close_reconciliation", reconciliationId: opened.reconciliationId, expectedVersion: 1, countedCashMinor: 20_000, reason: "TEST ONLY synthetic internal cash count" });
+    expect(closeReconciliation.status).toBe(201);
+    expect(await closeReconciliation.json()).toMatchObject({ result: { status: "CLOSED", expectedCashMinor: "20000", varianceMinor: "0" } });
+    const financeAudit = await pool.query("SELECT action FROM audit_events WHERE organization_id=$1 AND centre_id=$2 AND entity_id IN ($3,$4,$5,$6) ORDER BY recorded_at", [organizationId, centreId, order.id, partial.paymentId, disputed.paymentId, opened.reconciliationId]);
+    expect(financeAudit.rows.map((row) => row.action)).toEqual(expect.arrayContaining(["finance.order_charges_created", "finance.payment_recorded", "finance.payment_confirmed", "finance.payment_disputed", "finance.reconciliation_opened", "finance.reconciliation_closed"]));
+
+    // Exercise document upload/access through the real API with temporary private storage,
+    // disposable encryption keys and no scanner configured. This must remain quarantined.
+    const savedEnv = new Map<string, string | undefined>();
+    const testKeyId = `w7_${randomUUID().slice(0, 8)}`;
+    const testKey = randomBytes(32).toString("base64");
+    const storageDir = await mkdtemp(path.join(tmpdir(), "rudra-wave7-report-"));
+    for (const [key, value] of Object.entries({ RUDRA_FIELD_ENCRYPTION_KEYS: JSON.stringify({ [testKeyId]: testKey }), RUDRA_FIELD_ACTIVE_KEY_ID: testKeyId, REPORT_DOCUMENT_ENCRYPTION_KEYS: JSON.stringify({ [testKeyId]: testKey }), REPORT_DOCUMENT_ACTIVE_KEY_ID: testKeyId, REPORT_PRIVATE_STORAGE_DIR: storageDir, REPORT_CLAMAV_HOST: "", REPORT_CLAMAV_PORT: "3310" })) {
+      savedEnv.set(key, process.env[key]); process.env[key] = value;
+    }
+    const reportPermissions = ["reports.register", "reports.read", "reports.document.upload", "orders.read", "patients.read"];
+    mocks.getApiAccess.mockImplementation(async (permission: string, requestedCentreId?: string) => requestedCentreId && requestedCentreId !== centreId ? { response: Response.json({ error: "forbidden" }, { status: 403 }), staff: null } : reportPermissions.includes(permission) ? { response: null, staff: { organizationId, staffUserId, grants: reportPermissions.map((key) => ({ key, centreId })) } } : { response: Response.json({ error: "forbidden" }, { status: 403 }), staff: null });
+    try {
+      const registeredReport = await registerReport(new Request("http://localhost/api/reports", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json", "idempotency-key": randomUUID() }, body: JSON.stringify({ action: "register", centreId, orderId: order.id }) }));
+      expect(registeredReport.status).toBe(201);
+      const { report } = await registeredReport.json() as { report: { id: string; status: string } };
+      expect(report.status).toBe("AWAITING_REPORT");
+      const syntheticPdf = Buffer.from("%PDF-1.4\nSynthetic test-only report document.\n%%EOF\n");
+      const pdf = new File([syntheticPdf], "synthetic.pdf", { type: "application/pdf" });
+      const form = new FormData(); form.set("file", pdf);
+      const upload = await uploadReportDocument(new Request(`http://localhost/api/reports/${report.id}/documents`, { method: "POST", headers: { origin: "http://localhost", "idempotency-key": randomUUID() }, body: form }), { params: Promise.resolve({ id: report.id }) });
+      expect(upload.status).toBe(201);
+      expect(await upload.json()).toMatchObject({ document: { scanStatus: "QUARANTINED", replayed: false } });
+      const storedDocument = await pool.query("SELECT storage_key,scan_status,encryption_key_id FROM report_documents WHERE report_id=$1", [report.id]);
+      expect(storedDocument.rows[0]).toMatchObject({ scan_status: "QUARANTINED", encryption_key_id: testKeyId });
+      const { reportFilePath } = await import("@/server/report-storage");
+      const ciphertext = await readFile(reportFilePath(storedDocument.rows[0].storage_key));
+      expect(ciphertext.includes(Buffer.from("Synthetic test-only report document"))).toBe(false);
+      mocks.getApiAccess.mockImplementation(async (permission: string, requestedCentreId?: string) => permission === "reports.read" && requestedCentreId ? { response: Response.json({ error: "forbidden" }, { status: 403 }), staff: null } : reportPermissions.includes(permission) ? { response: null, staff: { organizationId, staffUserId, grants: reportPermissions.map((key) => ({ key, centreId })) } } : { response: Response.json({ error: "forbidden" }, { status: 403 }), staff: null });
+      const wrongCentre = await readReportDocument(new Request(`http://localhost/api/reports/${report.id}/documents`), { params: Promise.resolve({ id: report.id }) });
+      expect(wrongCentre.status).toBe(403);
+      expect(await wrongCentre.json()).toEqual({ error: "forbidden" });
+      mocks.getApiAccess.mockImplementation(async (permission: string, requestedCentreId?: string) => reportPermissions.includes(permission) && (!requestedCentreId || requestedCentreId === centreId) ? { response: null, staff: { organizationId, staffUserId, grants: reportPermissions.map((key) => ({ key, centreId })) } } : { response: Response.json({ error: "forbidden" }, { status: 403 }), staff: null });
+      const quarantinedRead = await readReportDocument(new Request(`http://localhost/api/reports/${report.id}/documents`), { params: Promise.resolve({ id: report.id }) });
+      expect(quarantinedRead.status).toBe(423);
+      expect((await pool.query("SELECT action FROM audit_events WHERE entity_id=$1", [report.id])).rows.map((row) => row.action)).toContain("report.document_uploaded");
+
+      // A real logical backup/restore of the disposable migrated app schema,
+      // encrypted private document bytes and a separately wrapped test-only key.
+      const postgresTools = await resolvePostgresTools();
+      expect(postgresTools).not.toBeNull();
+      recoveryTempDir = await mkdtemp(path.join(tmpdir(), "rudra-wave9-recovery-"));
+      await protectRecoveryDirectory(recoveryTempDir);
+      recoverySchema = `p2_09a_restore_${randomUUID().replaceAll("-", "").slice(0, 10)}`;
+      const sourceDoc = storedDocument.rows[0];
+      const sourceDocPath = reportFilePath(sourceDoc.storage_key);
+      const sourceCiphertext = await readFile(sourceDocPath);
+      expect(sourceCiphertext.subarray(0, 5).toString("utf8")).not.toBe("%PDF-");
+      const backupPath = path.join(recoveryTempDir, "synthetic-database-backup.sql");
+      const restorePath = path.join(recoveryTempDir, "synthetic-database-restore.sql");
+      const backupSql = await backupSchema({ connectionString: testUrl, schema, backupPath, tools: postgresTools! });
+      const backupSha256 = createHash("sha256").update(backupSql).digest("hex");
+      expect(backupSha256).toMatch(/^[a-f0-9]{64}$/);
+
+      const testOnlyKeyMaterial = {
+        format: "rudra-encryption-key-backup-v1",
+        keys: {
+          REPORT_DOCUMENT_ACTIVE_KEY_ID: testKeyId,
+          REPORT_DOCUMENT_ENCRYPTION_KEYS: JSON.stringify({ [testKeyId]: testKey }),
+          RUDRA_FIELD_ACTIVE_KEY_ID: testKeyId,
+          RUDRA_FIELD_ENCRYPTION_KEYS: JSON.stringify({ [testKeyId]: testKey }),
+          RUDRA_BLIND_INDEX_KEY: Buffer.alloc(32, 23).toString("base64"),
+        },
+      };
+      const recoveryPassphrase = randomBytes(32).toString("base64url");
+      const encryptedKeyBackup = await encryptKeyBackup(testOnlyKeyMaterial, recoveryPassphrase);
+      const recoveredKeys = await decryptKeyBackup(encryptedKeyBackup, recoveryPassphrase);
+      expect(recoveredKeys.keys).toEqual(testOnlyKeyMaterial.keys);
+
+      const restoreStorage = path.join(recoveryTempDir, "private-documents");
+      await mkdir(restoreStorage, { recursive: true });
+      const restoredDocumentPath = path.join(restoreStorage, path.basename(sourceDocPath));
+      await copyFile(sourceDocPath, restoredDocumentPath);
+      expect(await readFile(restoredDocumentPath)).toEqual(sourceCiphertext);
+      const restoredSchema = await restoreSchema({ connectionString: testUrl, sourceSchema: schema, destinationSchema: recoverySchema, backupSql, restorePath, tools: postgresTools! });
+      expect(restoredSchema.sourceSchemaReferencesRemapped).toBeGreaterThan(0);
+
+      const originalDatabaseUrl = process.env.DATABASE_URL;
+      const restoreUrl = new URL(testUrl);
+      restoreUrl.searchParams.set("options", `-csearch_path=${recoverySchema},public`);
+      const { closeDatabasePool } = await import("@/db/client");
+      await closeDatabasePool();
+      process.env.DATABASE_URL = restoreUrl.toString();
+      process.env.REPORT_PRIVATE_STORAGE_DIR = restoreStorage;
+      process.env.REPORT_DOCUMENT_ENCRYPTION_KEYS = recoveredKeys.keys.REPORT_DOCUMENT_ENCRYPTION_KEYS;
+      process.env.REPORT_DOCUMENT_ACTIVE_KEY_ID = recoveredKeys.keys.REPORT_DOCUMENT_ACTIVE_KEY_ID;
+      const restoredPool = new Pool({ connectionString: restoreUrl.toString(), max: 1 });
+      try {
+        const restoredLink = await restoredPool.query("SELECT r.id,r.order_id,d.storage_key,d.sha256,d.scan_status,d.encryption_key_id FROM diagnostic_reports r JOIN report_documents d ON d.report_id=r.id WHERE r.id=$1", [report.id]);
+        expect(restoredLink.rows[0]).toMatchObject({ id: report.id, order_id: order.id, storage_key: sourceDoc.storage_key, sha256: createHash("sha256").update(syntheticPdf).digest("hex"), scan_status: "QUARANTINED", encryption_key_id: testKeyId });
+        const { readReportPdf } = await import("@/server/report-storage");
+        expect(await readReportPdf(sourceDoc.storage_key, recoveredKeys.keys.REPORT_DOCUMENT_ACTIVE_KEY_ID)).toEqual(syntheticPdf);
+        expect((await restoredPool.query("SELECT count(*)::int AS count FROM report_events WHERE report_id=$1 AND event_type='DOCUMENT_UPLOADED'", [report.id])).rows[0].count).toBe(1);
+        const recoveredRead = await readReportDocument(new Request(`http://localhost/api/reports/${report.id}/documents`), { params: Promise.resolve({ id: report.id }) });
+        expect(recoveredRead.status).toBe(423);
+        expect(await recoveredRead.json()).toEqual({ error: "report_access_revoked_or_unavailable" });
+      } finally {
+        await restoredPool.end();
+        await closeDatabasePool();
+        if (originalDatabaseUrl === undefined) delete process.env.DATABASE_URL; else process.env.DATABASE_URL = originalDatabaseUrl;
+      }
+    } finally {
+      for (const [key, value] of savedEnv) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+      await rm(storageDir, { recursive: true, force: true });
+    }
+    const audit = await pool.query("SELECT action FROM audit_events WHERE organization_id=$1 AND centre_id=$2 AND entity_id IN ($3,$4,$5) ORDER BY recorded_at", [organizationId, centreId, leadId, conversion.patientId, appointment.id]);
+    expect(audit.rows.map((row) => row.action)).toEqual(expect.arrayContaining(["lead.converted", "appointment.created"]));
+  }, 120_000);
 });

@@ -61,3 +61,11 @@ No migration was required. No patient-facing API was added. No synthetic person 
 ## Phase 03 readiness
 
 Phase 03 is described in `docs/PHASES_AND_ACCEPTANCE.md` as Metropolis synchronization and verified availability. Rudra remains manual-first. No provider credentials, contract, mapping approval or verified external status feed are established by this Phase 02 preview work; integration, availability claims and automatic external ordering remain blocked. Continue with an approved manual-first operational milestone or wait for formal provider prerequisites rather than treating this portal checkpoint as Metropolis integration readiness.
+
+## 2026-11-19 — gated preview browser verification
+
+- Removed the portal preview component's nested `<main>` landmark; the shared application layout is now the single main landmark. Added regression assertions for one page heading, no nested main, and canonical navigation across all P001–P016 route renders.
+- Phase 02 focused route/component and inventory tests passed **73/73** across three files. ESLint and TypeScript passed. Production build passed with **406** generated route entries.
+- Production-mode Chromium checked all 16 canonical portal routes at desktop (1440px), tablet (768px) and mobile (390px): **48/48** checks returned HTTP 200, one main landmark and one page heading, with no horizontal overflow. Keyboard Enter toggled the fictional preview example on and off; navigation from P001 to P003 worked. Zero browser exceptions and zero API calls.
+- The matrix records “functionally verified” only for the safe, no-data preview shell. It does not claim patient authentication, real patient/family data, appointments, reports, billing, document upload or any patient-owned API is implemented or verified. All entry gates and protected acceptance fields remain unchanged.
+- Browser results are stored outside the repository at `F:\Rudra Health Care Centre\Rudra Health OS Audit\phase02-preview-browser-results.json`. No screenshot or visual-reference comparison was performed; Phase 02 design references and full assistive-technology acceptance remain pending.

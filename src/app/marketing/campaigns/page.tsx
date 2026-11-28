@@ -1,7 +1,7 @@
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CampaignWorkbench } from "@/components/marketing/campaign-workbench";
-import Link from "next/link";
+import { MarketingScreenNavigation } from "@/components/marketing/phase09-marketing-screens";
 
 export default function MarketingCampaignsPage() {
-  return <AdminShell permission="marketing.read" title="Campaign attribution">{(staff) => <><nav className="page-actions" aria-label="Marketing workspaces"><Link className="button button-secondary" href="/marketing/content">Content calendar</Link><Link className="button button-secondary" href="/marketing/design/m010">Open marketing design references M001–M018</Link></nav><CampaignWorkbench managedCentreIds={staff.grants.filter((grant) => grant.key === "marketing.manage").map((grant) => grant.centreId ?? "*")} /></>}</AdminShell>;
+  return <AdminShell permission="marketing.read" title="Campaign directory and planner">{(staff) => <><MarketingScreenNavigation current="campaigns" /><p role="note">Campaign state is for internal lead attribution only. Activating tracking does not launch an external campaign or authorize a budget.</p><CampaignWorkbench managedCentreIds={staff.grants.filter((grant) => grant.key === "marketing.manage").map((grant) => grant.centreId ?? "*")} /></>}</AdminShell>;
 }

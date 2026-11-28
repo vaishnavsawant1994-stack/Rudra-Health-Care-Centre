@@ -2,10 +2,12 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { UnifiedCommunicationInbox } from "@/components/leads/communication-draft-queue";
 import { CommunicationTemplateWorkbench } from "@/components/communications/communication-template-workbench";
 import { ReceptionWorkflowNav } from "@/components/appointments/reception-workflow-nav";
+import { Phase08RouteNavigation } from "@/components/communications/phase08-route-support";
 import Link from "next/link";
 
 export default function CommunicationsPage() {
   return <AdminShell permission="workspace.read" title="Communications inbox">{(staff) => <><ReceptionWorkflowNav current="11" />
+    <Phase08RouteNavigation current="A004" />
     <section className="admin-card" aria-labelledby="communications-design-preview-title">
       <h2 id="communications-design-preview-title">Communications & AI screen designs</h2>
       <p>Open the A001–A013 visual reference workspace. It uses synthetic examples only; no messages or calls are sent.</p>

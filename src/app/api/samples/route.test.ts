@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { collectionJobs, sampleCustodyEvents, specimens } from "@/db/schema";
+import { collectionJobs, patients, sampleCustodyEvents, specimens } from "@/db/schema";
 import { encryptOperationalData, operationalContext } from "@/server/operational-crypto";
 import { GET, POST } from "./route";
 
@@ -140,7 +140,7 @@ describe("specimen collection API boundary", () => {
     getApiAccess.mockResolvedValueOnce({ staff: null, response: Response.json({ error: "mfa_setup_required" }, { status: 428 }) });
     expect((await POST(req("df2d1773-3cfb-49f3-9370-d0b9d74389fe"))).status).toBe(428);
   });
-  it("replays an exact specimen collection request and rejects changed evidence under the same key", async () => {
+  it("replays an exact specimen collection request for a consent-granted synthetic patient and rejects changed evidence", async () => {
     const organizationId = "4779fa43-bd9d-4fb3-bdd9-2f7202485196";
     const centreId = "c1aeacbb-bf66-44f0-a27a-7bf06c60a6b5";
     const staffUserId = "5f8f3d2c-3d55-4bf4-8a37-fec87779e990";
@@ -162,7 +162,7 @@ describe("specimen collection API boundary", () => {
         id: eventId,
         privateDataCiphertext: encryptOperationalData({ evidenceReference: null, reason: payload.reason }, operationalContext({ organizationId, centreId, recordId: eventId }, "sample-custody-event")),
       };
-      const rowsFor = (table: unknown) => table === collectionJobs ? [job] : table === specimens ? [duplicate] : table === sampleCustodyEvents ? [collectionEvent] : [];
+      const rowsFor = (table: unknown) => table === collectionJobs ? [job] : table === patients ? [{ consentStatus: "GRANTED" }] : table === specimens ? [duplicate] : table === sampleCustodyEvents ? [collectionEvent] : [];
       const query = () => {
         let table: unknown;
         const builder = {

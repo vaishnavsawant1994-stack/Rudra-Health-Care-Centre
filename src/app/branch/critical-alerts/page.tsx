@@ -1,0 +1,4 @@
+import { AdminShell } from "@/components/admin/admin-shell";
+import { SampleWorkflowNav } from "@/components/branch/sample-workflow-nav";
+
+export default function CriticalResultsRestrictedPage() { return <AdminShell permission="reports.read" title="Critical result escalation">{<><SampleWorkflowNav current="L017"/><section className="admin-card"><p className="eyebrow">L017 · Restricted clinical workflow</p><h2>Urgent escalation actions are unavailable</h2><p>No approved critical-result thresholds, qualified-person roster, response protocol or acknowledgement policy is configured. This screen does not classify results, contact patients, create clinical alerts or record acknowledgement.</p><p>Report intake and verification remains available through the authorized report workflow. Follow the centre’s approved clinical procedure outside this application for urgent findings.</p></section></>}</AdminShell>; }

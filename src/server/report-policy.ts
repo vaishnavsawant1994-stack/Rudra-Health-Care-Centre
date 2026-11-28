@@ -6,3 +6,7 @@ export function canTransitionReport(from:ReportStatus,to:ReportStatus){return fr
 export function canVerifyReport({status,scanStatus,uploaderId,actorId}:{status:ReportStatus;scanStatus:string|null;uploaderId:string;actorId:string}){return status==="PENDING_VERIFICATION"&&scanStatus==="CLEAN"&&uploaderId!==actorId;}
 export function canApproveReportRelease({status,verifiedBy,actorId}:{status:ReportStatus;verifiedBy:string|null;actorId:string}){return status==="VERIFIED"&&verifiedBy!==null&&verifiedBy!==actorId;}
 export function deliveryResultStatus(outcome:"ATTEMPTED"|"FAILED"|"ACKNOWLEDGED"):ReportStatus{return outcome==="ACKNOWLEDGED"?"DELIVERED":"DELIVERY_PENDING";}
+/** Holds, quarantine, exception and supersession revoke ordinary document access until a permitted workflow restores eligibility. */
+export function canReadReportDocument(status: ReportStatus) {
+  return ["PENDING_VERIFICATION", "VERIFIED", "APPROVED_FOR_RELEASE", "DELIVERY_PENDING", "DELIVERED"].includes(status);
+}

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { PatientCollectionHistory } from "@/components/samples/sample-workbench";
 import { saveAppointmentPatientSelection } from "@/lib/appointment-patient-selection";
+import { beginLatestRequest, invalidateLatestRequest, isLatestRequest } from "@/lib/latest-request";
 
 type Centre = { id: string; code: string; name: string };
 type PatientRow = { id: string; patientNumber: string; firstName: string; lastName: string; preferredName: string | null; centreId: string; createdAt: string };
@@ -27,26 +28,31 @@ async function getJson<T>(url: string): Promise<{ response: Response; body: T }>
 }
 
 export function PatientList({ canCreate = false }: { canCreate?: boolean } = {}) {
+  const requestSequence = useRef({ current: 0 });
   const [rows, setRows] = useState<PatientRow[]>([]);
   const [centres, setCentres] = useState<Centre[]>([]);
   const [centreId, setCentreId] = useState("");
   const [query, setQuery] = useState("");
   const [state, setState] = useState("Loading patient records…");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(true);
 
   const load = useCallback(async (search = query, centre = centreId) => {
-    setBusy(true); setState("Loading patient records…");
+    const requestId = beginLatestRequest(requestSequence.current);
+    setBusy(true); setState("Loading patient records…"); setRows([]);
     try {
       const response = await fetch("/api/patients/search", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q: search.trim(), centreId: centre || null }) });
       const body = await response.json() as { patients?: PatientRow[]; error?: string };
+      if (!isLatestRequest(requestSequence.current, requestId)) return;
       if (!response.ok) { setState(body.error === "authentication_required" ? "Sign in to view patient records." : body.error === "forbidden" ? "You do not have permission for this patient scope." : "Patient records are unavailable. Try again."); setRows([]); return; }
       setRows(body.patients ?? []); setState(body.patients?.length ? "" : "No patients found in your authorized centre scope.");
-    } catch { setRows([]); setState("Patient service is unavailable. Try again."); }
-    finally { setBusy(false); }
+    } catch { if (isLatestRequest(requestSequence.current, requestId)) { setRows([]); setState("Patient service is unavailable. Try again."); } }
+    finally { if (isLatestRequest(requestSequence.current, requestId)) setBusy(false); }
   }, [centreId, query]);
 
   useEffect(() => {
     let live = true;
+    const sequence = requestSequence.current;
+    const requestId = beginLatestRequest(sequence);
     void (async () => {
       try {
         const [centreResult, patientResult] = await Promise.all([
@@ -55,12 +61,14 @@ export function PatientList({ canCreate = false }: { canCreate?: boolean } = {})
         ]);
         if (!live) return;
         if (centreResult.response.ok) setCentres(centreResult.body.centres ?? []);
+        if (!isLatestRequest(sequence, requestId)) return;
         if (!patientResult.response.ok) { setState(patientResult.body.error === "authentication_required" ? "Sign in to view patient records." : "Patient records are unavailable. Try again."); return; }
         const patientsResult = patientResult.body.patients ?? [];
         setRows(patientsResult); setState(patientsResult.length ? "" : "No patients found in your authorized centre scope.");
-      } catch { if (live) setState("Patient service is unavailable. Try again."); }
+      } catch { if (live && isLatestRequest(sequence, requestId)) { setRows([]); setState("Patient service is unavailable. Try again."); } }
+      finally { if (live && isLatestRequest(sequence, requestId)) setBusy(false); }
     })();
-    return () => { live = false; };
+    return () => { live = false; invalidateLatestRequest(sequence); };
   }, []);
 
   function search(event: FormEvent<HTMLFormElement>) { event.preventDefault(); void load(query, centreId); }
@@ -154,7 +162,7 @@ export function PatientProfile({ patientId, canReadOrders = false, canCreateOrde
     {canReadSamples ? <PatientCollectionHistory patientId={patientId} /> : null}
     <section className="admin-card"><h2>Family relationships</h2>{family.length ? <ul>{family.map((link) => <li key={link.id}>{link.relationship.toLowerCase()} · <Link href={`/patients/${link.patient.id}`}>{link.patient.name} ({link.patient.patientNumber})</Link></li>)}</ul> : <p>No confirmed family relationships are linked. Adult records require their own authorization; a family link does not grant access.</p>}</section>
     {families.length ? <section className="admin-card"><h2>Family membership</h2><ul>{families.map((membership) => <li key={membership.familyId}><Link href={`/families/${membership.familyId}`}>{membership.displayName} ({membership.familyNumber})</Link> · {membership.relationship.toLowerCase()} · {membership.status.replaceAll("_", " ").toLowerCase()}</li>)}</ul><p>Membership is administrative. It does not authorize access to another person’s patient record.</p></section> : null}
-    <section className="admin-card"><h2>Patient activity</h2>{activity.length ? <ol className="patient-timeline">{activity.map((event, index) => <li key={`${event.action}-${event.recordedAt}-${index}`}><strong>{event.action.replaceAll("patient.", "Patient ").replaceAll("_", " ")}</strong><time dateTime={event.recordedAt}>{new Date(event.recordedAt).toLocaleString()}</time></li>)}</ol> : <p>No activity events are recorded yet.</p>}</section>
+    <section id="patient-activity" className="admin-card"><h2>Patient activity</h2>{activity.length ? <ol className="patient-timeline">{activity.map((event, index) => <li key={`${event.action}-${event.recordedAt}-${index}`}><strong>{event.action.replaceAll("patient.", "Patient ").replaceAll("_", " ")}</strong><time dateTime={event.recordedAt}>{new Date(event.recordedAt).toLocaleString()}</time></li>)}</ol> : <p>No activity events are recorded yet.</p>}</section>
   </>;
 }
 

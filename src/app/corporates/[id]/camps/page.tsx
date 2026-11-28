@@ -1,0 +1,5 @@
+import Link from "next/link";
+import { Suspense } from "react";
+import { AdminShell } from "@/components/admin/admin-shell";
+export default function CorporateCampPage({ params }: { params: Promise<{ id: string }> }) { return <Suspense fallback={<section className="admin-card" role="status">Loading corporate program…</section>}><CorporateCampContent params={params} /></Suspense>; }
+async function CorporateCampContent({ params }: { params: Promise<{ id: string }> }) { const { id } = await params; return <AdminShell permission="corporate.read" title="Corporate camp planning">{() => <section className="admin-card"><h2>Camp scheduling is restricted</h2><p>No corporate camp, employee roster or capacity reservation contract is configured. This page does not create appointments or reveal employee/patient health information.</p><p><Link href={`/corporates/${encodeURIComponent(id)}`}>Review the authorized corporate account</Link></p><p>Before scheduling, require approved contract and rate review, centre capacity, clinical/privacy procedures and a separate appointment workflow.</p></section>}</AdminShell>; }

@@ -113,7 +113,7 @@ describe("sample collection API PostgreSQL integration", () => {
     else process.env.DATABASE_URL = originalDatabaseUrl;
   }, 30_000);
 
-  it("persists a synthetic specimen, exactly replays it, and rejects changed evidence under the same key", async () => {
+  it("blocks collection without recorded patient consent and creates no specimen or custody evidence", async () => {
     const body = {
       action: "collect",
       jobId,
@@ -131,43 +131,22 @@ describe("sample collection API PostgreSQL integration", () => {
 
     const beforeArrival = await send(body);
     expect(beforeArrival.status).toBe(409);
-    expect(await beforeArrival.json()).toEqual({ error: "collection_arrival_required" });
+    expect(await beforeArrival.json()).toEqual({ error: "patient_consent_required" });
     expect((await pool!.query("SELECT count(*)::int AS count FROM specimens WHERE organization_id=$1 AND idempotency_key=$2", [organizationId, idempotencyKey])).rows[0].count).toBe(0);
     const arrivalEventId = randomUUID();
     const arrivalPrivateData = encryptOperationalData({ reason: "Synthetic collector arrived", evidenceReference: null }, operationalContext({ organizationId, centreId, recordId: arrivalEventId }, "collection-job-event"));
     await pool!.query("INSERT INTO collection_job_events(id,organization_id,centre_id,job_id,event_type,source,private_data_ciphertext,actor_staff_id) VALUES($1,$2,$3,$4,'ARRIVED','STAFF',$5,$6)", [arrivalEventId, organizationId, centreId, jobId, arrivalPrivateData, collectorId]);
     const created = await send(body);
-    expect(created.status).toBe(201);
-    const createdPayload = await created.json() as { result: { id: string; status: string; versionNumber: number; replayed: boolean } };
-    expect(createdPayload.result).toMatchObject({ status: "COLLECTED", versionNumber: 1, replayed: false });
+    expect(created.status).toBe(409);
+    expect(await created.json()).toEqual({ error: "patient_consent_required" });
+    const retry = await send(body);
+    expect(retry.status).toBe(409);
+    expect(await retry.json()).toEqual({ error: "patient_consent_required" });
 
-    const exactRetry = await send(body);
-    expect(exactRetry.status).toBe(200);
-    expect(await exactRetry.json()).toEqual({ result: { ...createdPayload.result, replayed: true } });
-
-    const changedRetry = await send({ ...body, reason: "Different synthetic collection evidence" });
-    expect(changedRetry.status).toBe(409);
-    expect(await changedRetry.json()).toEqual({ error: "idempotency_conflict" });
-
-    const persisted = await pool!.query(
-      "SELECT id,status,version_number,private_data_ciphertext FROM specimens WHERE organization_id=$1 AND idempotency_key=$2",
-      [organizationId, idempotencyKey],
-    );
-    expect(persisted.rowCount).toBe(1);
-    expect(persisted.rows[0]).toMatchObject({ id: createdPayload.result.id, status: "COLLECTED", version_number: 1 });
-    expect(persisted.rows[0].private_data_ciphertext).toMatch(/^v1\./);
-    const custody = await pool!.query(
-      "SELECT event_type,private_data_ciphertext FROM sample_custody_events WHERE organization_id=$1 AND specimen_id=$2 AND event_type='COLLECTED'",
-      [organizationId, createdPayload.result.id],
-    );
-    expect(custody.rowCount).toBe(1);
-    expect(custody.rows[0].private_data_ciphertext).toMatch(/^v1\./);
+    expect((await pool!.query("SELECT count(*)::int AS count FROM specimens WHERE organization_id=$1 AND idempotency_key=$2", [organizationId, idempotencyKey])).rows[0].count).toBe(0);
+    expect((await pool!.query("SELECT count(*)::int AS count FROM sample_custody_events WHERE organization_id=$1 AND event_type='COLLECTED'", [organizationId])).rows[0].count).toBe(0);
     const jobEvents = await pool!.query("SELECT event_type FROM collection_job_events WHERE organization_id=$1 AND job_id=$2", [organizationId, jobId]);
-    expect(jobEvents.rows.map((row) => row.event_type)).toEqual(["TRAVEL_STARTED", "ARRIVED", "COLLECTION_RECORDED"]);
-    const audit = await pool!.query(
-      "SELECT action FROM audit_events WHERE organization_id=$1 AND entity_id=$2 AND action='specimen.collected'",
-      [organizationId, createdPayload.result.id],
-    );
-    expect(audit.rows).toEqual([{ action: "specimen.collected" }]);
+    expect(jobEvents.rows.map((row) => row.event_type)).toEqual(["TRAVEL_STARTED", "ARRIVED"]);
+    expect((await pool!.query("SELECT count(*)::int AS count FROM audit_events WHERE organization_id=$1 AND action='specimen.collected'", [organizationId])).rows[0].count).toBe(0);
   });
 });

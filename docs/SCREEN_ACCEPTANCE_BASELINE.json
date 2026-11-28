@@ -1,0 +1,1258 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-11-15T20:18:09.476Z",
+  "source": "docs/SCREEN_IMPLEMENTATION_MATRIX.csv",
+  "sourceSha256": "bb6440c3217fada4e49f565cce97026e68235282a19a1e79e84de37c56a43b9e",
+  "sourceRevision": "872eeebfd05adc30edb90490bbe4d3b2369add91",
+  "capturePurpose": "initial manual acceptance state baseline",
+  "reviewReference": null,
+  "reviewedChanges": [],
+  "entries": {
+    "W001": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W002": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W003": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W004": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W005": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W006": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W007": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W008": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W009": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W010": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W011": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W012": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W013": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W014": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W015": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W016": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W017": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W018": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W019": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W020": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W021": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W022": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W023": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W024": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W025": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "W026": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "P001": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "P002": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "P003": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "P004": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "P005": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "P006": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "P007": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "P008": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "P009": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "P010": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "P011": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "P012": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "P013": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "P014": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "P015": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "P016": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R001": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R002": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R003": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R004": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R005": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R006": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R007": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R008": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R009": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R010": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R011": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R012": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R013": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R014": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R015": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R016": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R017": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "R018": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "F001": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "F002": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "F003": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "F004": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "F005": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "F006": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "F007": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "F008": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "F009": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "F010": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "F011": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "F012": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "F013": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "F014": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "F015": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "L001": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "L002": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "L003": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "L004": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "L005": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "L006": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "L007": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "L008": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "L009": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "L010": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "L011": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "L012": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "L013": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "L014": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "L015": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "L016": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "L017": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "B001": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "B002": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "B003": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "B004": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "B005": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "B006": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "B007": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "B008": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "B009": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "B010": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "B011": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "B012": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "B013": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "B014": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "B015": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "C001": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "C002": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "C003": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "C004": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "C005": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "C006": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "C007": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "C008": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "C009": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "C010": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "C011": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "C012": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "A001": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "A002": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "A003": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "A004": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "A005": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "A006": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "A007": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "A008": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "A009": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "A010": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "A011": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "A012": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "A013": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M001": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M002": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M003": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M004": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M005": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M006": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M007": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M008": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M009": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M010": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M011": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M012": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M013": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M014": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M015": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M016": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M017": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "M018": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "O001": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "O002": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "O003": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "O004": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "O005": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "O006": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "O007": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "O008": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "O009": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "O010": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "O011": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "O012": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "O013": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "O014": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "O015": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "O016": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "S001": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "S002": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "S003": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "S004": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "S005": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "S006": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "S007": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "S008": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "S009": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "S010": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "S011": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    },
+    "S012": {
+      "Acceptance status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Manual desktop/mobile status": "Pending: no screen-specific manual desktop/mobile acceptance evidence recorded.",
+      "Accessibility/responsive status": "Pending: keyboard, screen-reader, responsive and accessibility acceptance not recorded.",
+      "Final Owner/QA acceptance": "Pending: no final owner/QA acceptance evidence recorded.",
+      "Deployment readiness": "Not assessed; no deployment readiness or approval event is recorded."
+    }
+  }
+}

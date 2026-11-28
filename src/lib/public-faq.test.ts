@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filterPublicFaq, type PublicFaqItem } from "./public-faq";
+import { filterPublicFaq, publicFaqAnswerId, type PublicFaqItem } from "./public-faq";
 
 const items: PublicFaqItem[] = [
   { question: "Are listed prices current?", answer: "Only verified catalogue prices are shown.", topic: "Services" },
@@ -17,5 +17,11 @@ describe("public FAQ search", () => {
     expect(filterPublicFaq(items, "  staff ", "Booking")).toEqual([items[1]]);
     expect(filterPublicFaq(items, "report", "Booking")).toEqual([]);
     expect(filterPublicFaq(items, "   ", "Privacy")).toEqual([items[2]]);
+  });
+
+  it("keeps a filtered answer linked to its original stable page anchor", () => {
+    const filtered = filterPublicFaq(items, "report", "ALL");
+    expect(filtered).toEqual([items[2]]);
+    expect(publicFaqAnswerId(filtered[0], items)).toBe("faq-answer-3");
   });
 });

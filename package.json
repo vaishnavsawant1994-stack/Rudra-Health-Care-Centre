@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test:browser:finance": "playwright test --config=playwright.finance.config.ts",
+    "seed:browser:finance": "node scripts/seed-finance-browser.mjs",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -43,7 +45,7 @@
     "dotenv": "^18.0.9",
     "drizzle-orm": "^0.45.4",
     "exceljs": "^4.4.0",
-    "next": "16.4.3",
+    "next": "16.4.6",
     "pg": "^8.23.1",
     "qrcode.react": "^4.2.0",
     "react": "19.3.0",
@@ -51,6 +53,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "1.65.1",
     "@eslint/js": "^10.0.1",
     "@next/eslint-plugin-next": "^16.4.3",
     "@tailwindcss/turbopack": "^4",

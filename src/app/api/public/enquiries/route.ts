@@ -117,7 +117,7 @@ export async function POST(request: Request) {
       await tx.insert(publicEnquiryEvents).values({ id: eventId, organizationId: scope.organizationId, centreId: parsed.data.centreId, enquiryId: id, eventType: "SUBMITTED", privateDataCiphertext: encryptLeadValue("activity", { category: payload.category, requestTopic: payload.requestTopic }, { organizationId: scope.organizationId, centreId: parsed.data.centreId, recordId: eventId }) });
       return created;
     });
-    return Response.json({ accepted: true, reference: result.enquiryNumber }, { status: 202 });
+    return Response.json({ accepted: true, reference: result.enquiryNumber, receiptId: result.id }, { status: 202, headers: { "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" } });
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
     return Response.json({ error: code === "idempotency_conflict" ? code : code === "enquiry_rate_limited" ? code : "enquiry_unavailable" }, { status: code === "idempotency_conflict" ? 409 : code === "enquiry_rate_limited" ? 429 : 503 });

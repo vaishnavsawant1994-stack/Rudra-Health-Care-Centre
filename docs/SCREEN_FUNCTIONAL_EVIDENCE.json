@@ -1,0 +1,568 @@
+{
+  "schemaVersion": 1,
+  "evidenceSource": "Consolidated screen-specific evidence from historical Phase 01?10 acceptance records and authenticated synthetic GitHub Actions Chromium runs. A record is limited to the exact path described; route rendering and restriction checks do not count as functional paths.",
+  "evidenceScope": "Scoped synthetic Chromium user paths. Entries do not imply full screen completion, accessibility acceptance, visual parity, deployment readiness or Owner/QA approval.",
+  "screens": [
+    {
+      "id": "A002",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45705275143",
+      "testedAtCommit": "0a081439ffe2210eb24c07381c9028cf1090f232",
+      "evidence": "Created and edited synthetic WhatsApp governance draft from version 1 to 2; record remained DRAFT and encrypted.",
+      "limitations": "No provider or outbound message; authorization and accessibility remain incomplete."
+    },
+    {
+      "id": "A003",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45705275143",
+      "testedAtCommit": "0a081439ffe2210eb24c07381c9028cf1090f232",
+      "evidence": "Created and edited synthetic voice governance draft from version 1 to 2; record remained DRAFT and encrypted.",
+      "limitations": "No calls, provider, recording or outbound activity."
+    },
+    {
+      "id": "A004",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45705275143",
+      "testedAtCommit": "0a081439ffe2210eb24c07381c9028cf1090f232",
+      "evidence": "Keyboard-operated internal inbox; injected 503 and retry; authorized empty state; other-centre request denied (403); responsive overflow checks at 1280/768/390.",
+      "limitations": "No inbox record creation/persistence in this path; full accessibility and Owner/QA remain pending."
+    },
+    {
+      "id": "A006",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45705275143",
+      "testedAtCommit": "0a081439ffe2210eb24c07381c9028cf1090f232",
+      "evidence": "Created synthetic support request, verified encrypted persistence, recovered queue after injected 503, started task, added note and recorded internal resolution with append-only events.",
+      "limitations": "No external SLA/customer notification; assignment/escalation controls not fully exercised."
+    },
+    {
+      "id": "A007",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45705275143",
+      "testedAtCommit": "0a081439ffe2210eb24c07381c9028cf1090f232",
+      "evidence": "Opened the synthetic support-ticket detail, added an internal note and recorded status/history updates.",
+      "limitations": "Limited ticket lifecycle path; external messaging, full role coverage, accessibility and Owner/QA remain pending."
+    },
+    {
+      "id": "A008",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45705275143",
+      "testedAtCommit": "0a081439ffe2210eb24c07381c9028cf1090f232",
+      "evidence": "Created and edited synthetic knowledge draft from version 1 to 2; record remained DRAFT and encrypted.",
+      "limitations": "No AI model or retrieval pipeline activated; source/expiry policy and broader acceptance remain pending."
+    },
+    {
+      "id": "A013",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45668553070",
+      "testedAtCommit": "2d0a61b384e464a9ec361250dd08e8724588e6e1",
+      "evidence": "Created/edited encrypted email template draft, activated for internal use, and verified append-only events; provider send remained disabled.",
+      "limitations": "No recipient, patient message or external delivery occurred."
+    },
+    {
+      "id": "B003",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45611660102",
+      "testedAtCommit": "b7719963ed8eafe2aed8fb8b80b9654617aa0c5a",
+      "evidence": "Created internal draft quote from authorized synthetic lead; catalogue-version snapshot and total displayed; cross-centre/unknown quote denied.",
+      "limitations": "No public quote delivery, invoice or pricing approval."
+    },
+    {
+      "id": "B005",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45548280139",
+      "testedAtCommit": "1f885d987883ac8ca7c5f1d37a37e9ef1587e90d",
+      "evidence": "Recorded synthetic payment evidence against an authorized charge; PostgreSQL verified centre link, encrypted private evidence and audit event.",
+      "limitations": "Staff-entered evidence is not bank/provider settlement; no real payment was captured."
+    },
+    {
+      "id": "B006",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45548280139",
+      "testedAtCommit": "1f885d987883ac8ca7c5f1d37a37e9ef1587e90d",
+      "evidence": "Synthetic finance ledger displayed the persisted payment evidence as RECORDED.",
+      "limitations": "This does not establish payment settlement, legal invoice status or full screen acceptance."
+    },
+    {
+      "id": "B008",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45548280139",
+      "testedAtCommit": "1f885d987883ac8ca7c5f1d37a37e9ef1587e90d",
+      "evidence": "Outstanding balance stayed INR 450.00 and UNPAID after unverified evidence was recorded.",
+      "limitations": "Reminder and adjustment actions were not exercised; no settlement was claimed."
+    },
+    {
+      "id": "B009",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45548280139",
+      "testedAtCommit": "1f885d987883ac8ca7c5f1d37a37e9ef1587e90d",
+      "evidence": "Two separately authenticated synthetic finance users opened and closed reconciliation; distinct operators, matching amounts and zero variance persisted.",
+      "limitations": "No bank/UPI statement matching or settlement was performed."
+    },
+    {
+      "id": "B011",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45548280139",
+      "testedAtCommit": "1f885d987883ac8ca7c5f1d37a37e9ef1587e90d",
+      "evidence": "Home-fees view rendered a separately categorized synthetic HOME_COLLECTION charge.",
+      "limitations": "No fee calculation, waiver, tax/accounting or expense comparison qualification."
+    },
+    {
+      "id": "B014",
+      "status": "RESTRICTION_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45548280139",
+      "testedAtCommit": "1f885d987883ac8ca7c5f1d37a37e9ef1587e90d",
+      "evidence": "Chromium displayed the explicit finance export restriction.",
+      "limitations": "No export executed. Scoped export permission, privacy review and immutable export audit remain pending."
+    },
+    {
+      "id": "C001",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45617866597",
+      "testedAtCommit": "dd3d217a3526d7a13ffc325745ca8310201f5375",
+      "evidence": "Opened protected synthetic doctor directory under authenticated staff session.",
+      "limitations": "Directory pagination/update controls, credential review and Owner/QA remain pending."
+    },
+    {
+      "id": "C002",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45617866597",
+      "testedAtCommit": "dd3d217a3526d7a13ffc325745ca8310201f5375",
+      "evidence": "Submitted synthetic doctor profile through onboarding (HTTP 201); encryption and audit event verified.",
+      "limitations": "Registration reference is not professional credential proof or clinical authority."
+    },
+    {
+      "id": "C003",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45617866597",
+      "testedAtCommit": "dd3d217a3526d7a13ffc325745ca8310201f5375",
+      "evidence": "Opened direct synthetic doctor profile; centre scope and private-field encryption verified.",
+      "limitations": "Profile activity/update completeness, visual/accessibility and Owner/QA remain pending."
+    },
+    {
+      "id": "C004",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45668553070",
+      "testedAtCommit": "2d0a61b384e464a9ec361250dd08e8724588e6e1",
+      "evidence": "Planned synthetic doctor visit, recorded staff check-in and encrypted notes, created linked internal task, cancelled another visit; unauthorized centre returned 403.",
+      "limitations": "Staff entry only; no physical attendance, GPS, clinical approval or external contact."
+    },
+    {
+      "id": "C005",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45611660102",
+      "testedAtCommit": "b7719963ed8eafe2aed8fb8b80b9654617aa0c5a",
+      "evidence": "Applied corporate relationship filter in canonical referrals UI; synthetic attributed lead and follow-up task were visible.",
+      "limitations": "No patient, billing, contract or provider action."
+    },
+    {
+      "id": "C006",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45611660102",
+      "testedAtCommit": "b7719963ed8eafe2aed8fb8b80b9654617aa0c5a",
+      "evidence": "Opened protected corporate relationship directory in Chromium.",
+      "limitations": "Directory/filter completeness and Owner/QA remain pending."
+    },
+    {
+      "id": "C007",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45611660102",
+      "testedAtCommit": "b7719963ed8eafe2aed8fb8b80b9654617aa0c5a",
+      "evidence": "Created a synthetic internal corporate relationship (HTTP 201) through canonical intake.",
+      "limitations": "No contract, consent, commercial approval or external communication."
+    },
+    {
+      "id": "C008",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45611660102",
+      "testedAtCommit": "b7719963ed8eafe2aed8fb8b80b9654617aa0c5a",
+      "evidence": "Opened direct synthetic corporate profile and internal follow-up workflow.",
+      "limitations": "No contract, patient data, billing or external communication."
+    },
+    {
+      "id": "C010",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidence": "Opened protected partner directory, created centre-scoped PARTNER record, opened profile and verified pending contact-permission notice; encrypted row persisted.",
+      "limitations": "No partner contract, patient access, consent, billing or external communication.",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8e9a6dfb1f28ce8a80e7f6933ac9e1c5e1b657dd/docs/PHASE_07_RELATIONSHIPS_ACCEPTANCE.md",
+      "evidenceRecordCommit": "8e9a6dfb1f28ce8a80e7f6933ac9e1c5e1b657dd",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45613005222"
+    },
+    {
+      "id": "C012",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45668553070",
+      "testedAtCommit": "2d0a61b384e464a9ec361250dd08e8724588e6e1",
+      "evidence": "Recovered from forced 503; displayed aggregate-only scoped counts, switched to permitted empty centre, denied unauthorized centre, and passed keyboard/viewport checks.",
+      "limitations": "Contract stages remain unavailable; broader pagination, screen-reader, visual comparison and Owner/QA remain pending."
+    },
+    {
+      "id": "L006",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/b158e09e272fab158c10ac9fd4e0484bace3e860/docs/MASTER_DEVELOPMENT_TRACKER.md",
+      "evidenceRecordCommit": "b158e09e272fab158c10ac9fd4e0484bace3e860",
+      "evidence": "Authenticated Chromium queue paged through five batches and displayed all 105 synthetic dispatch records exactly once; wrong-centre request denied and 390px layout remained contained.",
+      "limitations": "Queue pagination and centre-denial path only. Dispatch/physical handover, accessibility, visual comparison and Owner/QA remain pending."
+    },
+    {
+      "id": "M001",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+      "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+      "evidence": "Synthetic Chromium dashboard counts, navigation, retry and delayed-response centre switching.",
+      "limitations": "No external reach, engagement, spend, payments or diagnostic completion evidence; accessibility, visual comparison and Owner/QA pending."
+    },
+    {
+      "id": "M003",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+      "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+      "evidence": "Synthetic private content draft creation, encrypted persistence, edit/version history and append-only events.",
+      "limitations": "No publishing, sending, or external review; accessibility, visual comparison and Owner/QA pending."
+    },
+    {
+      "id": "M005",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+      "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+      "evidence": "Synthetic content calendar state and planned date persisted through the UI.",
+      "limitations": "Planned date is not a provider schedule or publication; accessibility, visual comparison and Owner/QA pending."
+    },
+    {
+      "id": "M006",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+      "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+      "evidence": "Synthetic in-review content; creator self-approval denied; separate reviewer approval and audit/version state persisted.",
+      "limitations": "Internal editorial approval only, not clinical/legal claim approval; accessibility, visual comparison and Owner/QA pending."
+    },
+    {
+      "id": "M012",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+      "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+      "evidence": "Synthetic campaign draft, centre switching under delayed response, persistence and internal attribution activation.",
+      "limitations": "No external publication, outreach or advertising spend; accessibility, visual comparison and Owner/QA pending."
+    },
+    {
+      "id": "M017",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+      "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+      "evidence": "Synthetic campaign-linked lead cohort and scoped aggregate attribution result verified in Chromium/API.",
+      "limitations": "No patient rows, payment attribution, or completed diagnostic evidence; accessibility, visual comparison and Owner/QA pending."
+    },
+    {
+      "id": "O005",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+      "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+      "evidence": "Synthetic planned roster shift created through UI and persisted with status/version.",
+      "limitations": "No actual attendance, staffing sufficiency, payroll or capacity-feasibility evidence; accessibility, visual comparison and Owner/QA pending."
+    },
+    {
+      "id": "O006",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+      "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+      "evidence": "Synthetic support action opened in the authorized operational queue through Chromium.",
+      "limitations": "Opening an action does not prove its source workflow is completed; accessibility, visual comparison and Owner/QA pending."
+    },
+    {
+      "id": "O015",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "run": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/45767316515",
+      "testedAtCommit": "1a664c6d70f4415917b9819493116adb0edae566",
+      "evidence": "Synthetic MFA session queried organization audit records, applied filters and verified centre-only access boundaries after migration 0102.",
+      "limitations": "No anomaly detector or controlled export; accessibility, visual comparison and Owner/QA acceptance pending."
+    },
+    {
+      "id": "R001",
+      "status": "BROWSER_ROUTE_RENDERED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/525d70f4a6cd010436261466aa29dd59eda0f2b3/docs/PHASE_03_RECEPTION_ACCEPTANCE.md",
+      "evidenceRecordCommit": "525d70f4a6cd010436261466aa29dd59eda0f2b3",
+      "evidence": "Reception overview route returned HTTP 200 in the recorded smoke check.",
+      "limitations": "Route smoke only; no full UI workflow established."
+    },
+    {
+      "id": "R002",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/525d70f4a6cd010436261466aa29dd59eda0f2b3/docs/PHASE_03_RECEPTION_ACCEPTANCE.md",
+      "evidenceRecordCommit": "525d70f4a6cd010436261466aa29dd59eda0f2b3",
+      "evidence": "Authenticated Chromium search, centre switching, injected 503/retry, out-of-order response suppression, wrong-centre denial (403), keyboard focus and desktop/tablet/mobile overflow checks passed.",
+      "limitations": "Synthetic patient identities only. Screen-reader, visual-reference and Owner/QA reviews remain pending."
+    },
+    {
+      "id": "R007",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/4efa93ea5792f52dda6209d91124aa7543d2719f/docs/ACCEPTANCE_BATCH1_2026-11-17.md",
+      "evidenceRecordCommit": "4efa93ea5792f52dda6209d91124aa7543d2719f",
+      "evidence": "Synthetic appointment request was submitted through the UI and appeared in an authorized read with REQUESTED status.",
+      "limitations": "Request is not a confirmed appointment or reserved slot. Reschedule, assignment, full accessibility, visual and Owner/QA checks remain pending."
+    },
+    {
+      "id": "R008",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/525d70f4a6cd010436261466aa29dd59eda0f2b3/docs/PHASE_03_RECEPTION_ACCEPTANCE.md",
+      "evidenceRecordCommit": "525d70f4a6cd010436261466aa29dd59eda0f2b3",
+      "evidence": "Authorized synthetic patient appointment request created through the UI and persisted as REQUESTED.",
+      "limitations": "No capacity reservation or confirmation; accessibility, visual comparison and Owner/QA remain pending."
+    },
+    {
+      "id": "R009",
+      "status": "RESTRICTION_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/525d70f4a6cd010436261466aa29dd59eda0f2b3/docs/PHASE_03_RECEPTION_ACCEPTANCE.md",
+      "evidenceRecordCommit": "525d70f4a6cd010436261466aa29dd59eda0f2b3",
+      "evidence": "Chromium verified order creation stays disabled when no approved centre catalogue entries exist.",
+      "limitations": "No order was fabricated. Catalogue approval and broader order acceptance remain pending."
+    },
+    {
+      "id": "R010",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/4efa93ea5792f52dda6209d91124aa7543d2719f/docs/ACCEPTANCE_BATCH1_2026-11-17.md",
+      "evidenceRecordCommit": "4efa93ea5792f52dda6209d91124aa7543d2719f",
+      "evidence": "Synthetic DRAFT order created through the API was rendered on the order-detail screen.",
+      "limitations": "This did not verify order creation/editing through the UI, approved catalogue pricing, conflicts, full accessibility, visual comparison or Owner/QA."
+    },
+    {
+      "id": "R013",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/525d70f4a6cd010436261466aa29dd59eda0f2b3/docs/PHASE_03_RECEPTION_ACCEPTANCE.md",
+      "evidenceRecordCommit": "525d70f4a6cd010436261466aa29dd59eda0f2b3",
+      "evidence": "Synthetic lead created through the protected staff UI and opened in the linked R014 detail.",
+      "limitations": "This is lead capture, not confirmation of patient identity or external contact; full screen acceptance remains pending."
+    },
+    {
+      "id": "R014",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/4efa93ea5792f52dda6209d91124aa7543d2719f/docs/ACCEPTANCE_BATCH1_2026-11-17.md",
+      "evidenceRecordCommit": "4efa93ea5792f52dda6209d91124aa7543d2719f",
+      "evidence": "Synthetic lead detail opened from CRM conversion; invalid qualification reason was blocked, valid reason saved, and permitted patient conversion completed.",
+      "limitations": "Identity-policy and broader follow-up/assignment/conflict states, accessibility, visual comparison and Owner/QA remain pending."
+    },
+    {
+      "id": "R015",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/4efa93ea5792f52dda6209d91124aa7543d2719f/docs/ACCEPTANCE_BATCH1_2026-11-17.md",
+      "evidenceRecordCommit": "4efa93ea5792f52dda6209d91124aa7543d2719f",
+      "evidence": "Protected reception queue displayed the submitted synthetic enquiry; staff conversion opened the linked lead; wrong-centre/role checks returned 403.",
+      "limitations": "Scoped journey only; additional queue states, roles, keyboard/accessibility, visual comparison and Owner/QA remain pending."
+    },
+    {
+      "id": "S001",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/4efa93ea5792f52dda6209d91124aa7543d2719f/docs/ACCEPTANCE_BATCH1_2026-11-17.md",
+      "evidenceRecordCommit": "4efa93ea5792f52dda6209d91124aa7543d2719f",
+      "evidence": "Synthetic Better Auth sign-in, TOTP enrollment/verification, protected navigation, visible keyboard focus and sign-out; protected API returned 401 after logout.",
+      "limitations": "Session expiry, recovery, broader screen-reader/security review, approved visual comparison and Owner/QA remain pending."
+    },
+    {
+      "id": "W001",
+      "status": "BROWSER_ROUTE_RENDERED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
+      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
+      "evidence": "Canonical public route rendered in Chromium at desktop, tablet and mobile widths as part of the 26-route/78-viewport check.",
+      "limitations": "Route rendering is not proof of working screen controls. Screen-specific functional, accessibility, design-reference and Owner/QA reviews remain pending."
+    },
+    {
+      "id": "W002",
+      "status": "BROWSER_ROUTE_RENDERED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
+      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
+      "evidence": "Canonical public route rendered in Chromium at desktop, tablet and mobile widths as part of the 26-route/78-viewport check.",
+      "limitations": "Route rendering is not proof of working screen controls. Screen-specific functional, accessibility, design-reference and Owner/QA reviews remain pending."
+    },
+    {
+      "id": "W003",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46126225461",
+      "evidenceRecordCommit": "1c2e621a2b164959c0765df321985b26f21f6323",
+      "evidence": "On commit 1c2e621, Chromium searched published tests by keyboard, checked synthetic published catalogue/version data in PostgreSQL, exercised no-results and injected-503/retry states, followed the test detail booking link with exact centre/item/version preselected, and verified no horizontal overflow at 1280/768/390px.",
+      "limitations": "Scoped functional path only; no live booking was submitted. Full control coverage, comprehensive accessibility, approved-reference visual parity and Owner/QA approval remain pending."
+    },
+    {
+      "id": "W004",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46126225461",
+      "evidenceRecordCommit": "1c2e621a2b164959c0765df321985b26f21f6323",
+      "evidence": "On commit 1c2e621, Chromium displayed the published synthetic test detail, price, specimen and preparation text, then carried its centre, item and version into the booking request at desktop/tablet/mobile sizes.",
+      "limitations": "No booking submission occurred. Full content approval, all control coverage, comprehensive accessibility, approved-reference visual parity and Owner/QA approval remain pending."
+    },
+    {
+      "id": "W005",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46126225461",
+      "evidenceRecordCommit": "1c2e621a2b164959c0765df321985b26f21f6323",
+      "evidence": "On commit 1c2e621, Chromium searched the actual /packages catalogue for a published synthetic package, verified its centre-specific price, added it to the comparison panel, and exercised the linked centre package filter. Earlier evidence for the three-package comparison limit is retained.",
+      "limitations": "No purchase or booking was made. Package catalogue approval, full control coverage, comprehensive accessibility, approved-reference visual parity and Owner/QA approval remain pending."
+    },
+    {
+      "id": "W006",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46126225461",
+      "evidenceRecordCommit": "1c2e621a2b164959c0765df321985b26f21f6323",
+      "evidence": "On commit 1c2e621, Chromium opened the published synthetic package detail, verified its included test and centre-specific price, and followed the request link with exact centre/package selection at desktop/tablet/mobile sizes.",
+      "limitations": "No booking submission occurred. Package approval, full controls, comprehensive accessibility, approved-reference visual parity and Owner/QA approval remain pending."
+    },
+    {
+      "id": "W007",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
+      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
+      "evidence": "Chromium submitted synthetic booking selections to the review step; selected catalogue version and collection preference survived.",
+      "limitations": "Scoped public browser path only. Full control coverage, accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
+    },
+    {
+      "id": "W008",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
+      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
+      "evidence": "Chromium displayed the submitted enquiry selections and fee choice while stating it was not a confirmed booking.",
+      "limitations": "Scoped public browser path only. Full control coverage, accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
+    },
+    {
+      "id": "W009",
+      "status": "RESTRICTION_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
+      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
+      "evidence": "Chromium confirmed online payment checkout remains unavailable; no payment provider action was exposed.",
+      "limitations": "Restricted-state evidence only. Billing policy, payment provider and security approval remain pending."
+    },
+    {
+      "id": "W010",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
+      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
+      "evidence": "Chromium received HTTP 202 and displayed a privacy-safe enquiry acknowledgement without appointment, slot or payment confirmation.",
+      "limitations": "Scoped public browser path only. Full control coverage, accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
+    },
+    {
+      "id": "W011",
+      "status": "BROWSER_ROUTE_RENDERED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
+      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
+      "evidence": "Canonical public route rendered in Chromium at desktop, tablet and mobile widths as part of the 26-route/78-viewport check.",
+      "limitations": "Route rendering is not proof of working screen controls. Screen-specific functional, accessibility, design-reference and Owner/QA reviews remain pending."
+    },
+    {
+      "id": "W012",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46126225461",
+      "evidenceRecordCommit": "1c2e621a2b164959c0765df321985b26f21f6323",
+      "evidence": "On commit 1c2e621, Chromium handled a synthetic directory 503 and retry, searched to a no-results state and back to the published synthetic centre, checked its published-address directions link, and verified responsive layout at 1280/768/390px.",
+      "limitations": "Synthetic public centre only. Comprehensive keyboard/screen-reader assessment, approved-reference visual comparison and Owner/QA approval remain pending."
+    },
+    {
+      "id": "W013",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46126225461",
+      "evidenceRecordCommit": "1c2e621a2b164959c0765df321985b26f21f6323",
+      "evidence": "On commit 1c2e621, Chromium loaded the synthetic centre profile and service area, injected a service-query failure and retried, filtered published packages and verified price, pagination state, included-test detail and exact centre/package booking prefill at 1280/768/390px.",
+      "limitations": "Service-area text is informational and does not establish capacity or availability. No booking was submitted. Comprehensive accessibility, approved-reference visual comparison and Owner/QA approval remain pending."
+    },
+    {
+      "id": "W014",
+      "status": "BROWSER_ROUTE_RENDERED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
+      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
+      "evidence": "Canonical public route rendered in Chromium at desktop, tablet and mobile widths as part of the 26-route/78-viewport check.",
+      "limitations": "Route rendering is not proof of working screen controls. Screen-specific functional, accessibility, design-reference and Owner/QA reviews remain pending."
+    },
+    {
+      "id": "W015",
+      "status": "BROWSER_ROUTE_RENDERED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
+      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
+      "evidence": "Canonical public route rendered in Chromium at desktop, tablet and mobile widths as part of the 26-route/78-viewport check.",
+      "limitations": "Route rendering is not proof of working screen controls. Screen-specific functional, accessibility, design-reference and Owner/QA reviews remain pending."
+    },
+    {
+      "id": "W016",
+      "status": "BROWSER_ROUTE_RENDERED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
+      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
+      "evidence": "Canonical public route rendered in Chromium at desktop, tablet and mobile widths as part of the 26-route/78-viewport check.",
+      "limitations": "Route rendering is not proof of working screen controls. Screen-specific functional, accessibility, design-reference and Owner/QA reviews remain pending."
+    },
+    {
+      "id": "W017",
+      "status": "BROWSER_ROUTE_RENDERED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
+      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
+      "evidence": "Canonical public route rendered in Chromium at desktop, tablet and mobile widths as part of the 26-route/78-viewport check.",
+      "limitations": "Route rendering is not proof of working screen controls. Screen-specific functional, accessibility, design-reference and Owner/QA reviews remain pending."
+    },
+    {
+      "id": "W018",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46113593027",
+      "evidenceRecordCommit": "ff1cf58cbfe3eb9a1b2bea61d9cce3d842ba1242",
+      "evidence": "Earlier synthetic corporate enquiry reached staff review. On this commit, Chromium exercised the /corporate enquiry form at desktop/tablet/mobile widths: both contact methods missing was rejected before POST with an announced error and focus; phone-only and email-only submissions each persisted through the real API as PENDING_REVIEW, centre-scoped, without a lead link or outbound message, and showed the safe acknowledgement. PostgreSQL confirmed encrypted contact data and a SUBMITTED event.",
+      "limitations": "Scoped enquiry-form path only. Remaining page controls, full accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
+    },
+    {
+      "id": "W019",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46113593027",
+      "evidenceRecordCommit": "ff1cf58cbfe3eb9a1b2bea61d9cce3d842ba1242",
+      "evidence": "Earlier synthetic doctor enquiry reached staff review. On this commit, Chromium exercised the /doctors enquiry form at desktop/tablet/mobile widths: both contact methods missing was rejected before POST with an announced error and focus; phone-only and email-only submissions each persisted through the real API as PENDING_REVIEW, centre-scoped, without a lead link or outbound message, and showed the safe acknowledgement. PostgreSQL confirmed encrypted contact data and a SUBMITTED event.",
+      "limitations": "Scoped enquiry-form path only. Remaining page controls, full accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
+    },
+    {
+      "id": "W020",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46113593027",
+      "evidenceRecordCommit": "ff1cf58cbfe3eb9a1b2bea61d9cce3d842ba1242",
+      "evidence": "Earlier synthetic partner enquiry reached staff review. On this commit, Chromium exercised the /partners enquiry form at desktop/tablet/mobile widths: both contact methods missing was rejected before POST with an announced error and focus; phone-only and email-only submissions each persisted through the real API as PENDING_REVIEW, centre-scoped, without a lead link or outbound message, and showed the safe acknowledgement. PostgreSQL confirmed encrypted contact data and a SUBMITTED event.",
+      "limitations": "Scoped enquiry-form path only. Remaining page controls, full accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
+    },
+    {
+      "id": "W021",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/actions/runs/46113593027",
+      "evidenceRecordCommit": "ff1cf58cbfe3eb9a1b2bea61d9cce3d842ba1242",
+      "evidence": "Earlier synthetic centre-routed contact enquiry reached staff review. On this commit, Chromium exercised the /contact enquiry form at desktop/tablet/mobile widths: both contact methods missing was rejected before POST with an announced error and focus; phone-only and email-only submissions each persisted through the real API as PENDING_REVIEW, centre-scoped, without a lead link or outbound message, and showed the safe acknowledgement. PostgreSQL confirmed encrypted contact data and a SUBMITTED event.",
+      "limitations": "Scoped enquiry-form path only. Remaining page controls, full accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
+    },
+    {
+      "id": "W022",
+      "status": "FUNCTIONAL_PATH_VERIFIED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
+      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
+      "evidence": "Chromium used FAQ search/topic shortcuts; keyboard focus and Enter navigated to the matching answer.",
+      "limitations": "Scoped public browser path only. Full control coverage, accessibility audit, approved-reference visual parity and Owner/QA approval remain pending."
+    },
+    {
+      "id": "W023",
+      "status": "BROWSER_ROUTE_RENDERED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
+      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
+      "evidence": "Canonical public route rendered in Chromium at desktop, tablet and mobile widths as part of the 26-route/78-viewport check.",
+      "limitations": "Route rendering is not proof of working screen controls. Screen-specific functional, accessibility, design-reference and Owner/QA reviews remain pending."
+    },
+    {
+      "id": "W024",
+      "status": "BROWSER_ROUTE_RENDERED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
+      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
+      "evidence": "Canonical public route rendered in Chromium at desktop, tablet and mobile widths as part of the 26-route/78-viewport check.",
+      "limitations": "Route rendering is not proof of working screen controls. Screen-specific functional, accessibility, design-reference and Owner/QA reviews remain pending."
+    },
+    {
+      "id": "W025",
+      "status": "BROWSER_ROUTE_RENDERED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
+      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
+      "evidence": "Canonical public route rendered in Chromium at desktop, tablet and mobile widths as part of the 26-route/78-viewport check.",
+      "limitations": "Route rendering is not proof of working screen controls. Screen-specific functional, accessibility, design-reference and Owner/QA reviews remain pending."
+    },
+    {
+      "id": "W026",
+      "status": "BROWSER_ROUTE_RENDERED",
+      "evidenceUrl": "https://github.com/vaishnavsawant1994-stack/Rudra-Health-Care-Centre/blob/8345e69feed18182d207a38c23f547f865030895/docs/PHASE_01_PUBLIC_BROWSER_ACCEPTANCE_2026-11-18.md",
+      "evidenceRecordCommit": "8345e69feed18182d207a38c23f547f865030895",
+      "evidence": "Canonical public route rendered in Chromium at desktop, tablet and mobile widths as part of the 26-route/78-viewport check.",
+      "limitations": "Route rendering is not proof of working screen controls. Screen-specific functional, accessibility, design-reference and Owner/QA reviews remain pending."
+    }
+  ]
+}

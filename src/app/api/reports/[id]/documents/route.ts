@@ -8,6 +8,7 @@ import { csrfRejected,isSameOriginRequest } from "@/server/csrf";
 import { persistReportPdf,readReportPdf,removeReportPdf,safeReportStorageKey,scanReportBuffer } from "@/server/report-storage";
 import { activeReportKeyId } from "@/server/report-crypto";
 import { encryptFinanceReportPrivateData } from "@/server/finance-report-crypto";
+import { canReadReportDocument, type ReportStatus } from "@/server/report-policy";
 
 type Context={params:Promise<{id:string}>};
 const UUID=z.uuid();
@@ -47,7 +48,9 @@ export async function GET(request:Request,context:Context){
   const base=await getApiAccess("reports.read");if(base.response)return base.response;
   const scopeResult=await getDb().execute(sql`SELECT centre_id,status FROM diagnostic_reports WHERE id=${reportId} AND organization_id=${base.staff.organizationId}`);
   const scope=(scopeResult as unknown as {rows:Array<{centre_id:string;status:string}>}).rows[0];if(!scope)return Response.json({error:"not_found"},{status:404});
-  const required=scope.status==="PENDING_VERIFICATION"?"reports.verify":"reports.read";const access=await getApiAccess(required,scope.centre_id);if(access.response)return access.response;
+  const centreRead=await getApiAccess("reports.read",scope.centre_id);if(centreRead.response)return centreRead.response;
+  if(!canReadReportDocument(scope.status as ReportStatus))return Response.json({error:"report_access_revoked_or_unavailable"},{status:423,headers:{"cache-control":"private, no-store"}});
+  if(scope.status==="PENDING_VERIFICATION"){const verification=await getApiAccess("reports.verify",scope.centre_id);if(verification.response)return verification.response;}
   const result=await getDb().execute(sql`SELECT d.storage_key,d.scan_status,d.sha256,d.original_filename,d.centre_id,d.encryption_key_id FROM report_documents d WHERE d.report_id=${reportId} AND d.organization_id=${base.staff.organizationId} AND d.centre_id=${scope.centre_id} ORDER BY d.uploaded_at DESC LIMIT 1`);
   const row=(result as unknown as {rows:Array<{storage_key:string;scan_status:string;sha256:string;original_filename:string;centre_id:string;encryption_key_id:string|null}>}).rows[0];if(!row)return Response.json({error:"not_found"},{status:404});
   if(row.scan_status!=="CLEAN"||!row.encryption_key_id)return Response.json({error:"document_quarantined"},{status:423});

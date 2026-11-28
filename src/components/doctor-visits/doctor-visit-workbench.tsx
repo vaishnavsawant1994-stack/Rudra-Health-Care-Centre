@@ -12,32 +12,38 @@ type Visit = { id: string; scheduledAt: string | null; purpose: string; agenda: 
 
 export function DoctorVisitWorkbench({ grants = [] }: { grants?: PermissionGrant[] }) {
   const attempts = useRef(new Map<string, IdempotencyAttempt>());
+  const doctorRequest = useRef(0);
+  const historyRequest = useRef(0);
   const [centres, setCentres] = useState<Centre[]>([]); const [centreId, setCentreId] = useState("");
   const [doctors, setDoctors] = useState<Doctor[]>([]); const [doctorId, setDoctorId] = useState("");
   const [visits, setVisits] = useState<Visit[]>([]); const [visitPage, setVisitPage] = useState(1); const [visitsHaveMore, setVisitsHaveMore] = useState(false); const [message, setMessage] = useState("Loading authorized centres…"); const [busy, setBusy] = useState(false);
   const doctor = doctors.find((item) => item.id === doctorId);
 
   async function loadDoctors(scope: string) {
-    if (!scope) return;
+    const requestId = ++doctorRequest.current;
+    if (!scope) { historyRequest.current += 1; setDoctors([]); setDoctorId(""); setVisits([]); setMessage("Select an authorized centre."); return; }
     setMessage("Loading authorized doctor relationships…");
     try {
       const response = await fetch(`/api/doctors?centreId=${encodeURIComponent(scope)}&status=ACTIVE&pageSize=50`, { cache: "no-store" });
       const body = await response.json() as { doctors?: Doctor[] };
       if (!response.ok) throw Error();
+      if (requestId !== doctorRequest.current) return;
       setDoctors(body.doctors ?? []); setDoctorId(""); setVisits([]);
       setMessage(body.doctors?.length ? "" : "No active doctor relationships are available in this centre.");
-    } catch { setDoctors([]); setDoctorId(""); setVisits([]); setMessage("Doctor relationships could not be loaded for this centre."); }
+    } catch { if (requestId === doctorRequest.current) { setDoctors([]); setDoctorId(""); setVisits([]); setMessage("Doctor relationships could not be loaded for this centre."); } }
   }
 
   async function loadHistory(selected: Doctor, page = 1) {
+    const requestId = ++historyRequest.current;
     setMessage("Loading visit history…");
     try {
       const response = await fetch(`/api/doctors/${selected.id}/visits?centreId=${encodeURIComponent(selected.centreId)}&page=${page}&pageSize=100`, { cache: "no-store" });
       const body = await response.json() as { visits?: Visit[]; hasMore?: boolean };
       if (!response.ok) throw Error();
+      if (requestId !== historyRequest.current) return;
       setVisits(body.visits ?? []); setVisitPage(page); setVisitsHaveMore(body.hasMore === true);
       setMessage("");
-    } catch { setVisits([]); setMessage("Visit history is unavailable in your current centre scope."); }
+    } catch { if (requestId === historyRequest.current) { setVisits([]); setMessage("Visit history is unavailable in your current centre scope."); } }
   }
 
   useEffect(() => { let active = true; void fetch("/api/doctors/centres", { cache: "no-store" }).then(async (response) => ({ response, body: await response.json() as { centres?: Centre[] } })).then(({ response, body }) => { if (!active) return; if (!response.ok) throw Error(); setCentres(body.centres ?? []); const first = body.centres?.[0]; if (first) { setCentreId(first.id); void loadDoctors(first.id); } else setMessage("No centre is available in your permission scope."); }).catch(() => { if (active) setMessage("Centre access could not be loaded."); }); return () => { active = false; }; }, []);
@@ -70,8 +76,8 @@ export function DoctorVisitWorkbench({ grants = [] }: { grants?: PermissionGrant
     <section className="admin-card">
       <h2>Plan a doctor relationship visit</h2>
       <p>Use synthetic operational notes only. Do not include patient names, health information, referral payments, or location tracking. Check-in is a staff-recorded action, not GPS verification.</p>
-      <label>Centre<select value={centreId} onChange={(event) => { setCentreId(event.target.value); setDoctorId(""); setVisits([]); void loadDoctors(event.target.value); }}><option value="">Select centre</option>{centres.map((item) => <option key={item.id} value={item.id}>{item.name} / {item.code}</option>)}</select></label>
-      <label>Doctor<select value={doctorId} onChange={(event) => { const selected = doctors.find((item) => item.id === event.target.value); setDoctorId(event.target.value); setVisits([]); if (selected) void loadHistory(selected, 1); }}><option value="">Select doctor</option>{doctors.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.specialty} · {item.doctorNumber}</option>)}</select></label>
+      <label>Centre<select value={centreId} onChange={(event) => { historyRequest.current += 1; setCentreId(event.target.value); setDoctorId(""); setVisits([]); void loadDoctors(event.target.value); }}><option value="">Select centre</option>{centres.map((item) => <option key={item.id} value={item.id}>{item.name} / {item.code}</option>)}</select></label>
+      <label>Doctor<select value={doctorId} onChange={(event) => { const selected = doctors.find((item) => item.id === event.target.value); historyRequest.current += 1; setDoctorId(event.target.value); setVisits([]); if (selected) void loadHistory(selected, 1); }}><option value="">Select doctor</option>{doctors.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.specialty} · {item.doctorNumber}</option>)}</select></label>
       {doctor ? <form className="admin-form" onSubmit={(event) => void submit(event, "PLAN")}>
         <label>Planned date and time<input name="scheduledAt" type="datetime-local" required /></label>
         <label>Purpose<select name="purpose"><option value="RELATIONSHIP">Relationship meeting</option><option value="SERVICE_OVERVIEW">Service overview</option><option value="FOLLOW_UP">Follow-up</option><option value="OTHER">Other</option></select></label>

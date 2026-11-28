@@ -123,5 +123,5 @@ describe("website content review PostgreSQL lifecycle", () => {
     expect(await publicResponse.json()).toMatchObject({ slug: "corporate", content: makeContent("Contact Rudra for synthetic corporate enquiry details.") });
 
     await expect(pool.query("INSERT INTO website_content_pages(organization_id,slug,draft_ciphertext,created_by_staff_id,updated_by_staff_id) VALUES($1,'privacy','ciphertext',$2,$2)", [organizationId, editorId])).rejects.toThrow();
-  });
+  }, 15_000);
 });

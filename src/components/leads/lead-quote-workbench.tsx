@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { IdempotencyAttempt } from "@/lib/idempotency-attempt";
 import type { PermissionGrant } from "@/server/permissions";
 
@@ -75,6 +76,6 @@ export function LeadQuoteWorkbench({ grants, initialLeadId = "" }: { grants: rea
         <button className="button button-primary" disabled={busy || !canQuote || !leadId || selected.length === 0 || (visitType === "HOME_COLLECTION" && fee === 0 && feeReason.trim().length < 3)}>{busy ? "Saving…" : "Save internal quote draft"}</button>
       </form><p role="status" aria-live="polite">{message}</p>
     </section>
-    <section className="admin-card"><h2>Quote version history</h2>{quotes.length ? quotes.map((quote) => <article className="admin-card" key={quote.id}><p className="eyebrow">{quote.quoteNumber} · Version {quote.versionNumber} · Internal draft</p><p>{quote.snapshot.lines.map((line) => `${line.displayName} (${line.serviceCode}) ${money(line.pricePaise)}`).join("; ")}</p><p>Diagnostic services {money(quote.diagnosticTotalPaise)} · Separate home visit {money(quote.homeVisitFeePaise)} · Total {money(quote.totalPaise)}</p>{quote.snapshot.homeVisitFeeReason && <p>Waiver reason: {quote.snapshot.homeVisitFeeReason}</p>}<small>Price source is snapshotted by catalogue version. Promotions: not applied pending approved policy. Customer communication is disabled.</small></article>) : <p>No internal quote drafts for this lead.</p>}</section>
+    <section className="admin-card"><h2>Quote version history</h2>{quotes.length ? quotes.map((quote) => <article className="admin-card" key={quote.id}><p className="eyebrow">{quote.quoteNumber} · Version {quote.versionNumber} · Internal draft</p><p>{quote.snapshot.lines.map((line) => `${line.displayName} (${line.serviceCode}) ${money(line.pricePaise)}`).join("; ")}</p><p>Diagnostic services {money(quote.diagnosticTotalPaise)} · Separate home visit {money(quote.homeVisitFeePaise)} · Total {money(quote.totalPaise)}</p><Link className="button button-secondary" href={`/finance/quotes/${encodeURIComponent(quote.id)}?leadId=${encodeURIComponent(leadId)}`}>Open quote details</Link>{quote.snapshot.homeVisitFeeReason && <p>Waiver reason: {quote.snapshot.homeVisitFeeReason}</p>}<small>Price source is snapshotted by catalogue version. Promotions: not applied pending approved policy. Customer communication is disabled.</small></article>) : <p>No internal quote drafts for this lead.</p>}</section>
   </div>;
 }

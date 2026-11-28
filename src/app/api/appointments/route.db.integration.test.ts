@@ -40,6 +40,8 @@ describe("appointment creation PostgreSQL integration", () => {
   let specimenListHandler: typeof import("../samples/route").GET;
   let specimenActionHandler: typeof import("../samples/route").POST;
   let dispatchListHandler: typeof import("../samples/dispatch/route").GET;
+  let dispatchCreateHandler: typeof import("../samples/dispatch/route").POST;
+  let dispatchActionHandler: typeof import("../samples/dispatch/[id]/route").POST;
   let collectionActionHandler: typeof import("../collections/[id]/route").PATCH;
   let workloadHandler: typeof import("../roster/workload/route").GET;
   let rosterListHandler: typeof import("../roster/route").GET;
@@ -128,7 +130,8 @@ describe("appointment creation PostgreSQL integration", () => {
     ({ GET: escalationReadHandler, PATCH: escalationActionHandler } = await import("../escalations/[id]/route"));
     ({ GET: collectionListHandler } = await import("../collections/route"));
     ({ GET: specimenListHandler, POST: specimenActionHandler } = await import("../samples/route"));
-    ({ GET: dispatchListHandler } = await import("../samples/dispatch/route"));
+    ({ GET: dispatchListHandler, POST: dispatchCreateHandler } = await import("../samples/dispatch/route"));
+    ({ POST: dispatchActionHandler } = await import("../samples/dispatch/[id]/route"));
     ({ PATCH: collectionActionHandler } = await import("../collections/[id]/route"));
     ({ GET: workloadHandler } = await import("../roster/workload/route"));
     ({ GET: rosterListHandler } = await import("../roster/route"));
@@ -1030,6 +1033,42 @@ describe("appointment creation PostgreSQL integration", () => {
     expect(await receiptResponse.json()).toMatchObject({ result: { status: "RECEIVED_AT_RUDRA", versionNumber: 3, replayed: false } });
     expect(await (await specimenActionHandler(receiveRequest())).json()).toMatchObject({ result: { status: "RECEIVED_AT_RUDRA", versionNumber: 3, replayed: true } });
     expect((await pool.query("SELECT count(*)::int AS count FROM sample_custody_events WHERE organization_id=$1 AND specimen_id=$2 AND event_type='RECEIVED_AT_RUDRA'", [organizationId, handoverSubmissionSpecimen])).rows[0].count).toBe(1);
+    // Test-only procedure references below exist only in this disposable test schema.
+    // They are synthetic fixtures, not clinical SOP, transport, or business approvals.
+    const packingProcedureId = randomUUID();
+    const transportProcedureId = randomUUID();
+    await pool.query("INSERT INTO sample_procedure_approvals(id,organization_id,centre_id,operation,reference,status,approved_by_staff_id) VALUES($1,$2,$3,'PACKING',$4,'ACTIVE',$5),($6,$2,$3,'TRANSPORT',$7,'ACTIVE',$5)", [packingProcedureId, organizationId, centreId, `TEST ONLY — synthetic PACKING fixture ${packingProcedureId.slice(0, 8)}`, staffUserId, transportProcedureId, `TEST ONLY — synthetic TRANSPORT fixture ${transportProcedureId.slice(0, 8)}`]);
+    mocks.getApiAccess.mockResolvedValue({ staff: { organizationId, staffUserId, grants: [{ key: "samples.read", centreId }, { key: "samples.dispatch", centreId }] }, response: null });
+    const dispatchCreateRequest = () => new Request("http://localhost/api/samples/dispatch", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json" }, body: JSON.stringify({ centreId, specimenIds: [handoverSubmissionSpecimen], packingProcedureApprovalId: packingProcedureId, reason: "TEST ONLY — synthetic branch packing fixture" }) });
+    const dispatchCreateResponse = await dispatchCreateHandler(dispatchCreateRequest());
+    expect(dispatchCreateResponse.status).toBe(201);
+    const dispatchBody = await dispatchCreateResponse.json() as { batch: { id: string; status: string; versionNumber: number } };
+    expect(dispatchBody.batch).toMatchObject({ status: "PREPARING", versionNumber: 1 });
+    const duplicateDispatch = await dispatchCreateHandler(dispatchCreateRequest());
+    expect(duplicateDispatch.status).toBe(409);
+    expect(await duplicateDispatch.json()).toMatchObject({ error: "specimens_not_ready" });
+    const handoverKey = randomUUID();
+    const dispatchHandoverRequest = () => new Request(`http://localhost/api/samples/dispatch/${dispatchBody.batch.id}`, { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json" }, body: JSON.stringify({ action: "handover", batchId: dispatchBody.batch.id, expectedVersion: 1, carrierReference: `TEST-ONLY-SYNTHETIC-CARRIER-${handoverKey.slice(0, 8)}`, procedureApprovalId: transportProcedureId, reason: "TEST ONLY — simulated carrier handover; no external service or receipt" }) });
+    // Dispatch handover has optimistic concurrency, but no idempotency-key contract.
+    // Two simultaneous identical requests therefore yield one commit and one stale-version conflict.
+    const concurrentHandovers = await Promise.all([
+      dispatchActionHandler(dispatchHandoverRequest(), { params: Promise.resolve({ id: dispatchBody.batch.id }) }),
+      dispatchActionHandler(dispatchHandoverRequest(), { params: Promise.resolve({ id: dispatchBody.batch.id }) }),
+    ]);
+    expect(concurrentHandovers.map((response) => response.status).sort()).toEqual([200, 409]);
+    const handoverSuccess = concurrentHandovers.find((response) => response.status === 200)!;
+    expect(await handoverSuccess.json()).toMatchObject({ result: { status: "DISPATCHED", versionNumber: 2 } });
+    const handoverConflict = concurrentHandovers.find((response) => response.status === 409)!;
+    expect(await handoverConflict.json()).toEqual({ error: "version_conflict" });
+    const repeatedHandover = await dispatchActionHandler(dispatchHandoverRequest(), { params: Promise.resolve({ id: dispatchBody.batch.id }) });
+    expect(repeatedHandover.status).toBe(409);
+    expect(await repeatedHandover.json()).toEqual({ error: "version_conflict" });
+    const finalCustody = await pool.query("SELECT event_type,source FROM sample_custody_events WHERE organization_id=$1 AND specimen_id=$2 ORDER BY recorded_at,id", [organizationId, handoverSubmissionSpecimen]);
+    expect(finalCustody.rows.map((row) => row.event_type)).toEqual(["SUBMITTED_FOR_RECEIVING", "RECEIVED_AT_RUDRA", "PACKED", "DISPATCHED"]);
+    expect(finalCustody.rows.every((row) => row.source === "STAFF_RECORDED")).toBe(true);
+    expect((await pool.query("SELECT status FROM specimens WHERE organization_id=$1 AND id=$2", [organizationId, handoverSubmissionSpecimen])).rows[0].status).toBe("DISPATCHED");
+    expect((await pool.query("SELECT status FROM dispatch_batches WHERE organization_id=$1 AND id=$2", [organizationId, dispatchBody.batch.id])).rows[0].status).toBe("DISPATCHED");
+    expect((await pool.query("SELECT count(*)::int AS count FROM sample_external_receipts WHERE organization_id=$1 AND batch_id=$2", [organizationId, dispatchBody.batch.id])).rows[0].count).toBe(0);
     mocks.getApiAccess.mockResolvedValue({ staff: { organizationId, staffUserId, grants: specimenGrants }, response: null });
     const samplePageOne = await (await specimenListHandler(new Request("http://localhost/api/samples?page=1&pageSize=1"))).json() as { specimens: Array<{ id: string }>; page: number; hasMore: boolean };
     const samplePageTwo = await (await specimenListHandler(new Request("http://localhost/api/samples?page=2&pageSize=1"))).json() as { specimens: Array<{ id: string }>; page: number; hasMore: boolean };
@@ -1049,8 +1088,10 @@ describe("appointment creation PostgreSQL integration", () => {
     const dispatchPageOne = await (await dispatchListHandler(new Request("http://localhost/api/samples/dispatch?page=1&pageSize=1"))).json() as { batches: Array<{ id: string }>; page: number; hasMore: boolean };
     const dispatchPageTwo = await (await dispatchListHandler(new Request("http://localhost/api/samples/dispatch?page=2&pageSize=1"))).json() as { batches: Array<{ id: string }>; page: number; hasMore: boolean };
     expect(dispatchPageOne).toMatchObject({ page: 1, hasMore: true });
-    expect(dispatchPageTwo).toMatchObject({ page: 2, hasMore: false });
+    expect(dispatchPageTwo).toMatchObject({ page: 2, hasMore: true });
     expect([dispatchPageOne.batches[0].id, dispatchPageTwo.batches[0].id].sort()).toEqual(dispatchIds.slice(0, 2).sort());
+    const dispatchPageThree = await (await dispatchListHandler(new Request("http://localhost/api/samples/dispatch?page=3&pageSize=1"))).json() as { batches: Array<{ id: string }>; page: number; hasMore: boolean };
+    expect(dispatchPageThree).toMatchObject({ page: 3, hasMore: false });
     mocks.getApiAccess.mockReset();
     mocks.getApiAccess.mockResolvedValue({ staff: { organizationId, staffUserId, grants: [{ key: "appointments.read", centreId }, { key: "appointments.update", centreId }, { key: "appointments.assign", centreId }, { key: "roster.read", centreId }, { key: "finance.read", centreId }] }, response: null });
   });

@@ -7,9 +7,11 @@ import { decryptReportDocument, encryptReportDocument } from "@/server/report-cr
 const MAX_BYTES=10*1024*1024;
 function storageRoot(){
   if(process.env.NODE_ENV==="production")throw new Error("private_report_storage_not_qualified");
-  const root=path.resolve(/*turbopackIgnore: true*/ process.cwd(),"var","private-reports");
-  const publicRoot=path.resolve(/*turbopackIgnore: true*/ process.cwd(),"public")+path.sep;
-  if(root===path.resolve(/*turbopackIgnore: true*/ process.cwd(),"public")||root.startsWith(publicRoot))throw new Error("report_storage_must_be_private");
+  const configuredRoot=process.env.REPORT_PRIVATE_STORAGE_DIR?.trim();
+  const root=path.resolve(/*turbopackIgnore: true*/ configuredRoot||path.join(process.cwd(),"var","private-reports"));
+  const publicDirectory=path.resolve(/*turbopackIgnore: true*/ process.cwd(),"public");
+  const publicRoot=publicDirectory+path.sep;
+  if(root===publicDirectory||root.startsWith(publicRoot))throw new Error("report_storage_must_be_private");
   return root;
 }
 export function safeReportStorageKey(){return `${randomUUID()}.pdf`;}

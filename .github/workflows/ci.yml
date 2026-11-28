@@ -1,0 +1,293 @@
+name: Rudra Health OS CI
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master, codex/rudra-review-8055f48]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rudra-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, typecheck, tests, build, inventory
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_USER: rudra_ci
+          POSTGRES_PASSWORD: rudra_ci_test_only
+          POSTGRES_DB: rudra_health_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rudra_ci -d rudra_health_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://rudra_ci:rudra_ci_test_only@127.0.0.1:5432/rudra_health_test
+      DATABASE_TEST_URL: postgresql://rudra_ci:rudra_ci_test_only@127.0.0.1:5432/rudra_health_test
+      DATABASE_MIGRATION_URL: postgresql://rudra_ci:rudra_ci_test_only@127.0.0.1:5432/rudra_health_test
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      PUBLIC_SITE_URL: http://localhost:3000
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          package-manager-cache: false
+
+      - name: Generate disposable CI cryptographic keys
+        shell: bash
+        run: |
+          node <<'NODE'
+          const { randomBytes } = require('node:crypto');
+          const { appendFileSync } = require('node:fs');
+          const { GITHUB_ENV } = process.env;
+          const fieldId = 'ci-field';
+          const reportId = 'ci-report';
+          const lines = {
+            BETTER_AUTH_SECRET: randomBytes(48).toString('base64url'),
+            RUDRA_FIELD_ACTIVE_KEY_ID: fieldId,
+            RUDRA_FIELD_ENCRYPTION_KEYS: JSON.stringify({ [fieldId]: randomBytes(32).toString('base64') }),
+            RUDRA_BLIND_INDEX_KEY: randomBytes(32).toString('base64'),
+            REPORT_DOCUMENT_ACTIVE_KEY_ID: reportId,
+            REPORT_DOCUMENT_ENCRYPTION_KEYS: JSON.stringify({ [reportId]: randomBytes(32).toString('base64') }),
+          };
+          for (const [key, value] of Object.entries(lines)) {
+            if (/[\r\n]/.test(value)) throw new Error(`invalid_ci_env_value:${key}`);
+            process.stdout.write(`::add-mask::${value}\n`);
+            appendFileSync(GITHUB_ENV, `${key}=${value}\n`);
+          }
+          NODE
+
+      - name: Configure private CI document storage
+        shell: bash
+        run: echo "REPORT_PRIVATE_STORAGE_DIR=$RUNNER_TEMP/rudra-health-os-private-reports" >> "$GITHUB_ENV"
+
+      - name: Install locked dependencies
+        id: install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx next typegen && npm run typecheck
+
+      - name: Provision no-login application role for migration grants
+        run: |
+          node --input-type=module <<'NODE'
+          import { Client } from 'pg';
+          const client = new Client({ connectionString: process.env.DATABASE_URL });
+          await client.connect();
+          try {
+            await client.query('CREATE ROLE rudra_dev_app NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE');
+          } finally {
+            await client.end();
+          }
+          NODE
+
+      - name: Install PostgreSQL 17 client tools for isolated recovery tests
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes ca-certificates curl gnupg
+          sudo install -d /usr/share/postgresql-common/pgdg
+          curl --fail --silent --show-error https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor --yes -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg] https://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo "$VERSION_CODENAME")-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client-17
+          pg_dump --version
+          psql --version
+
+      - name: Full automated tests
+        run: npm test
+
+      - name: Rehearse migration upgrade 0093 to 0102 in a disposable schema
+        run: node scripts/qualify-ci-migration-upgrade.mjs
+
+      - name: Production build
+        run: npm run build
+
+      - name: Reconcile canonical screen inventory
+        run: node scripts/reconcile-screen-inventory.mjs
+
+  finance-browser-acceptance:
+    name: Finance browser acceptance (synthetic)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_USER: rudra_browser
+          POSTGRES_DB: rudra_health_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rudra_browser -d rudra_health_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    permissions:
+      contents: read
+    env:
+      DATABASE_URL: postgresql://rudra_browser@127.0.0.1:5432/rudra_health_test
+      DATABASE_TEST_URL: postgresql://rudra_browser@127.0.0.1:5432/rudra_health_test
+      DATABASE_MIGRATION_URL: postgresql://rudra_browser@127.0.0.1:5432/rudra_health_test
+      BETTER_AUTH_URL: http://127.0.0.1:3000
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+      PUBLIC_SITE_URL: http://127.0.0.1:3000
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          package-manager-cache: false
+
+      - name: Generate disposable browser-test encryption keys
+        shell: bash
+        run: |
+          node <<'NODE'
+          const { randomBytes } = require('node:crypto');
+          const { appendFileSync } = require('node:fs');
+          const fieldId = 'ci-finance-field';
+          const reportId = 'ci-finance-report';
+          const values = {
+            BETTER_AUTH_SECRET: randomBytes(48).toString('base64url'),
+            RUDRA_FIELD_ACTIVE_KEY_ID: fieldId,
+            RUDRA_FIELD_ENCRYPTION_KEYS: JSON.stringify({ [fieldId]: randomBytes(32).toString('base64') }),
+            RUDRA_BLIND_INDEX_KEY: randomBytes(32).toString('base64'),
+            REPORT_DOCUMENT_ACTIVE_KEY_ID: reportId,
+            REPORT_DOCUMENT_ENCRYPTION_KEYS: JSON.stringify({ [reportId]: randomBytes(32).toString('base64') }),
+            REPORT_PRIVATE_STORAGE_DIR: `${process.env.RUNNER_TEMP}/rudra-finance-browser-private`,
+          };
+          for (const [key, value] of Object.entries(values)) {
+            if (/[\r\n]/.test(value)) throw new Error(`invalid_ci_env_value:${key}`);
+            process.stdout.write(`::add-mask::${value}\n`);
+            appendFileSync(process.env.GITHUB_ENV, `${key}=${value}\n`);
+          }
+          NODE
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Install Chromium and operating-system dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Provision no-login application role
+        run: |
+          node --input-type=module <<'NODE'
+          import { Client } from 'pg';
+          const client = new Client({ connectionString: process.env.DATABASE_URL });
+          await client.connect();
+          try { await client.query('CREATE ROLE rudra_dev_app NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE'); }
+          finally { await client.end(); }
+          NODE
+
+      - name: Apply migrations to disposable browser database
+        run: npm run db:migrate
+
+      - name: Create synthetic finance operator and order fixtures
+        run: npm run seed:browser:finance
+
+      - name: Provision additional scoped synthetic staff logins
+        run: node scripts/seed-role-browser.mjs
+
+      - name: Build production application
+        run: npm run build
+
+      - name: Run authenticated finance browser journey
+        run: npm run test:browser:finance
+
+  dependency-audit:
+    name: Dependency vulnerability audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          package-manager-cache: false
+
+      - name: Install locked dependencies
+        id: install
+        run: npm ci
+
+      - name: Audit all dependencies
+        id: audit_all
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+      - name: Audit production dependencies
+        id: audit_production
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Fail if either dependency audit reports high severity
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        env:
+          AUDIT_ALL_OUTCOME: ${{ steps.audit_all.outcome }}
+          AUDIT_PRODUCTION_OUTCOME: ${{ steps.audit_production.outcome }}
+        run: |
+          if [[ "$AUDIT_ALL_OUTCOME" != "success" || "$AUDIT_PRODUCTION_OUTCOME" != "success" ]]; then
+            echo "Dependency audit findings are blocking; review the audit output and remediate or document through an explicit security decision."
+            exit 1
+          fi
+
+  secret-scan:
+    name: Full-history secret scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout complete PR history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Scan history for secrets
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

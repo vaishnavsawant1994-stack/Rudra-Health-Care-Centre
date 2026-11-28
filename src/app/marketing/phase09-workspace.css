@@ -1,0 +1,5 @@
+.marketing-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 12px; margin: 16px 0; }
+.marketing-summary-grid .admin-card { display: grid; gap: 6px; margin: 0; }
+.marketing-summary-grid strong { font-size: 1.5rem; color: var(--color-primary, #0c7b75); }
+.marketing-summary-grid small { color: var(--color-muted, #64748b); }
+.marketing-summary-grid + h3 { margin-top: 22px; }

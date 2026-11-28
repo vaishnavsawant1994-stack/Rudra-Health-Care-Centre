@@ -8,6 +8,10 @@ export function mayCreateCollectionJobAtCentre(grants: readonly PermissionGrant[
   return hasAtCentre(grants, "collections.assign", centreId);
 }
 
+export function mayListEligibleCollectionJobs(grants: readonly PermissionGrant[]) {
+  return grants.some((grant) => grant.key === "collections.assign");
+}
+
 export function mayManageProceduresAtCentre(grants: readonly PermissionGrant[], centreId: string) {
   return hasAtCentre(grants, "samples.procedures.manage", centreId);
 }

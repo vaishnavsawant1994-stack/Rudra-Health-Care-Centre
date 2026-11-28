@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { mayAuthorizeRecollectionAtCentre, mayCollectSampleAtCentre, mayCreateCollectionJobAtCentre, mayDispatchSamplesAtCentre, mayManageProceduresAtCentre, mayManageSampleExceptionsAtCentre, mayReceiveSamplesAtCentre, mayRecordVisitAtCentre, mayVerifyExternalReceiptAtCentre } from "@/lib/sample-operations-permissions";
+import { mayAuthorizeRecollectionAtCentre, mayCollectSampleAtCentre, mayCreateCollectionJobAtCentre, mayDispatchSamplesAtCentre, mayListEligibleCollectionJobs, mayManageProceduresAtCentre, mayManageSampleExceptionsAtCentre, mayReceiveSamplesAtCentre, mayRecordVisitAtCentre, mayVerifyExternalReceiptAtCentre } from "@/lib/sample-operations-permissions";
 
 describe("sample operation centre permissions", () => {
+  it("only requests eligible collection jobs when assignment is granted", () => {
+    expect(mayListEligibleCollectionJobs([{ key: "collections.visit.record", centreId: "a" }])).toBe(false);
+    expect(mayListEligibleCollectionJobs([{ key: "collections.assign", centreId: "a" }])).toBe(true);
+  });
+
   it("does not carry centre grants into another centre", () => {
     const grants = [{ key: "collections.assign", centreId: "a" }, { key: "samples.procedures.manage", centreId: "a" }, { key: "samples.receive", centreId: "b" }, { key: "samples.exceptions.manage", centreId: "a" }];
     expect(mayCreateCollectionJobAtCentre(grants, "a")).toBe(true);
